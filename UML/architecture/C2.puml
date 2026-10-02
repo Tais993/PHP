@@ -1,0 +1,21 @@
+﻿@startuml C2_Container
+!include <C4/C4_Container>
+
+title C2 - Container Diagram - PHP: Personal Home Page
+
+Person(user, "User", "Uses the homepage to manage tasks and stay up-to-date")
+
+System_Boundary(system, "PHP: Personal Home Page") {
+
+    Container(website, "Web Application", "React / TypeScript", "Provides the user interface for managing tasks, boards and views.")
+
+    Container(application, "Backend Application", "Java / Spring Boot", "Provides the API and contains the application's business logic.")
+
+    ContainerDb(database, "Application Database", "PostgreSQL", "Stores users, tasks, boards, views and application configuration.")
+}
+
+Rel(user, website, "Interacts on site")
+Rel(website, application, "Requests or posts", "REST")
+Rel(application, database, "Reads/writes", "SQL")
+
+@enduml

@@ -1,0 +1,12 @@
+﻿@startuml C1_Context
+!include <C4/C4_Context>
+
+title C1 - System Context - PHP: Personal Home Page
+
+Person(user, "User", "Uses the homepage to manage tasks and stay up-to-date")
+
+System(system, "PHP: Personal Home Page", "A browser homepage for organising tasks, boards and relevant information.")
+
+Rel(user, system, "Uses through website")
+
+@enduml

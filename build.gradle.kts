@@ -1,53 +1,42 @@
+import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
+
 plugins {
     java
-    id("org.springframework.boot") version "4.1.1"
-    id("io.spring.dependency-management") version "1.1.7"
-    id("org.asciidoctor.jvm.convert") version "4.0.5"
+    id("org.springframework.boot") version "4.1.1" apply false
+    id("io.spring.dependency-management") version "1.1.7" apply false
+    id("org.asciidoctor.jvm.convert") version "4.0.5" apply false
 }
 
 group = "nl.tijsbeek"
 version = "0.0.1-SNAPSHOT"
 description = "Homepage"
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(26)
+allprojects {
+    repositories {
+        mavenCentral()
     }
 }
 
-repositories {
-    mavenCentral()
-}
+subprojects {
+    group = rootProject.group
+    version = rootProject.version
 
-extra["snippetsDir"] = file("build/generated-snippets")
+    apply(plugin = "java")
+    apply(plugin = "io.spring.dependency-management")
 
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-restclient")
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-    runtimeOnly("org.postgresql:postgresql")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-restdocs")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-websocket-test")
-    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+    extensions.configure<DependencyManagementExtension> {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.1")
+        }
+    }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(27)
+        }
+    }
 
-tasks.test {
-    outputs.dir(project.extra["snippetsDir"]!!)
-}
-
-tasks.asciidoctor {
-    inputs.dir(project.extra["snippetsDir"]!!)
-    dependsOn(tasks.test)
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
 }

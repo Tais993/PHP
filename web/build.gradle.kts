@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":infrastructure"))
 
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")

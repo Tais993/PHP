@@ -9,12 +9,12 @@ import static java.util.Objects.requireNonNull;
 
 @RestController
 @RequestMapping("/test")
-class TaskController {
+public class TaskController {
 
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Long create(String resource) {;
+    public Long create(String resource) {
         Objects.requireNonNull(resource);
 
         return 0L;
@@ -22,7 +22,7 @@ class TaskController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Long receive() {;
-        return 5L;
+    public String receive() {
+        return "5";
     }
 }

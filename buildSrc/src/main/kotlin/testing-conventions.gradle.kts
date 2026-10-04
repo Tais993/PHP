@@ -10,9 +10,6 @@ plugins {
 val sourceSets = extensions.getByType<SourceSetContainer>()
 
 val integrationTestSourceSet = sourceSets.create("integrationTest") {
-    java.srcDir("src/integrationTest/java")
-    resources.srcDir("src/integrationTest/resources")
-
     compileClasspath += sourceSets["main"].output
     runtimeClasspath += sourceSets["main"].output
 }

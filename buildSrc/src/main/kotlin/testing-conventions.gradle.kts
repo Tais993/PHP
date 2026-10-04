@@ -45,25 +45,60 @@ tasks.named("check") {
     dependsOn(integrationTest)
 }
 
-val jacocoTestReport = tasks.named<JacocoReport>("jacocoTestReport") {
-    dependsOn(
-        tasks.named("test"),
-        integrationTest
-    )
+val unitTestReport = tasks.register<JacocoReport>("jacocoUnitTestReport") {
+    dependsOn(tasks.named("test"))
 
-    executionData(
-        tasks.named<Test>("test"),
-        integrationTest
-    )
+    executionData(tasks.named<Test>("test"))
+
+    sourceSets(sourceSets["main"])
 
     reports {
         xml.required = true
         html.required = true
         csv.required = false
+
+        xml.outputLocation =
+            layout.buildDirectory.file(
+                "reports/jacoco/unit/jacocoUnitTestReport.xml"
+            )
+
+        html.outputLocation =
+            layout.buildDirectory.dir(
+                "reports/jacoco/unit/html"
+            )
     }
 }
 
-tasks.named("check") {
-    dependsOn(integrationTest)
-    dependsOn(jacocoTestReport)
+val integrationTestReport =
+    tasks.register<JacocoReport>("jacocoIntegrationTestReport") {
+
+        dependsOn(integrationTest)
+
+        executionData(integrationTest)
+
+        sourceSets(sourceSets["main"])
+
+        reports {
+            xml.required = true
+            html.required = true
+            csv.required = false
+
+            xml.outputLocation =
+                layout.buildDirectory.file(
+                    "reports/jacoco/integration/jacocoIntegrationTestReport.xml"
+                )
+
+            html.outputLocation =
+                layout.buildDirectory.dir(
+                    "reports/jacoco/integration/html"
+                )
+        }
+    }
+
+tasks.named<Test>("test") {
+    finalizedBy(unitTestReport)
+}
+
+integrationTest.configure {
+    finalizedBy(integrationTestReport)
 }

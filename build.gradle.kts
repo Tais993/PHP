@@ -22,6 +22,7 @@ subprojects {
     version = rootProject.version
 
     apply(plugin = "java")
+    apply(plugin = "testing-conventions")
     apply(plugin = "io.spring.dependency-management")
 
     extensions.configure<DependencyManagementExtension> {
@@ -34,9 +35,5 @@ subprojects {
         toolchain {
             languageVersion = JavaLanguageVersion.of(27)
         }
-    }
-
-    tasks.withType<Test> {
-        useJUnitPlatform()
     }
 }

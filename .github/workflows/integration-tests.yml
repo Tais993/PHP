@@ -1,0 +1,44 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          java-version: '27'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Run integration tests
+        run: ./gradlew integrationTest jacocoIntegrationTestReport
+
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-reports
+          path: |
+            **/build/reports/tests/integrationTest/
+            **/build/test-results/integrationTest/
+
+      - name: Upload integration coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: |
+            ./domain/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./application/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./infrastructure/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./web/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+          flags: integration
+          token: ${{ secrets.CODECOV_TOKEN }}

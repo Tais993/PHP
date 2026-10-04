@@ -16,24 +16,18 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+
+//  TODO: docker compose
+  developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 
     annotationProcessor(
         "org.springframework.boot:spring-boot-configuration-processor"
     )
 
-    testImplementation(
-        "org.springframework.boot:spring-boot-starter-webmvc-test"
-    )
-    testImplementation(
-        "org.springframework.boot:spring-boot-starter-websocket-test"
-    )
-    testImplementation(
-        "org.springframework.boot:spring-boot-starter-restdocs"
-    )
-    testImplementation(
-        "org.springframework.restdocs:spring-restdocs-mockmvc"
-    )
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-restdocs")
+    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

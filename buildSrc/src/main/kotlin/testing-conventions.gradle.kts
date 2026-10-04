@@ -9,10 +9,7 @@ plugins {
 
 val sourceSets = extensions.getByType<SourceSetContainer>()
 
-val integrationTestSourceSet = sourceSets.create("integrationTest") {
-    compileClasspath += sourceSets["main"].output
-    runtimeClasspath += sourceSets["main"].output
-}
+val integrationTestSourceSet = sourceSets.create("integrationTest")
 
 configurations.named("integrationTestImplementation") {
     extendsFrom(configurations["testImplementation"])
@@ -22,8 +19,21 @@ configurations.named("integrationTestRuntimeOnly") {
     extendsFrom(configurations["testRuntimeOnly"])
 }
 
-tasks.withType<Test> {
+integrationTestSourceSet.compileClasspath =
+    sourceSets["main"].output +
+        configurations["testCompileClasspath"]
+
+integrationTestSourceSet.runtimeClasspath =
+    integrationTestSourceSet.output +
+        sourceSets["main"].output +
+        configurations["testRuntimeClasspath"]
+
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+
+    testLogging {
+        showStandardStreams = true
+    }
 }
 
 val integrationTest = tasks.register<Test>("integrationTest") {
@@ -32,8 +42,6 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
-
-    useJUnitPlatform()
 
     shouldRunAfter(tasks.named("test"))
 }
@@ -45,7 +53,9 @@ tasks.named("check") {
 val unitTestReport = tasks.register<JacocoReport>("jacocoUnitTestReport") {
     dependsOn(tasks.named("test"))
 
-    executionData(tasks.named<Test>("test"))
+    executionData(
+        layout.buildDirectory.file("jacoco/test.exec")
+    )
 
     sourceSets(sourceSets["main"])
 
@@ -71,7 +81,9 @@ val integrationTestReport =
 
         dependsOn(integrationTest)
 
-        executionData(integrationTest)
+        executionData(
+            layout.buildDirectory.file("jacoco/integrationTest.exec")
+        )
 
         sourceSets(sourceSets["main"])
 

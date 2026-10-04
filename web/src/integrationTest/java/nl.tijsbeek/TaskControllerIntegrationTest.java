@@ -31,7 +31,7 @@ class TaskControllerIntegrationTest {
 
     @Test
     void whenTestApp_thenEmptyResponse() throws Exception {
-        mockMvc.perform(get("/create"))
+        mockMvc.perform(get("/test"))
                 .andExpect(status().isOk());
     }
 }

@@ -1,0 +1,5 @@
+[![Gradle Build](https://github.com/Tais993/PHP/actions/workflows/gradle-build.yml/badge.svg)](https://github.com/Tais993/PHP/actions/workflows/gradle-build.yml)
+[![Unit Tests](https://github.com/Tais993/PHP/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/Tais993/PHP/actions/workflows/unit-tests.yml)
+[![Integration Tests](https://github.com/Tais993/PHP/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/Tais993/PHP/actions/workflows/integration-tests.yml)
+[![Dependency Graph](https://github.com/Tais993/PHP/actions/workflows/dependency-graph.yml/badge.svg)](https://github.com/Tais993/PHP/actions/workflows/dependency-graph.yml)
+[![SonarQube](https://github.com/Tais993/PHP/actions/workflows/sonarqube.yml/badge.svg)](https://github.com/Tais993/PHP/actions/workflows/sonarqube.yml)

@@ -16,9 +16,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-
-//  TODO: docker compose
-  developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 
     annotationProcessor(
         "org.springframework.boot:spring-boot-configuration-processor"
@@ -43,4 +41,8 @@ tasks.test {
 tasks.asciidoctor {
     inputs.dir(project.extra["snippetsDir"]!!)
     dependsOn(tasks.test)
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    systemProperty("spring.profiles.active", "local")
 }

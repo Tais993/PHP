@@ -1,9 +1,9 @@
 CREATE TABLE task
 (
-    id          INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name        VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    created_at  DATE NOT NULL,
+    id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    title       VARCHAR(255) NOT NULL,
+    description TEXT         NOT NULL,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     status      VARCHAR(255) NOT NULL
 );

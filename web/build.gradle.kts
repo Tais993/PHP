@@ -8,6 +8,7 @@ description = "Web"
 extra["snippetsDir"] = file("build/generated-snippets")
 
 dependencies {
+    implementation(project(":domain"))
     implementation(project(":application"))
     implementation(project(":infrastructure"))
 

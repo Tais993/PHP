@@ -6,6 +6,7 @@ import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.services.TaskService;
 import org.jetbrains.annotations.Contract;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import static java.util.Objects.requireNonNull;
@@ -30,7 +31,10 @@ public class TaskController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public TaskResponse receive(@RequestParam long id) {
-        return TaskResponse.fromDomain(taskService.getTask(id));
+    public ResponseEntity<TaskResponse> receive(@RequestParam long id) {
+        return taskService.getTask(id)
+                .map(TaskResponse::fromDomain)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

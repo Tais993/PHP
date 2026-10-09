@@ -1,5 +1,6 @@
-package nl.tijsbeek.testing;
+package nl.tijsbeek.testing.fixtures;
 
+import nl.tijsbeek.testing.PostgreSqlTestContainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;

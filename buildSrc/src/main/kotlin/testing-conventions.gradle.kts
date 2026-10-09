@@ -1,4 +1,3 @@
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testing.jacoco.tasks.JacocoReport
 
@@ -7,32 +6,20 @@ plugins {
     jacoco
 }
 
-val sourceSets = extensions.getByType<SourceSetContainer>()
-
-val integrationTestSourceSet = sourceSets.create("integrationTest")
-
-configurations.named("integrationTestImplementation") {
-    extendsFrom(configurations["testImplementation"])
-}
-
-configurations.named("integrationTestRuntimeOnly") {
-    extendsFrom(configurations["testRuntimeOnly"])
-}
-
-integrationTestSourceSet.compileClasspath =
-    sourceSets["main"].output +
-        configurations["testCompileClasspath"]
-
-integrationTestSourceSet.runtimeClasspath =
-    integrationTestSourceSet.output +
-        sourceSets["main"].output +
-        configurations["testRuntimeClasspath"]
+val testSourceSet = sourceSets.test.get()
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
     testLogging {
+        events("passed", "skipped", "failed")
         showStandardStreams = true
+    }
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeTags("integration")
     }
 }
 
@@ -40,8 +27,12 @@ val integrationTest = tasks.register<Test>("integrationTest") {
     description = "Runs integration tests."
     group = "verification"
 
-    testClassesDirs = integrationTestSourceSet.output.classesDirs
-    classpath = integrationTestSourceSet.runtimeClasspath
+    testClassesDirs = testSourceSet.output.classesDirs
+    classpath = testSourceSet.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags("integration")
+    }
 
     shouldRunAfter(tasks.named("test"))
 }
@@ -57,7 +48,7 @@ val unitTestReport = tasks.register<JacocoReport>("jacocoUnitTestReport") {
         layout.buildDirectory.file("jacoco/test.exec")
     )
 
-    sourceSets(sourceSets["main"])
+    sourceSets(sourceSets.main.get())
 
     reports {
         xml.required = true
@@ -76,33 +67,31 @@ val unitTestReport = tasks.register<JacocoReport>("jacocoUnitTestReport") {
     }
 }
 
-val integrationTestReport =
-    tasks.register<JacocoReport>("jacocoIntegrationTestReport") {
+val integrationTestReport = tasks.register<JacocoReport>("jacocoIntegrationTestReport") {
+    dependsOn(integrationTest)
 
-        dependsOn(integrationTest)
+    executionData(
+        layout.buildDirectory.file("jacoco/integrationTest.exec")
+    )
 
-        executionData(
-            layout.buildDirectory.file("jacoco/integrationTest.exec")
-        )
+    sourceSets(sourceSets.main.get())
 
-        sourceSets(sourceSets["main"])
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
 
-        reports {
-            xml.required = true
-            html.required = true
-            csv.required = false
+        xml.outputLocation =
+            layout.buildDirectory.file(
+                "reports/jacoco/integration/jacocoIntegrationTestReport.xml"
+            )
 
-            xml.outputLocation =
-                layout.buildDirectory.file(
-                    "reports/jacoco/integration/jacocoIntegrationTestReport.xml"
-                )
-
-            html.outputLocation =
-                layout.buildDirectory.dir(
-                    "reports/jacoco/integration/html"
-                )
-        }
+        html.outputLocation =
+            layout.buildDirectory.dir(
+                "reports/jacoco/integration/html"
+            )
     }
+}
 
 tasks.named<Test>("test") {
     finalizedBy(unitTestReport)

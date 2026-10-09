@@ -4,5 +4,6 @@ include(
     "domain",
     "application",
     "infrastructure",
-    "web"
+    "web",
+    "test-fixtures"
 )

@@ -1,37 +1,82 @@
 package nl.tijsbeek;
 
+import nl.tijsbeek.dto.CreateTaskRequest;
+import nl.tijsbeek.dto.TaskResponse;
+
+import nl.tijsbeek.fixtures.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
-class TaskControllerIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres =
-            new PostgreSQLContainer("postgres:17");
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+class TaskControllerIntegrationTest extends IntegrationTestBase {
 
     private final MockMvc mockMvc;
 
-    TaskControllerIntegrationTest(@Autowired MockMvc mockMvc) {
+    private final ObjectMapper objectMapper;
+
+    TaskControllerIntegrationTest(JdbcTemplate jdbcTemplate, MockMvc mockMvc, ObjectMapper objectMapper) {
+        super(jdbcTemplate);
         this.mockMvc = mockMvc;
+        this.objectMapper = objectMapper;
     }
 
     @Test
-    void whenTestApp_thenEmptyResponse() throws Exception {
-        mockMvc.perform(get("/test"))
-                .andExpect(status().isOk());
+    void getFakeTaskById_ReturnsNotFound() throws Exception {
+        mockMvc.perform(
+                        get("/task")
+                                .param("id", "9999")
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createTask_ThenGetById_ReturnsTask() throws Exception {
+        CreateTaskRequest request = new CreateTaskRequest(
+                "test",
+                "Lorem ipsum",
+                "unfinished"
+        );
+
+        MvcResult result = mockMvc.perform(
+                        post("/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("test"))
+                .andExpect(jsonPath("$.description").value("Lorem ipsum"))
+                .andExpect(jsonPath("$.status").value("unfinished"))
+                .andReturn();
+
+        TaskResponse createdTask = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                TaskResponse.class
+        );
+
+        long taskId = createdTask.id();
+
+        mockMvc.perform(
+                        get("/task")
+                                .param("id", String.valueOf(taskId))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.title").value("test"))
+                .andExpect(jsonPath("$.description").value("Lorem ipsum"))
+                .andExpect(jsonPath("$.status").value("unfinished"))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
 }

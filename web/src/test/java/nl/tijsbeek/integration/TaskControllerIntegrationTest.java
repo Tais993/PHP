@@ -1,9 +1,10 @@
-package nl.tijsbeek;
+package nl.tijsbeek.integration;
 
 import nl.tijsbeek.dto.CreateTaskRequest;
 import nl.tijsbeek.dto.TaskResponse;
 
-import nl.tijsbeek.fixtures.IntegrationTestBase;
+import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
+import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@IntegrationTest
 @AutoConfigureMockMvc
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class TaskControllerIntegrationTest extends IntegrationTestBase {

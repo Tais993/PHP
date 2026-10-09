@@ -29,6 +29,12 @@ public class TaskController {
         return TaskResponse.fromDomain(task);
     }
 
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@RequestParam long id) {
+        taskService.deleteTask(id);
+    }
+
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<TaskResponse> receive(@RequestParam long id) {

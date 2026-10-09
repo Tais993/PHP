@@ -6,3 +6,13 @@
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tais993_PHP&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Tais993_PHP)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tais993_PHP&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Tais993_PHP)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Tais993_PHP&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Tais993_PHP)
+
+
+
+
+for running? Run `./gradlew :web:bootRun`
+
+for tests? Run `./gradlew test`
+
+for integration tests? Run `./gradlew integrationTest`
+for 

@@ -3,6 +3,7 @@ package nl.tijsbeek.entities;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class Task {
     public static final int MAX_TITLE_LENGTH = 255;
@@ -23,7 +24,9 @@ public class Task {
 
 
     public void changeTitle(@NotNull String newTitle) {
-        if (newTitle == null || newTitle.isBlank()) {
+        Objects.requireNonNull(newTitle);
+
+        if (newTitle.isBlank()) {
             throw new IllegalArgumentException(
                     "Task title cannot be empty"
             );

@@ -10,6 +10,9 @@ public interface TaskService {
     @Transactional
     Task createTask(String title, String description, String status);
 
+    @Transactional
+    void deleteTask(long id);
+
     @Transactional(readOnly = true)
     Optional<Task> getTask(long id);
 

@@ -66,5 +66,21 @@ sonar {
                 "web/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml"
             ).joinToString(",")
         )
+
+
+
+        // Exclusions:
+
+        // Test-fixtures should NOT count for coverage
+        property(
+            "sonar.coverage.exclusions",
+            "**/test-fixtures/**"
+        )
+
+        // JPA and domain entities are NOT duplicates
+        property(
+            "sonar.cpd.exclusions",
+            "**/*JPA.java,**/entities/**"
+        )
     }
 }

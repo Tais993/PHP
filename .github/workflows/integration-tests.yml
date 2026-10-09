@@ -1,5 +1,9 @@
 name: Integration Tests
 
+defaults:
+  run:
+    working-directory: backend
+
 on:
   push:
     branches: [ "main", "develop" ]
@@ -36,9 +40,9 @@ jobs:
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: |
-            ./domain/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
-            ./application/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
-            ./infrastructure/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
-            ./web/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./backend/domain/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./backend/application/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./backend/infrastructure/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+            ./backend/web/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
           flags: integration
           token: ${{ secrets.CODECOV_TOKEN }}

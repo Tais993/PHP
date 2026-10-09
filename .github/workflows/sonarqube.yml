@@ -1,5 +1,9 @@
 name: SonarQube
 
+defaults:
+  run:
+    working-directory: backend
+
 on:
   push:
     branches:

@@ -2,6 +2,10 @@
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 name: Gradle Build
 
+defaults:
+  run:
+    working-directory: backend
+
 on:
   push:
     branches: [ "main", "develop" ]

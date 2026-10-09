@@ -1,5 +1,9 @@
 name: Unit Tests
 
+defaults:
+  run:
+    working-directory: backend
+
 on:
   push:
     branches: [ "main", "develop" ]
@@ -36,9 +40,9 @@ jobs:
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: |
-            ./domain/build/reports/jacoco/unit/jacocoUnitTestReport.xml
-            ./application/build/reports/jacoco/unit/jacocoUnitTestReport.xml
-            ./infrastructure/build/reports/jacoco/unit/jacocoUnitTestReport.xml
-            ./web/build/reports/jacoco/unit/jacocoUnitTestReport.xml
+            ./backend/domain/build/reports/jacoco/unit/jacocoUnitTestReport.xml
+            ./backend/application/build/reports/jacoco/unit/jacocoUnitTestReport.xml
+            ./backend/infrastructure/build/reports/jacoco/unit/jacocoUnitTestReport.xml
+            ./backend/web/build/reports/jacoco/unit/jacocoUnitTestReport.xml
           flags: unit
           token: ${{ secrets.CODECOV_TOKEN }}

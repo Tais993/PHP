@@ -100,3 +100,14 @@ tasks.named<Test>("test") {
 integrationTest.configure {
     finalizedBy(integrationTestReport)
 }
+
+
+tasks.register("testAllWithCoverage") {
+    description = "Runs unit and integration tests with coverage."
+    group = "verification"
+
+    dependsOn(
+        "jacocoUnitTestReport",
+        "jacocoIntegrationTestReport"
+    )
+}

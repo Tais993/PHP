@@ -1,4 +1,4 @@
-package nl.tijsbeek.integration;
+package nl.tijsbeek.integration.controller;
 
 import nl.tijsbeek.dto.CreateTaskRequest;
 import nl.tijsbeek.dto.TaskResponse;
@@ -39,6 +39,46 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(
                         get("/task")
                                 .param("id", "9999")
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createTask_ThenDeleteTask_GetTaskReturnsNotFound() throws Exception {
+        CreateTaskRequest request = new CreateTaskRequest(
+                "test1250285028921930",
+                "Lorem ipsum",
+                "unfinished"
+        );
+
+        MvcResult result = mockMvc.perform(
+                        post("/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("test1250285028921930"))
+                .andExpect(jsonPath("$.description").value("Lorem ipsum"))
+                .andExpect(jsonPath("$.status").value("unfinished"))
+                .andReturn();
+
+        TaskResponse createdTask = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                TaskResponse.class
+        );
+
+        long taskId = createdTask.id();
+
+        mockMvc.perform(
+                        delete("/task")
+                                .param("id", String.valueOf(taskId))
+                )
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                        get("/task")
+                                .param("id", String.valueOf(taskId))
                 )
                 .andExpect(status().isNotFound());
     }

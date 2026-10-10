@@ -1,9 +1,5 @@
 name: SonarQube
 
-defaults:
-  run:
-    working-directory: backend
-
 on:
   push:
     branches:
@@ -68,26 +64,33 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: unit-coverage
-          path: backend
+          path: backend/build/reports/jacoco/unit
 
       - name: Download integration coverage
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: integration-coverage
-          path: backend
+          path: backend/build/reports/jacoco/integration
 
       - name: Verify coverage reports
         run: |
-          find . -path '*/build/reports/jacoco/*/*.xml' -print
+          echo "Available JaCoCo reports:"
+          find build/reports/jacoco -type f -print
 
-          test -n "$(find . -path '*/build/reports/jacoco/unit/*.xml' -print -quit)"
-          test -n "$(find . -path '*/build/reports/jacoco/integration/*.xml' -print -quit)"
+          test -s build/reports/jacoco/unit/report.xml
+          test -s build/reports/jacoco/integration/report.xml
+
+          echo "JaCoCo reports found successfully."
 
       - name: Compile production classes and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
           ./gradlew
+          :domain:classes
+          :application:classes
+          :infrastructure:classes
           :web:classes
           sonar
-          -Dsonar.coverage.jacoco.xmlReportPaths=**/build/reports/jacoco/unit/jacocoUnitTestReport.xml,**/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+          --info
+          -Dsonar.verbose=true

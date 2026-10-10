@@ -2,6 +2,9 @@ import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 
 plugins {
     java
+    jacoco
+
+    id("coverage-aggregation")
 
     id("org.springframework.boot") version "4.1.1" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
@@ -60,28 +63,23 @@ sonar {
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
             listOf(
-                "domain/build/reports/jacoco/unit/jacocoUnitTestReport.xml",
-                "domain/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml",
-                "application/build/reports/jacoco/unit/jacocoUnitTestReport.xml",
-                "application/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml",
-                "infrastructure/build/reports/jacoco/unit/jacocoUnitTestReport.xml",
-                "infrastructure/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml",
-                "web/build/reports/jacoco/unit/jacocoUnitTestReport.xml",
-                "web/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml"
+                layout.buildDirectory.file(
+                    "reports/jacoco/unit/report.xml"
+                ).get().asFile.absolutePath,
+
+                layout.buildDirectory.file(
+                    "reports/jacoco/integration/report.xml"
+                ).get().asFile.absolutePath
             ).joinToString(",")
         )
 
-
-
-        // Exclusions:
-
-        // Test-fixtures should NOT count for coverage
+        // Test-fixtures should NOT count for coverage.
         property(
             "sonar.coverage.exclusions",
             "**/test-fixtures/**"
         )
 
-        // JPA and domain entities are NOT duplicates
+        // JPA and domain entities are NOT duplicates.
         property(
             "sonar.cpd.exclusions",
             "**/*JPA.java,**/entities/**"

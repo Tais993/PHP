@@ -28,14 +28,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
 
-      - name: Run integration tests
-        run: ./gradlew integrationTest jacocoIntegrationTestReport
+      - name: Run integration tests with coverage
+        run: ./gradlew jacocoAggregateIntegrationReport
 
       - name: Upload integration coverage artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: integration-coverage
-          path: backend/*/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+          path: backend/build/reports/jacoco/integration/report.xml
           if-no-files-found: error
           retention-days: 7
 
@@ -52,10 +52,7 @@ jobs:
       - name: Upload integration coverage to Codecov
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
-          files: |
-            ./backend/domain/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
-            ./backend/application/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
-            ./backend/infrastructure/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
-            ./backend/web/build/reports/jacoco/integration/jacocoIntegrationTestReport.xml
+          files: ./backend/build/reports/jacoco/integration/report.xml
           flags: integration
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true

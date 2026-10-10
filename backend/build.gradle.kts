@@ -63,8 +63,13 @@ sonar {
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
             listOf(
-                "build/reports/jacoco/unit/report.xml",
-                "build/reports/jacoco/integration/report.xml"
+                layout.buildDirectory.file(
+                    "reports/jacoco/unit/report.xml"
+                ).get().asFile.absolutePath,
+
+                layout.buildDirectory.file(
+                    "reports/jacoco/integration/report.xml"
+                ).get().asFile.absolutePath
             ).joinToString(",")
         )
 

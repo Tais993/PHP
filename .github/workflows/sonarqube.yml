@@ -74,8 +74,13 @@ jobs:
 
       - name: Verify coverage reports
         run: |
+          echo "Available JaCoCo reports:"
+          find build/reports/jacoco -type f -print
+
           test -s build/reports/jacoco/unit/report.xml
           test -s build/reports/jacoco/integration/report.xml
+
+          echo "JaCoCo reports found successfully."
 
       - name: Compile production classes and analyze
         env:
@@ -87,3 +92,5 @@ jobs:
           :infrastructure:classes
           :web:classes
           sonar
+          --info
+          -Dsonar.verbose=true

@@ -27,6 +27,12 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.save(task);
     }
 
+    @Transactional
+    @Override
+    public void deleteTask(long id) {
+        taskRepository.deleteById(id);
+    }
+
     @Transactional(readOnly = true)
     @Override
     public Optional<Task> getTask(long id) {

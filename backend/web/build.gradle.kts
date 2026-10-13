@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":application"))
     implementation(project(":infrastructure"))
 
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
+
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-websocket")

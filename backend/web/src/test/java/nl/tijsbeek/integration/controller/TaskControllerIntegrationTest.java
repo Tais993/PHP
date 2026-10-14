@@ -37,8 +37,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     @Test
     void getFakeTaskById_ReturnsNotFound() throws Exception {
         mockMvc.perform(
-                        get("/task")
-                                .param("id", "9999")
+                        get("/tasks/{id}", "9999")
                 )
                 .andExpect(status().isNotFound());
     }
@@ -52,7 +51,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         );
 
         MvcResult result = mockMvc.perform(
-                        post("/task")
+                        post("/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -71,14 +70,13 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         long taskId = createdTask.id();
 
         mockMvc.perform(
-                        delete("/task")
+                        delete("/tasks")
                                 .param("id", String.valueOf(taskId))
                 )
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(
-                        get("/task")
-                                .param("id", String.valueOf(taskId))
+                        get("/tasks/{id}", taskId)
                 )
                 .andExpect(status().isNotFound());
     }
@@ -92,7 +90,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         );
 
         MvcResult result = mockMvc.perform(
-                        post("/task")
+                        post("/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -111,8 +109,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         long taskId = createdTask.id();
 
         mockMvc.perform(
-                        get("/task")
-                                .param("id", String.valueOf(taskId))
+                        get("/tasks/{id}", taskId)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
@@ -121,4 +118,59 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status").value("unfinished"))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
+
+
+
+    @Test
+    void createTasks_thenGetAll_ReturnsTasks() throws Exception {
+        // Arrange
+        CreateTaskRequest request1 = new CreateTaskRequest(
+                "Task 1",
+                "First task description",
+                "unfinished"
+        );
+
+        CreateTaskRequest request2 = new CreateTaskRequest(
+                "Task 2",
+                "Second task description",
+                "finished"
+        );
+
+        // Create first task
+        mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request1))
+                )
+                .andExpect(status().isCreated());
+
+        // Create second task
+        mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request2))
+                )
+                .andExpect(status().isCreated());
+
+        // Act & Assert: Retrieve all tasks
+        mockMvc.perform(get("/tasks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+
+                // First task
+                .andExpect(jsonPath("$[0].id").isNumber())
+                .andExpect(jsonPath("$[0].title").value("Task 1"))
+                .andExpect(jsonPath("$[0].description").value("First task description"))
+                .andExpect(jsonPath("$[0].status").value("unfinished"))
+                .andExpect(jsonPath("$[0].createdAt").isNotEmpty())
+
+                // Second task
+                .andExpect(jsonPath("$[1].id").isNumber())
+                .andExpect(jsonPath("$[1].title").value("Task 2"))
+                .andExpect(jsonPath("$[1].description").value("Second task description"))
+                .andExpect(jsonPath("$[1].status").value("finished"))
+                .andExpect(jsonPath("$[1].createdAt").isNotEmpty());
+    }
+
 }

@@ -9,10 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 import static java.util.Objects.requireNonNull;
 
 @RestController
-@RequestMapping("/task")
+@RequestMapping("/tasks")
 public class TaskController {
 
     private final TaskService taskService;
@@ -29,18 +31,27 @@ public class TaskController {
         return TaskResponse.fromDomain(task);
     }
 
-    @DeleteMapping
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@RequestParam long id) {
-        taskService.deleteTask(id);
-    }
-
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<TaskResponse> receive(@RequestParam long id) {
+    public List<TaskResponse> receive() {
+        return taskService.getAllTasks()
+                .stream()
+                .map(TaskResponse::fromDomain)
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<TaskResponse> receive(@PathVariable long id) {
         return taskService.getTask(id)
                 .map(TaskResponse::fromDomain)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@RequestParam long id) {
+        taskService.deleteTask(id);
     }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Contract;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -37,6 +38,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Optional<Task> getTask(long id) {
         return taskRepository.findById(id);
+    }
+
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
     }
 
     @Transactional

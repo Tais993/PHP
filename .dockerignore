@@ -1,7 +1,12 @@
+**/node_modules
+**/dist
+**/.gradle
+.env
+**/.env
+
 .git
 .github
 .idea
-.gradle
 .UML
 
 **/build

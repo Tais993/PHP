@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile
 
     image: ghcr.io/tais993/php:latest
     restart: unless-stopped

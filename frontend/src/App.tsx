@@ -12,7 +12,7 @@ export default function App() {
     const [task, setTask] = useState<TaskData | null>(null)
 
     useEffect(() => {
-        fetch('/task?id=2')
+        fetch('/tasks?id=2')
             .then(response => {
                 if (!response.ok) throw new Error('Task not found')
                 return response.json()

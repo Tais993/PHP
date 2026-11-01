@@ -9,19 +9,33 @@ export type TaskData = {
 }
 
 export default function App() {
-    const [task, setTask] = useState<TaskData | null>(null)
+    const [tasks, setTasks] = useState<TaskData[]>([])
+    const [loading, setLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        fetch('/tasks?id=2')
+        fetch('/tasks')
             .then(response => {
-                if (!response.ok) throw new Error('Task not found')
+                if (!response.ok) {
+                    throw new Error('Could not load tasks')
+                }
                 return response.json()
             })
-            .then(setTask)
-            .catch(console.error)
+            .then((data: TaskData[]) => setTasks(data))
+            .catch(() => setError('Could not load tasks'))
+            .finally(() => setLoading(false))
     }, [])
 
-    if (!task) return <p>Loading task...</p>
+    if (loading) return <p>Loading tasks...</p>
+    if (error) return <p>{error}</p>
+    if (tasks.length === 0) return <p>No tasks yet.</p>
 
-    return <Task task={task} />
+    return (
+        <main>
+            <h1>Tasks</h1>
+            {tasks.map(task => (
+                <Task key={task.id} task={task} />
+            ))}
+        </main>
+    )
 }

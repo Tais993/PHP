@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(platform("org.springframework.boot:spring-boot-dependencies:4.1.1"))
+    api(platform("org.springframework.boot:spring-boot-dependencies:4.1.2"))
 
     api("org.junit.jupiter:junit-jupiter-api")
 

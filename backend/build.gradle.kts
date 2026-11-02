@@ -6,7 +6,7 @@ plugins {
 
     id("coverage-aggregation")
 
-    id("org.springframework.boot") version "4.1.1" apply false
+    id("org.springframework.boot") version "4.1.2" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
     id("org.asciidoctor.jvm.convert") version "4.0.5" apply false
 
@@ -44,7 +44,7 @@ subprojects {
 
     extensions.configure<DependencyManagementExtension> {
         imports {
-            mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.1")
+            mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.2")
         }
     }
 

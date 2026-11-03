@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Task } from './components/Task'
+import {useEffect, useState} from 'react'
+import {Task} from './components/Task'
 
 export type TaskData = {
     id: number
     title: string
     description: string
     status: string
+    dueDate: string
 }
 
 export default function App() {
@@ -34,7 +35,7 @@ export default function App() {
         <main>
             <h1>Tasks</h1>
             {tasks.map(task => (
-                <Task key={task.id} task={task} />
+                <Task key={task.id} task={task}/>
             ))}
         </main>
     )

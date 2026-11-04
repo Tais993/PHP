@@ -85,4 +85,13 @@ sonar {
             "**/*JPA.java,**/entities/**"
         )
     }
+
+
+    // Runs dependencies --write-locks for each subproject
+    tasks.register("updateAllLocks") {
+        group = "build setup"
+        description = "Updates dependency lockfiles for all projects."
+
+        dependsOn(allprojects.map { "${it.path.trimEnd(':')}:dependencies" })
+    }
 }

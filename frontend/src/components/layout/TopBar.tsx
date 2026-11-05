@@ -1,4 +1,5 @@
 import {Button, Divider, Group} from "@mantine/core";
+import {Link} from "react-router";
 
 export default function TopBar() {
     return (
@@ -20,11 +21,11 @@ export default function TopBar() {
                         visibleFrom="sm"
                     />
 
-                    <Button variant="subtle" color="gray" component="a" href="/boards">
+                    <Button variant="subtle" color="gray" component={Link} to="/boards">
                         All boards
                     </Button>
 
-                    <Button variant="subtle" color="gray" component="a" href="/prototype">
+                    <Button variant="subtle" color="gray" component={Link} to="/prototype">
                         Prototype
                     </Button>
                 </Group>

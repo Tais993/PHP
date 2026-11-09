@@ -6,7 +6,7 @@ import { AppShell, MantineProvider } from '@mantine/core'
 import '@mantine/core/styles.css'
 import './index.css'
 
-import App from './App.tsx'
+import BoardLayout from './components/layout/BoardLayout.tsx'
 import TopBar from './components/layout/TopBar.tsx'
 import Prototype from './prototype/Prototype.tsx'
 
@@ -35,7 +35,7 @@ createRoot(document.getElementById('root')!).render(
                 <Routes>
                     {/* Any normal page shares the same layout */}
                     <Route element={<AppLayout />}>
-                        <Route index element={<App />} />
+                        <Route index element={<BoardLayout />} />
                     </Route>
 
                     {/* Prototype needs its own layout */}

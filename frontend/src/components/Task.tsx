@@ -1,11 +1,11 @@
 import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core'
-import type { TaskData } from '../App'
+import type {TaskData} from "./types/TaskData.ts";
 
 type TaskProps = {
     task: TaskData
 }
 
-export function Task({ task }: TaskProps) {
+export function Task({ task }: Readonly<TaskProps>) {
     return (
         <Paper
             withBorder

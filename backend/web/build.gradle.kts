@@ -12,7 +12,7 @@ dependencies {
     implementation(project(":application"))
     implementation(project(":infrastructure"))
 
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
 
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")

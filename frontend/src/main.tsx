@@ -1,14 +1,49 @@
-import {StrictMode} from 'react'
-import {createRoot} from 'react-dom/client'
-import './index.css'
-import Prototype from './Prototype.tsx'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
+import { AppShell, MantineProvider } from '@mantine/core'
+
 import '@mantine/core/styles.css'
-import {MantineProvider} from '@mantine/core'
+import './index.css'
+
+import App from './App.tsx'
+import TopBar from './components/layout/TopBar.tsx'
+import Prototype from './prototype/Prototype.tsx'
+
+function AppLayout() {
+    return (
+        <AppShell
+            header={{ height: 60 }}
+            footer={{ height: 44 }}
+            padding="lg"
+        >
+            <AppShell.Header>
+                <TopBar />
+            </AppShell.Header>
+
+            <AppShell.Main>
+                <Outlet />
+            </AppShell.Main>
+        </AppShell>
+    )
+}
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <MantineProvider>
-            <Prototype/>
+            <BrowserRouter>
+                <Routes>
+                    {/* Any normal page shares the same layout */}
+                    <Route element={<AppLayout />}>
+                        <Route index element={<App />} />
+                    </Route>
+
+                    <Route
+                        path="*"
+                        element={<p>Page not found.</p>}
+                    />
+                </Routes>
+            </BrowserRouter>
         </MantineProvider>
     </StrictMode>,
 )

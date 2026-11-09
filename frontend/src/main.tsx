@@ -38,6 +38,9 @@ createRoot(document.getElementById('root')!).render(
                         <Route index element={<App />} />
                     </Route>
 
+                    {/* Prototype needs its own layout */}
+                    <Route path="/prototype" element={<Prototype />} />
+
                     <Route
                         path="*"
                         element={<p>Page not found.</p>}

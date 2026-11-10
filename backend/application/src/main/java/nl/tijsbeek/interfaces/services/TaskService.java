@@ -1,4 +1,4 @@
-package nl.tijsbeek.services;
+package nl.tijsbeek.interfaces.services;
 
 import nl.tijsbeek.entities.Task;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface TaskService {
 
     @Transactional
-    Task createTask(String title, String description, String status);
+    Task createTask(String title, Long boardId, String description, String status);
 
     @Transactional
     void deleteTask(long id);

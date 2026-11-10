@@ -46,6 +46,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     void createTask_ThenDeleteTask_GetTaskReturnsNotFound() throws Exception {
         CreateTaskRequest request = new CreateTaskRequest(
                 "test1250285028921930",
+                1L,
                 "Lorem ipsum",
                 "unfinished"
         );
@@ -57,6 +58,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.boardId").isNumber())
                 .andExpect(jsonPath("$.title").value("test1250285028921930"))
                 .andExpect(jsonPath("$.description").value("Lorem ipsum"))
                 .andExpect(jsonPath("$.status").value("unfinished"))
@@ -84,6 +86,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     void createTask_ThenGetById_ReturnsTask() throws Exception {
         CreateTaskRequest request = new CreateTaskRequest(
                 "test",
+                1L,
                 "Lorem ipsum",
                 "unfinished"
         );
@@ -94,6 +97,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.boardId").isNumber())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.title").value("test"))
                 .andExpect(jsonPath("$.description").value("Lorem ipsum"))
@@ -111,6 +115,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                         get("/tasks/{id}", taskId)
                 )
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.boardId").value(1L))
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test"))
                 .andExpect(jsonPath("$.description").value("Lorem ipsum"))
@@ -124,12 +129,14 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         // Arrange
         CreateTaskRequest request1 = new CreateTaskRequest(
                 "Task 1",
+                1L,
                 "First task description",
                 "unfinished"
         );
 
         CreateTaskRequest request2 = new CreateTaskRequest(
                 "Task 2",
+                1L,
                 "Second task description",
                 "finished"
         );
@@ -158,6 +165,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
 
                 // First task
                 .andExpect(jsonPath("$[0].id").isNumber())
+                .andExpect(jsonPath("$[0].boardId").value(1L))
                 .andExpect(jsonPath("$[0].title").value("Task 1"))
                 .andExpect(jsonPath("$[0].description").value("First task description"))
                 .andExpect(jsonPath("$[0].status").value("unfinished"))
@@ -165,6 +173,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
 
                 // Second task
                 .andExpect(jsonPath("$[1].id").isNumber())
+                .andExpect(jsonPath("$[1].boardId").value(1L))
                 .andExpect(jsonPath("$[1].title").value("Task 2"))
                 .andExpect(jsonPath("$[1].description").value("Second task description"))
                 .andExpect(jsonPath("$[1].status").value("finished"))

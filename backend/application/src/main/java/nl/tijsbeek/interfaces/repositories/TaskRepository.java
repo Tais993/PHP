@@ -1,4 +1,4 @@
-package nl.tijsbeek.repositories;
+package nl.tijsbeek.interfaces.repositories;
 
 import nl.tijsbeek.entities.Task;
 

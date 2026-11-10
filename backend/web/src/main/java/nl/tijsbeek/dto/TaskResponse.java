@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 public record TaskResponse(
         Long id,
+        Long boardId,
         String title,
         String description,
         LocalDateTime createdAt,
@@ -15,6 +16,7 @@ public record TaskResponse(
     public static TaskResponse fromDomain(Task task) {
         return new TaskResponse(
                 task.getId(),
+                task.getBoardId(),
                 task.getTitle(),
                 task.getDescription(),
                 task.getCreatedAt(),

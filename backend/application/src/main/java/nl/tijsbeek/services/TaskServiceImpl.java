@@ -2,7 +2,8 @@ package nl.tijsbeek.services;
 
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
-import nl.tijsbeek.repositories.TaskRepository;
+import nl.tijsbeek.interfaces.repositories.TaskRepository;
+import nl.tijsbeek.interfaces.services.TaskService;
 import org.jetbrains.annotations.Contract;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +23,16 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional
     @Override
-    public Task createTask(String title, String description, String status) {
+    public Task createTask(String title, Long boardId, String description, String status) {
         // TODO automatically add it to default board
-        Task task = new Task(null, null, title, description, null,status);
+        // if board ID is null use the default one
+        if (boardId == null) {
+            boardId = 1L;
+        }
+        // TODO add actual logic so the default one is opened, but that requires users so it's w/e for now
+
+        Task task = new Task(null, boardId, title, description, null,status);
+
 
         return taskRepository.save(task);
     }

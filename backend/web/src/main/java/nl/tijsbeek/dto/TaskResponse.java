@@ -1,6 +1,8 @@
 package nl.tijsbeek.dto;
 
 import nl.tijsbeek.entities.Task;
+import org.jetbrains.annotations.Contract;
+import org.jspecify.annotations.NonNull;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +15,8 @@ public record TaskResponse(
         String status) {
 
 
-    public static TaskResponse fromDomain(Task task) {
+    @Contract("_ -> new")
+    public static @NonNull TaskResponse fromDomain(@NonNull Task task) {
         return new TaskResponse(
                 task.getId(),
                 task.getBoardId(),

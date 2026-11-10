@@ -49,9 +49,9 @@ public class TaskController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@RequestParam long id) {
+    public void delete(@PathVariable long id) {
         taskService.deleteTask(id);
     }
 }

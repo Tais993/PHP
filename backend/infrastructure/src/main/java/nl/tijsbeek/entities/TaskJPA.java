@@ -14,6 +14,9 @@ public class TaskJPA {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "board_id", nullable = false)
+    private Long boardId;
+
     @Column(name = "title", nullable = false, length = MAX_TITLE_LENGTH)
     private String title;
 
@@ -36,6 +39,14 @@ public class TaskJPA {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public long getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(long boardId) {
+        this.boardId = boardId;
     }
 
     public String getTitle() {

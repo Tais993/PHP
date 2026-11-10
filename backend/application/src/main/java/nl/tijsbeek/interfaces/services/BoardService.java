@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface BoardService {
 
     @Transactional
-    Board createBoard(Board board);
+    Board createBoard(String title, String description);
 
     @Transactional
     Optional<Board> getBoard(long id);

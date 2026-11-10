@@ -1,7 +1,9 @@
 package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.BoardResponse;
+import nl.tijsbeek.dto.CreateBoardRequest;
 import nl.tijsbeek.dto.TaskResponse;
+import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.interfaces.services.BoardService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import org.jetbrains.annotations.Contract;
@@ -24,7 +26,13 @@ public class BoardController {
         this.boardService = requireNonNull(boardService);
     }
 
-    // CREATE
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public BoardResponse create(@RequestBody CreateBoardRequest request) {
+        Board board = boardService.createBoard(request.title(), request.description());
+
+        return BoardResponse.fromDomain(board);
+    }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)

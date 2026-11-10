@@ -70,8 +70,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         long taskId = createdTask.id();
 
         mockMvc.perform(
-                        delete("/tasks")
-                                .param("id", String.valueOf(taskId))
+                        delete("/tasks/{id}", taskId)
                 )
                 .andExpect(status().isNoContent());
 
@@ -118,7 +117,6 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status").value("unfinished"))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
-
 
 
     @Test

@@ -23,7 +23,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     @Override
     public Task createTask(String title, String description, String status) {
-        Task task = new Task(null, title, description, null,status);
+        // TODO automatically add it to default board
+        Task task = new Task(null, null, title, description, null,status);
 
         return taskRepository.save(task);
     }

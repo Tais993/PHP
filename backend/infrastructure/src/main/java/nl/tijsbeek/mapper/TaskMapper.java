@@ -12,6 +12,7 @@ public class TaskMapper {
     public static @NonNull Task toDomain(@NonNull TaskJPA entity) {
         return new Task(
                 entity.getId(),
+                entity.getBoardId(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getCreatedAt(),
@@ -19,6 +20,7 @@ public class TaskMapper {
         );
     }
 
+    @Contract("_ -> new")
     public static @NonNull TaskJPA toJpa(@NonNull Task task) {
         TaskJPA entity = new TaskJPA();
 
@@ -26,6 +28,7 @@ public class TaskMapper {
             entity.setId(task.getId());
         }
 
+        entity.setBoardId(task.getBoardId());
         entity.setTitle(task.getTitle());
         entity.setDescription(task.getDescription());
         entity.setStatus(task.getStatus());

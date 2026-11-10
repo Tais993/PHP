@@ -9,13 +9,15 @@ public class Task {
     public static final int MAX_TITLE_LENGTH = 255;
 
     private final Long id;
+    private Long boardId;
     private String title;
     private String description;
     private final LocalDateTime createdAt;
     private String status;
 
-    public Task(Long id, String title, String description, LocalDateTime createdAt, String status) {
+    public Task(Long id, Long boardId, String title, String description, LocalDateTime createdAt, String status) {
         this.id = id;
+        this.boardId = boardId;
         this.title = title;
         this.description = description;
         this.createdAt = createdAt;
@@ -44,6 +46,10 @@ public class Task {
 
     public Long getId() {
         return id;
+    }
+
+    public Long getBoardId() {
+        return boardId;
     }
 
     public String getTitle() {

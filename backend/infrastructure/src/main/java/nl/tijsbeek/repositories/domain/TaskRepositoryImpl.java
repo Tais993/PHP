@@ -3,7 +3,7 @@ package nl.tijsbeek.repositories.domain;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
 import nl.tijsbeek.mapper.TaskMapper;
-import nl.tijsbeek.repositories.TaskRepository;
+import nl.tijsbeek.interfaces.repositories.TaskRepository;
 import nl.tijsbeek.repositories.jpa.TaskJpaRepository;
 import org.springframework.stereotype.Repository;
 

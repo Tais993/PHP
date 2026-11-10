@@ -3,7 +3,7 @@ package nl.tijsbeek.controller;
 import nl.tijsbeek.dto.CreateTaskRequest;
 import nl.tijsbeek.dto.TaskResponse;
 import nl.tijsbeek.entities.Task;
-import nl.tijsbeek.services.TaskService;
+import nl.tijsbeek.interfaces.services.TaskService;
 import org.jetbrains.annotations.Contract;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +27,7 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@RequestBody CreateTaskRequest taskRequest) {
-        Task task = taskService.createTask(taskRequest.title(), taskRequest.description(), taskRequest.status());
+        Task task = taskService.createTask(taskRequest.title(), taskRequest.boardId(), taskRequest.description(), taskRequest.status());
         return TaskResponse.fromDomain(task);
     }
 

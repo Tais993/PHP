@@ -11,9 +11,6 @@ public interface TaskService {
     @Transactional
     Task createTask(String title, Long boardId, String description, String status);
 
-    @Transactional
-    void deleteTask(long id);
-
     @Transactional(readOnly = true)
     Optional<Task> getTask(long id);
 
@@ -22,4 +19,7 @@ public interface TaskService {
 
     @Transactional
     Task changeTaskTitle(long id, String newTitle);
+
+    @Transactional
+    void deleteTask(long id);
 }

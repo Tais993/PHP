@@ -24,10 +24,15 @@ public abstract class DatabaseFixture {
     }
 
     @BeforeEach
-    void resetDatabase() {
-        jdbcTemplate.execute("""
-            TRUNCATE TABLE task
-            RESTART IDENTITY CASCADE
-            """);
+    void setUp() {
+        jdbcTemplate.execute(
+                "TRUNCATE TABLE task, board RESTART IDENTITY CASCADE"
+        );
+
+        jdbcTemplate.update(
+                "INSERT INTO board (title, description) VALUES (?, ?)",
+                "Inbox",
+                "Existing tasks"
+        );
     }
 }

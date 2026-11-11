@@ -9,6 +9,7 @@ import './index.css'
 import BoardLayout from './components/layout/BoardLayout.tsx'
 import TopBar from './components/layout/TopBar.tsx'
 import Prototype from './prototype/Prototype.tsx'
+import { BoardsProvider } from "./providers/BoardsProvider.tsx"
 
 function AppLayout() {
     return (
@@ -34,8 +35,13 @@ createRoot(document.getElementById('root')!).render(
             <BrowserRouter>
                 <Routes>
                     {/* Any normal page shares the same layout */}
-                    <Route element={<AppLayout />}>
+                    <Route element={
+                                <BoardsProvider>
+                                   <AppLayout />
+                               </BoardsProvider>
+                           }>
                         <Route index element={<BoardLayout />} />
+                        <Route path="boards/:boardId" element={<BoardLayout />} />
                     </Route>
 
                     {/* Prototype needs its own layout */}

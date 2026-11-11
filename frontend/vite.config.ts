@@ -5,7 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/task': {
+      '/api/tasks': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/api/boards': {
         target: 'http://localhost:8080',
         changeOrigin: true,
       },

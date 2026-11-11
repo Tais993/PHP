@@ -1,7 +1,9 @@
-import {useEffect, useState} from 'react'
-import {Button, Divider, Group, ScrollArea, Select} from "@mantine/core";
+import {useContext, useEffect, useState} from 'react'
+import {Button, Divider, Group, ScrollArea} from "@mantine/core";
 import type {TaskData} from "../types/TaskData.ts";
 import {TaskList} from "../TaskList.tsx";
+import {BoardsContext} from "../../BoardsProvider.tsx";
+import {Link, useParams} from "react-router";
 
 
 export default function BoardLayout() {
@@ -10,7 +12,7 @@ export default function BoardLayout() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        fetch('/tasks')
+        fetch('/api/tasks')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Could not load tasks')
@@ -18,13 +20,29 @@ export default function BoardLayout() {
                 return response.json()
             })
             .then((data: TaskData[]) => setTasks(data))
-            .catch(() => setError('Could not load tasks'))
+            .catch((exception) => {
+                setError('Could not load tasks')
+                console.log(exception)
+            })
             .finally(() => setLoading(false))
     }, [])
 
     if (loading) return <p>Loading tasks...</p>
     if (error) return <p>{error}</p>
     if (tasks.length === 0) return <p>No tasks yet.</p>
+
+
+    const {boardId} = useParams();
+
+
+    const context = useContext(BoardsContext);
+
+    if (!context) {
+        throw new Error('TopBar must be inside BoardsProvider');
+    }
+
+    const {boards, loading: boardsLoading, error: boardsError} = context;
+
 
     return (
         <>
@@ -37,19 +55,23 @@ export default function BoardLayout() {
                         wrap="nowrap"
                         style={{width: 'max-content'}}
                     >
-                        <Select
-                            aria-label="Current board"
-                            data={[
-                                'Personal tasks (placeholder)',
-                                'School (placeholder)',
-                                'Photography (placeholder)',
-                            ]}
-                            value="Personal tasks"
-                            allowDeselect={false}
-                            w={220}
-                            size="sm"
-                            mr="xs"
-                        />
+                        <Group>
+                            {boardsLoading && <span>Loading boards...</span>}
+                            {boardsError && <span>{boardsError}</span>}
+
+                            {boards.map(board => (
+                                <Button
+                                    key={board.id}
+                                    variant="subtle"
+                                    color="gray"
+                                    component={Link}
+                                    to={`/boards/${board.id}`}
+                                >
+                                    {board.title}
+                                </Button>
+                            ))}
+                        </Group>
+
 
                         <Button
                             variant="subtle"
@@ -94,7 +116,7 @@ export default function BoardLayout() {
                         </Button>
                     </Group>
 
-                    <Divider />
+                    <Divider/>
 
                 </ScrollArea>
             </header>
@@ -102,7 +124,7 @@ export default function BoardLayout() {
 
             <main>
                 <h1>Tasks</h1>
-                <TaskList tasks={tasks} />
+                <TaskList tasks={tasks}/>
             </main>
 
         </>

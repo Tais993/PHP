@@ -1,0 +1,39 @@
+import {createContext, type ReactNode, useEffect, useState} from 'react';
+import type {BoardData} from "../components/types/BoardData.ts";
+
+type BoardsContextValue = {
+    boards: BoardData[];
+    loading: boolean;
+    error: string | null;
+};
+
+export const BoardsContext = createContext<BoardsContextValue | null>(null);
+
+export function BoardsProvider({children}: {children: ReactNode}) {
+    const [boards, setBoards] = useState<BoardData[]>([])
+    const [loading, setLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
+
+
+    useEffect(() => {
+        fetch('/api/boards')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Could not load boards')
+                }
+                return response.json()
+            })
+            .then((data: BoardData[]) => setBoards(data))
+            .catch((exception) => {
+                setError('Could not load boards')
+                console.log(exception)
+            })
+            .finally(() => setLoading(false))
+    }, [])
+
+    return (
+        <BoardsContext.Provider value={{boards, loading, error}}>
+            {children}
+        </BoardsContext.Provider>
+    );
+}

@@ -1,5 +1,6 @@
 import {Button, Divider, Group} from "@mantine/core";
 import {Link} from "react-router";
+import AddBoardButton from "../AddBoardButton.tsx";
 
 export default function TopBar() {
     return (
@@ -30,9 +31,7 @@ export default function TopBar() {
                     </Button>
                 </Group>
 
-                <Button variant="default" size="sm">
-                    New board
-                </Button>
+                <AddBoardButton/>
             </Group>
 
             {/*<Divider/>*/}

@@ -10,6 +10,7 @@
 .UML
 
 **/build
+frontend/
 
 *.iml
 README.md

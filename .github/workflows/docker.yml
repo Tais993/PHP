@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        component: [backend] # add frontend eventually
+        component: [backend]
 
     steps:
       - name: Checkout

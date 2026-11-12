@@ -1,4 +1,5 @@
 import {createContext, type ReactNode, useEffect, useState} from 'react';
+import {apiUrl} from '../config.ts';
 import type {TaskData} from "../components/types/TaskData.ts";
 
 type TasksContextValue = {
@@ -20,7 +21,7 @@ export function TasksProvider({boardId, children}: { boardId: number; children: 
 
         setLoading(true);
         setError(null);
-        fetch(`/api/boards/${boardId}/tasks`, {
+        fetch(apiUrl(`/boards/${boardId}/tasks`), {
             signal: controller.signal,
         })
             .then(response => {

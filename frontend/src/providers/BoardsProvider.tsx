@@ -1,5 +1,6 @@
 import {createContext, type ReactNode, useEffect, useState} from 'react';
 import type {BoardData} from "../components/types/BoardData.ts";
+import {apiUrl} from '../config.ts';
 
 type BoardsContextValue = {
     boards: BoardData[];
@@ -20,7 +21,7 @@ export function BoardsProvider({children}: { children: ReactNode }) {
 
         setLoading(true);
         setError(null);
-        fetch('/api/boards', {
+        fetch(apiUrl('/boards'), {
             signal: controller.signal,
         })
             .then(response => {

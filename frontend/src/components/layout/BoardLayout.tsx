@@ -4,6 +4,7 @@ import {TaskList} from "../TaskList.tsx";
 import {BoardsContext} from "../../providers/BoardsProvider.tsx";
 import {Link} from "react-router";
 import {TasksContext} from "../../providers/TasksProvider.tsx";
+import AddTaskButton from "../AddTaskButton.tsx";
 
 
 export default function BoardLayout() {
@@ -101,7 +102,11 @@ export default function BoardLayout() {
 
 
             <main>
-                <h1>Tasks</h1>
+                <Group justify="space-between" mb="md">
+                    <h1>Tasks</h1>
+                    <AddTaskButton />
+                </Group>
+
                 <TaskList tasks={tasks}/>
             </main>
 

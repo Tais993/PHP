@@ -40,6 +40,7 @@ Some planned features, such as user account creation, are still in development.
 [source,text]
 ----
 PHP/
+    frontend/             React/Vite application, built and deployed as static files
     backend/
         domain/           Core domain entities
         application/      Services, use cases and repository contracts
@@ -49,7 +50,7 @@ PHP/
         buildSrc/         Gradle conventions for testing and coverage
     .github/workflows/    CI, quality analysis and Docker workflows
     compose.dev.yaml      PostgreSQL only, for local development
-    compose.yaml          Application and PostgreSQL containers
+    compose.yaml          Backend and PostgreSQL containers
 ----
 
 The backend follows a layered architecture inspired by Clean Architecture. The domain contains the core models. The application layer defines business logic and repository contracts they need. The infrastructure implements those contracts using JPA and PostgreSQL. And last but not least, the web layer handles HTTP request.
@@ -63,27 +64,100 @@ image::.UML/architecture/architecture-diagram.svg[Backend architecture]
 === Prerequisites
 
 * Java 27 JDK
+* Node.js 24 for the frontend
 * Docker Desktop or another Docker Engine
 
 The repository includes a Gradle wrapper, so a Gradle installation is not required.
 
 === Configuration
 
-All backend Gradle commands are executed from the `backend` directory.
+Local development works with the default settings. When deploying the frontend
+and backend separately, configure their URLs as described below.
 
-[source,bash]
+==== Backend
+
+Backend settings are defined in
+`backend/web/src/main/resources/application.properties`.
+For deployment, set these environment variables on your backend host:
+
+[cols="1,2",options="header"]
+|===
+|Variable |Purpose
+
+|`PORT`
+|HTTP port. Defaults to `8080`; Heroku provides this automatically.
+
+|`SPRING_DATASOURCE_URL`
+|PostgreSQL JDBC connection URL.
+
+|`SPRING_DATASOURCE_USERNAME`
+|Database username.
+
+|`SPRING_DATASOURCE_PASSWORD`
+|Database password.
+
+|`FRONTEND_ORIGINS`
+|Frontend URLs allowed to call the backend from a browser.
+|===
+
+For example, set this on the backend host:
+
+[source,dotenv]
 ----
-cd backend
+FRONTEND_ORIGINS=https://your-frontend.example
 ----
 
-The Spring Boot configuration files are in `backend/web/src/main/resources/`:
+Use the frontend's origin only: no path or trailing slash. Separate multiple
+origins with commas. Without this setting, production rejects cross-origin
+browser requests.
 
-* `application.properties` contains shared application settings.
-* `application-local.properties` selects the development Compose configuration.
+For local development, `:web:bootRun` activates the `local` profile automatically.
+This profile allows frontend requests from `http://localhost:5173` and
+`http://127.0.0.1:5173`.
 
-The `:web:bootRun` task activates the `local` Spring profile automatically.
+==== Frontend
 
-The default Docker Compose figuration uses the database `homepage`, username and password are both `homepage`, with PostgreSQL exposed on port `5434`. Replace the credentials before deploying to a live environment.
+Frontend settings are read in `frontend/src/config.ts`.
+The API URL is configured through `VITE_API_BASE_URL`.
+
+For local overrides:
+
+. Copy `frontend/.env.example` to `frontend/.env.local`.
+. Set the backend URL in that file, including `/api`:
++
+[source,dotenv]
+----
+VITE_API_BASE_URL=http://localhost:8080/api
+----
+
+For a separately hosted frontend, set the deployed backend URL in the frontend
+build environment:
+
+[source,dotenv]
+----
+VITE_API_BASE_URL=https://your-backend.example/api
+----
+
+Set this *before* running `npm run build`. The URL is embedded in the generated
+files, so changing it requires a new build. Frontend settings are public and must
+not contain secrets.
+
+See link:frontend/README.md[the frontend README] for build and hosting instructions.
+
+==== Local database
+
+Docker Compose uses these development defaults:
+
+[cols="1,1",options="header"]
+|===
+|Setting |Value
+|Database |`homepage`
+|Username |`homepage`
+|Password |`homepage`
+|Host port |`5434`
+|===
+
+Use separate credentials when deploying to a live environment.
 
 == Local development
 
@@ -100,6 +174,10 @@ On Windows, use `gradlew.bat` instead of `./gradlew`.
 In the local profile, Spring Boot is configured to use `compose.dev.yaml`. This profile only runs PostgreSQL. This allows the backend to be ran locally for development and debugging.
 
 The backend usually listens to `http://localhost:8080`. At present, this exposes REST endpoints.
+
+Start the frontend separately from `frontend/` with `npm ci` and `npm run dev`.
+Open `http://localhost:5173`; its default development API URL is
+`http://localhost:8080/api`.
 
 If you rather run the development database manually, run the following command from the repository root:
 
@@ -119,7 +197,10 @@ To run both the application and its PostgreSQL database in container, run this f
 docker compose up -d --build
 ----
 
-The full `compose.yaml` defines the application's container and a PostgreSQL 17 container with a persistent PostgreSQL volume. The app is exposed on `http://localhost:8080`.
+The full `compose.yaml` defines the backend container and a PostgreSQL 17 container
+with a persistent PostgreSQL volume. The API is exposed on `http://localhost:8080/api`.
+The Docker image contains only the backend. Build the frontend with `npm run build`
+from `frontend/` and publish `frontend/dist/` separately.
 
 To stop the containers:
 

@@ -3,6 +3,7 @@ package nl.tijsbeek.integration.controller;
 
 import nl.tijsbeek.dto.BoardResponse;
 import nl.tijsbeek.dto.CreateBoardRequest;
+import nl.tijsbeek.dto.CreateTaskRequest;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -165,4 +166,96 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 )));
     }
 
+    // create boards, add tasks for boards, get tasks and verify or its the right baord
+    @Test
+    public void createBoards_AddTasks_ReturnsTasksOfSameBoard() throws Exception {
+        // Arrange
+        CreateBoardRequest requestBoardOne = new CreateBoardRequest(
+                "BoardOne",
+                "Board one for testing"
+        );
+
+        CreateBoardRequest requestBoardTwo = new CreateBoardRequest(
+                "BoardTwo",
+                "Board two for testing"
+        );
+
+        // Act & Assert
+        MvcResult createBoardOneResult = mockMvc.perform(
+                        post("/boards")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestBoardOne))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("BoardOne"))
+                .andExpect(jsonPath("$.description").value("Board one for testing"))
+                .andReturn();
+
+        MvcResult createBoardTwoResult = mockMvc.perform(
+                        post("/boards")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestBoardTwo))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("BoardTwo"))
+                .andExpect(jsonPath("$.description").value("Board two for testing"))
+                .andReturn();
+
+        long boardOneId = objectMapper.readValue(
+                createBoardOneResult.getResponse().getContentAsString(),
+                BoardResponse.class
+        ).id();
+
+        long boardTwoId = objectMapper.readValue(
+                createBoardTwoResult.getResponse().getContentAsString(),
+                BoardResponse.class
+        ).id();
+
+
+        CreateTaskRequest requestTaskOne = new CreateTaskRequest(
+                "Task 1",
+                boardOneId,
+                "First task description",
+                "unfinished"
+        );
+
+        CreateTaskRequest requestTaskTwo = new CreateTaskRequest(
+                "Task 2",
+                boardTwoId,
+                "Second task description",
+                "finished"
+        );
+
+
+        // Create first task
+        mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestTaskOne))
+                )
+                .andExpect(status().isCreated());
+
+        // Create second task
+        mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestTaskTwo))
+                )
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/boards/{id}/tasks", boardOneId, boardTwoId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+
+                // Verify first task, of board one
+                .andExpect(jsonPath("$[0].id").isNumber())
+                .andExpect(jsonPath("$[0].boardId").value(boardOneId))
+                .andExpect(jsonPath("$[0].title").value("Task 1"))
+                .andExpect(jsonPath("$[0].description").value("First task description"))
+                .andExpect(jsonPath("$[0].status").value("unfinished"))
+                .andExpect(jsonPath("$[0].createdAt").isNotEmpty());
+    }
 }

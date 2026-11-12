@@ -11,6 +11,8 @@ public interface TaskRepository {
 
     List<Task> findAll();
 
+    List<Task> findAllByBoardId(long boardId);
+
     Task save(Task task);
 
     void deleteById(long id);

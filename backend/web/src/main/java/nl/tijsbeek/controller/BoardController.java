@@ -20,10 +20,12 @@ import static java.util.Objects.requireNonNull;
 public class BoardController {
 
     private final BoardService boardService;
+    private final TaskService taskService;
 
     @Contract(pure = true)
-    public BoardController(BoardService boardService) {
+    public BoardController(BoardService boardService, TaskService taskService) {
         this.boardService = requireNonNull(boardService);
+        this.taskService = taskService;
     }
 
     @PostMapping
@@ -50,6 +52,15 @@ public class BoardController {
                 .map(BoardResponse::fromDomain)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{boardId}/tasks")
+    @ResponseStatus(HttpStatus.OK)
+    public List<TaskResponse> receiveTasks(@PathVariable final long boardId) {
+        return taskService.getAllTasksByBoardId(boardId)
+                .stream()
+                .map(TaskResponse::fromDomain)
+                .toList();
     }
 
     @DeleteMapping("/{id}")

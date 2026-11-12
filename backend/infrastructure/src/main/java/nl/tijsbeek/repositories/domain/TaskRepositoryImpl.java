@@ -34,6 +34,14 @@ public class TaskRepositoryImpl implements TaskRepository {
     }
 
     @Override
+    public List<Task> findAllByBoardId(long boardId) {
+        return jpaRepository.findAllByBoardId(boardId)
+                .stream()
+                .map(TaskMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public Task save(Task task) {
         TaskJPA entity = TaskMapper.toJpa(task);
 

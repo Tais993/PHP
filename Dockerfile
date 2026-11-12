@@ -1,23 +1,9 @@
-# Build frontend
-FROM node:24-alpine AS frontend-build
-
-WORKDIR /frontend
-
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
-
-COPY frontend/ ./
-RUN npm run build
-
-
-# Build backend, including the frontend output
+# Build backend
 FROM eclipse-temurin:27-jdk AS backend-build
 
 WORKDIR /backend
 
 COPY backend/ ./
-
-COPY --from=frontend-build /frontend/dist/ ./web/src/main/resources/static/
 
 RUN chmod +x gradlew
 RUN ./gradlew :web:bootJar --no-daemon

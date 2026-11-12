@@ -1,47 +1,25 @@
-import {useContext, useEffect, useState} from 'react'
+import {useContext} from 'react'
 import {Button, Divider, Group, ScrollArea} from "@mantine/core";
-import type {TaskData} from "../types/TaskData.ts";
 import {TaskList} from "../TaskList.tsx";
-import {BoardsContext} from "../../BoardsProvider.tsx";
-import {Link, useParams} from "react-router";
+import {BoardsContext} from "../../providers/BoardsProvider.tsx";
+import {Link} from "react-router";
+import {TasksContext} from "../../providers/TasksProvider.tsx";
 
 
 export default function BoardLayout() {
-    const [tasks, setTasks] = useState<TaskData[]>([])
-    const [loading, setLoading] = useState<boolean>(true)
-    const [error, setError] = useState<string | null>(null)
+    const boardsContext = useContext(BoardsContext);
+    const tasksContext = useContext(TasksContext);
 
-    useEffect(() => {
-        fetch('/api/tasks')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Could not load tasks')
-                }
-                return response.json()
-            })
-            .then((data: TaskData[]) => setTasks(data))
-            .catch((exception) => {
-                setError('Could not load tasks')
-                console.log(exception)
-            })
-            .finally(() => setLoading(false))
-    }, [])
-
-    if (loading) return <p>Loading tasks...</p>
-    if (error) return <p>{error}</p>
-    if (tasks.length === 0) return <p>No tasks yet.</p>
-
-
-    const {boardId} = useParams();
-
-
-    const context = useContext(BoardsContext);
-
-    if (!context) {
+    if (!boardsContext) {
         throw new Error('TopBar must be inside BoardsProvider');
     }
 
-    const {boards, loading: boardsLoading, error: boardsError} = context;
+    if (!tasksContext) {
+        throw new Error('TopBar must be inside TasksProvider');
+    }
+
+    const {boards, loading: boardsLoading, error: boardsError} = boardsContext;
+    const {tasks} = tasksContext;
 
 
     return (

@@ -1,29 +1,29 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
-import { AppShell, MantineProvider } from '@mantine/core'
+import {StrictMode} from 'react'
+import {createRoot} from 'react-dom/client'
+import {BrowserRouter, Navigate, Outlet, Route, Routes} from 'react-router'
+import {AppShell, MantineProvider} from '@mantine/core'
 
 import '@mantine/core/styles.css'
 import './index.css'
 
-import BoardLayout from './components/layout/BoardLayout.tsx'
 import TopBar from './components/layout/TopBar.tsx'
 import Prototype from './prototype/Prototype.tsx'
-import { BoardsProvider } from "./providers/BoardsProvider.tsx"
+import {BoardsProvider} from "./providers/BoardsProvider.tsx"
+import BoardPage from "./BoardPage.tsx";
 
 function AppLayout() {
     return (
         <AppShell
-            header={{ height: 60 }}
-            footer={{ height: 44 }}
+            header={{height: 60}}
+            footer={{height: 44}}
             padding="lg"
         >
             <AppShell.Header>
-                <TopBar />
+                <TopBar/>
             </AppShell.Header>
 
             <AppShell.Main>
-                <Outlet />
+                <Outlet/>
             </AppShell.Main>
         </AppShell>
     )
@@ -37,15 +37,16 @@ createRoot(document.getElementById('root')!).render(
                     {/* Any normal page shares the same layout */}
                     <Route element={
                                 <BoardsProvider>
-                                   <AppLayout />
+                                   <AppLayout/>
                                </BoardsProvider>
                            }>
-                        <Route index element={<BoardLayout />} />
-                        <Route path="boards/:boardId" element={<BoardLayout />} />
+                        {/*For now this routes to the first board, but in the future an unrelated index page will be added*/}
+                        <Route index element={<Navigate to="/boards/1" replace />} />
+                        <Route path="boards/:boardId" element={<BoardPage/>}/>
                     </Route>
 
                     {/* Prototype needs its own layout */}
-                    <Route path="/prototype" element={<Prototype />} />
+                    <Route path="/prototype" element={<Prototype/>}/>
 
                     <Route
                         path="*"

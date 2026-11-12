@@ -53,6 +53,11 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.findAll();
     }
 
+    @Override
+    public List<Task> getAllTasksByBoardId(long boardId) {
+        return taskRepository.findAllByBoardId(boardId);
+    }
+
     @Transactional
     @Override
     public Task changeTaskTitle(long id, String newTitle) {

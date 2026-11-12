@@ -17,6 +17,9 @@ public interface TaskService {
     @Transactional(readOnly = true)
     List<Task> getAllTasks();
 
+    @Transactional(readOnly = true)
+    List<Task> getAllTasksByBoardId(long boardId);
+
     @Transactional
     Task changeTaskTitle(long id, String newTitle);
 

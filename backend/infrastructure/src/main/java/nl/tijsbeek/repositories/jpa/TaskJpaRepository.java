@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TaskJpaRepository
-        extends JpaRepository<TaskJPA, Long> {
+        extends JpaRepository<TaskJPA, Long>, TaskViewQueries {
 
     List<TaskJPA> findAllByBoardId(long boardId);
 }

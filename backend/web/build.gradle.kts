@@ -27,6 +27,7 @@ dependencies {
 
 
     testImplementation(project(":test-fixtures"))
+    testImplementation("org.flywaydb:flyway-core")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-restdocs")

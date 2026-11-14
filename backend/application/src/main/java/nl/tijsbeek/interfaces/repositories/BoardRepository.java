@@ -1,7 +1,6 @@
 package nl.tijsbeek.interfaces.repositories;
 
 import nl.tijsbeek.entities.Board;
-import nl.tijsbeek.entities.Task;
 
 import java.util.List;
 import java.util.Optional;

@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.ObjectMapper;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -191,6 +192,138 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$[1].status.id").value(finishedId))
                 .andExpect(jsonPath("$[1].status.name").value("finished"))
                 .andExpect(jsonPath("$[1].createdAt").isNotEmpty());
+    }
+
+    @Test
+    void createTaskWithoutStatus_ThenGetById_ReturnsTaskWithoutStatus() throws Exception {
+        CreateTaskRequest request = new CreateTaskRequest(
+                "Task without status",
+                1L,
+                "Status is optional",
+                null
+        );
+
+        MvcResult result = mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Task without status"))
+                .andExpect(jsonPath("$.description").value("Status is optional"))
+                .andExpect(jsonPath("$.status").value(nullValue()))
+                .andReturn();
+
+        long taskId = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                TaskResponse.class
+        ).id();
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Task without status"))
+                .andExpect(jsonPath("$.description").value("Status is optional"))
+                .andExpect(jsonPath("$.status").value(nullValue()))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty());
+
+        mockMvc.perform(get("/tasks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(taskId))
+                .andExpect(jsonPath("$[0].status").value(nullValue()));
+
+        mockMvc.perform(get("/boards/{id}/tasks", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(taskId))
+                .andExpect(jsonPath("$[0].status").value(nullValue()));
+    }
+
+    @Test
+    void createTaskWithoutBoardId_ThenGetById_ReturnsTaskOnDefaultBoard() throws Exception {
+        long statusId = createStatus(1L, "unfinished", 0);
+        CreateTaskRequest request = new CreateTaskRequest(
+                "Task on default board",
+                null,
+                "Uses the Inbox board",
+                statusId
+        );
+
+        MvcResult result = mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Task on default board"))
+                .andExpect(jsonPath("$.description").value("Uses the Inbox board"))
+                .andExpect(jsonPath("$.status.id").value(statusId))
+                .andExpect(jsonPath("$.status.name").value("unfinished"))
+                .andExpect(jsonPath("$.status.position").value(0))
+                .andReturn();
+
+        long taskId = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                TaskResponse.class
+        ).id();
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Task on default board"))
+                .andExpect(jsonPath("$.description").value("Uses the Inbox board"))
+                .andExpect(jsonPath("$.status.id").value(statusId))
+                .andExpect(jsonPath("$.status.name").value("unfinished"))
+                .andExpect(jsonPath("$.status.position").value(0))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty());
+    }
+
+    @Test
+    void createTaskWithSecondBoardStatus_ThenGetById_ReturnsSelectedStatus() throws Exception {
+        createStatus(1L, "unfinished", 0);
+        long selectedStatusId = createStatus(1L, "finished", 7);
+        CreateTaskRequest request = new CreateTaskRequest(
+                "Finished task",
+                1L,
+                "Uses the selected status",
+                selectedStatusId
+        );
+
+        MvcResult result = mockMvc.perform(
+                        post("/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.status.id").value(selectedStatusId))
+                .andExpect(jsonPath("$.status.name").value("finished"))
+                .andExpect(jsonPath("$.status.position").value(7))
+                .andReturn();
+
+        long taskId = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                TaskResponse.class
+        ).id();
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Finished task"))
+                .andExpect(jsonPath("$.description").value("Uses the selected status"))
+                .andExpect(jsonPath("$.status.id").value(selectedStatusId))
+                .andExpect(jsonPath("$.status.name").value("finished"))
+                .andExpect(jsonPath("$.status.position").value(7))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
 
     private long createStatus(long boardId, String name, int position) {

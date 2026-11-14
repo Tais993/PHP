@@ -13,9 +13,9 @@ public class Task {
     private String title;
     private String description;
     private final LocalDateTime createdAt;
-    private String status;
+    private BoardStatus status;
 
-    public Task(Long id, Long boardId, String title, String description, LocalDateTime createdAt, String status) {
+    public Task(Long id, Long boardId, String title, String description, LocalDateTime createdAt, BoardStatus status) {
         this.id = id;
         this.boardId = boardId;
         this.title = title;
@@ -69,11 +69,11 @@ public class Task {
         return createdAt;
     }
 
-    public String getStatus() {
+    public BoardStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(BoardStatus status) {
         this.status = status;
     }
 }

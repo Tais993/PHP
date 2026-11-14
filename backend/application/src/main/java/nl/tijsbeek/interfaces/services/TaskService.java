@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface TaskService {
 
     @Transactional
-    Task createTask(String title, Long boardId, String description, String status);
+    Task createTask(String title, Long boardId, String description, Long statusId);
 
     @Transactional(readOnly = true)
     Optional<Task> getTask(long id);

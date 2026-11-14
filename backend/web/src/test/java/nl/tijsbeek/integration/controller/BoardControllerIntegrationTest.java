@@ -32,6 +32,7 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     BoardControllerIntegrationTest(
             JdbcTemplate jdbcTemplate,
@@ -41,6 +42,7 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
         super(jdbcTemplate);
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Test
@@ -213,19 +215,21 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 BoardResponse.class
         ).id();
 
+        long unfinishedId = createStatus(boardOneId, "unfinished", 0);
+        long finishedId = createStatus(boardTwoId, "finished", 0);
 
         CreateTaskRequest requestTaskOne = new CreateTaskRequest(
                 "Task 1",
                 boardOneId,
                 "First task description",
-                "unfinished"
+                unfinishedId
         );
 
         CreateTaskRequest requestTaskTwo = new CreateTaskRequest(
                 "Task 2",
                 boardTwoId,
                 "Second task description",
-                "finished"
+                finishedId
         );
 
 
@@ -255,7 +259,14 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$[0].boardId").value(boardOneId))
                 .andExpect(jsonPath("$[0].title").value("Task 1"))
                 .andExpect(jsonPath("$[0].description").value("First task description"))
-                .andExpect(jsonPath("$[0].status").value("unfinished"))
+                .andExpect(jsonPath("$[0].status.id").value(unfinishedId))
+                .andExpect(jsonPath("$[0].status.name").value("unfinished"))
                 .andExpect(jsonPath("$[0].createdAt").isNotEmpty());
+    }
+
+    private long createStatus(long boardId, String name, int position) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO board_status (board_id, name, position) VALUES (?, ?, ?) RETURNING id",
+                Long.class, boardId, name, position);
     }
 }

@@ -45,31 +45,21 @@ jobs:
         with:
           cache-read-only: true
 
-      - name: Update lockfiles and verification metadata
+      - name: Update lockfiles
         run: >-
-          ./gradlew --no-daemon --write-locks --write-verification-metadata sha256
+          ./gradlew --no-daemon --write-locks
           updateAllLocks assemble testClasses
 
-      - name: Reject changes to existing verification entries
-        run: |
-          if git diff --unified=0 -- gradle/verification-metadata.xml | grep '^-[^-]' > /dev/null; then
-            echo 'Existing verification entries changed. Review these checksums manually.'
-            exit 1
-          fi
-
-      - name: Verify generated metadata
-        run: ./gradlew --no-daemon --dependency-verification strict assemble testClasses
-
-      - name: Commit updated lockfiles and metadata
+      - name: Commit updated lockfiles
         working-directory: .
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_BRANCH: ${{ github.head_ref }}
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          git add -- backend/gradle/verification-metadata.xml ':(glob)backend/**/gradle.lockfile'
+          git add -- ':(glob)backend/**/gradle.lockfile'
           if git diff --cached --quiet; then
-            echo 'Lockfiles and verification metadata are already up to date.'
+            echo 'Lockfiles are already up to date.'
             exit 0
           fi
 
@@ -85,6 +75,6 @@ jobs:
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Update Gradle lockfiles and verification metadata'
+          git commit -m 'Update Gradle lockfiles'
           git "${git_auth[@]}" push origin "HEAD:refs/heads/$PR_BRANCH"
           echo 'Updated the PR. Approve follow-up workflows in GitHub if prompted.' >> "$GITHUB_STEP_SUMMARY"

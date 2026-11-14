@@ -26,56 +26,45 @@ public class TaskJPA {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "status", nullable = false, length = 30)
-    private String status;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status")
+    private BoardStatusJPA status;
 
     public TaskJPA() {
         // Required by JPA
     }
 
-    public long getId() {
-        return id;
+    public TaskJPA(Long id, Long boardId, String title, String description,
+                   LocalDateTime createdAt, BoardStatusJPA status) {
+        this.id = id;
+        this.boardId = boardId;
+        this.title = title;
+        this.description = description;
+        this.createdAt = createdAt;
+        this.status = status;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public Long getId() {
+        return id;
     }
 
     public long getBoardId() {
         return boardId;
     }
 
-    public void setBoardId(long boardId) {
-        this.boardId = boardId;
-    }
-
     public String getTitle() {
         return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-
-    public String getStatus() {
+    public BoardStatusJPA getStatus() {
         return status;
     }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
 }

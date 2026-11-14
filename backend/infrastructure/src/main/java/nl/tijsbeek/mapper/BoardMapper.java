@@ -2,6 +2,8 @@ package nl.tijsbeek.mapper;
 
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardJPA;
+import nl.tijsbeek.entities.BoardStatus;
+import nl.tijsbeek.entities.BoardStatusJPA;
 import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
 
@@ -13,7 +15,14 @@ public class BoardMapper {
         return new Board(
                 entity.getId(),
                 entity.getTitle(),
-                entity.getDescription()
+                entity.getDescription(),
+                entity.getStatuses().stream()
+                        .map(status -> new BoardStatus(
+                                status.getId(),
+                                status.getName(),
+                                status.getPosition()
+                        ))
+                        .toList()
         );
     }
 
@@ -28,6 +37,20 @@ public class BoardMapper {
         entity.setTitle(board.getTitle());
         entity.setDescription(board.getDescription());
 
+        board.getStatuses()
+                .stream()
+                .map(BoardMapper::statusToJpa)
+                .forEach(entity::addStatus);
+
         return entity;
+    }
+
+    private static BoardStatusJPA statusToJpa(BoardStatus status) {
+        return new BoardStatusJPA(
+                status.getId(),
+                null,
+                status.getName(),
+                status.getPosition()
+        );
     }
 }

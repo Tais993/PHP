@@ -1,11 +1,14 @@
 package nl.tijsbeek.repositories.domain;
 
+import jakarta.persistence.EntityManager;
+import nl.tijsbeek.entities.BoardStatusJPA;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
 import nl.tijsbeek.mapper.TaskMapper;
 import nl.tijsbeek.interfaces.repositories.TaskRepository;
 import nl.tijsbeek.repositories.jpa.TaskJpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,18 +17,22 @@ import java.util.Optional;
 public class TaskRepositoryImpl implements TaskRepository {
 
     private final TaskJpaRepository jpaRepository;
+    private final EntityManager entityManager;
 
-    public TaskRepositoryImpl(TaskJpaRepository jpaRepository) {
+    public TaskRepositoryImpl(TaskJpaRepository jpaRepository, EntityManager entityManager) {
         this.jpaRepository = jpaRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Task> findById(long id) {
         return jpaRepository.findById(id)
                 .map(TaskMapper::toDomain);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Task> findAll() {
         return jpaRepository.findAll()
                 .stream()
@@ -34,6 +41,7 @@ public class TaskRepositoryImpl implements TaskRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Task> findAllByBoardId(long boardId) {
         return jpaRepository.findAllByBoardId(boardId)
                 .stream()
@@ -42,8 +50,11 @@ public class TaskRepositoryImpl implements TaskRepository {
     }
 
     @Override
+    @Transactional
     public Task save(Task task) {
-        TaskJPA entity = TaskMapper.toJpa(task);
+        BoardStatusJPA status = task.getStatus() == null ? null :
+                entityManager.getReference(BoardStatusJPA.class, task.getStatus().getId());
+        TaskJPA entity = TaskMapper.toJpa(task, status);
 
         TaskJPA saved = jpaRepository.save(entity);
 

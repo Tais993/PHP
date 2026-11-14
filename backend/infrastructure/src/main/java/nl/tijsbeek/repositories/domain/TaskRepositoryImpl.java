@@ -2,24 +2,29 @@ package nl.tijsbeek.repositories.domain;
 
 import jakarta.persistence.EntityManager;
 import nl.tijsbeek.entities.BoardStatusJPA;
+import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
-import nl.tijsbeek.mapper.TaskMapper;
+import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
 import nl.tijsbeek.interfaces.repositories.TaskRepository;
+import nl.tijsbeek.mapper.TaskMapper;
 import nl.tijsbeek.repositories.jpa.TaskJpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class TaskRepositoryImpl implements TaskRepository {
 
+    private final BoardViewRepository boardViewRepository;
     private final TaskJpaRepository jpaRepository;
     private final EntityManager entityManager;
 
-    public TaskRepositoryImpl(TaskJpaRepository jpaRepository, EntityManager entityManager) {
+    public TaskRepositoryImpl(BoardViewRepository boardViewRepository, TaskJpaRepository jpaRepository, EntityManager entityManager) {
+        this.boardViewRepository = boardViewRepository;
         this.jpaRepository = jpaRepository;
         this.entityManager = entityManager;
     }
@@ -44,6 +49,23 @@ public class TaskRepositoryImpl implements TaskRepository {
     @Transactional(readOnly = true)
     public List<Task> findAllByBoardId(long boardId) {
         return jpaRepository.findAllByBoardId(boardId)
+                .stream()
+                .map(TaskMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> findAllForView(long boardViewId) {
+        return boardViewRepository.findById(boardViewId)
+                .map(this::findAllForView)
+                .orElseGet(ArrayList::new);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> findAllForView(BoardView view) {
+        return jpaRepository.findAllForView(view)
                 .stream()
                 .map(TaskMapper::toDomain)
                 .toList();

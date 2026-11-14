@@ -52,6 +52,10 @@ public class Task {
         return boardId;
     }
 
+    public void setBoardId(Long boardId) {
+        this.boardId = boardId;
+    }
+
     public String getTitle() {
         return title;
     }

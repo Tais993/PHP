@@ -2,6 +2,8 @@ package nl.tijsbeek.mapper;
 
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
+import nl.tijsbeek.entities.BoardStatus;
+import nl.tijsbeek.entities.BoardStatusJPA;
 import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
 
@@ -16,23 +18,23 @@ public class TaskMapper {
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getCreatedAt(),
-                entity.getStatus()
+                entity.getStatus() == null ? null : new BoardStatus(
+                        entity.getStatus().getId(),
+                        entity.getStatus().getName(),
+                        entity.getStatus().getPosition()
+                )
         );
     }
 
-    @Contract("_ -> new")
-    public static @NonNull TaskJPA toJpa(@NonNull Task task) {
-        TaskJPA entity = new TaskJPA();
-
-        if (task.getId() != null && task.getId() > 0) {
-            entity.setId(task.getId());
-        }
-
-        entity.setBoardId(task.getBoardId());
-        entity.setTitle(task.getTitle());
-        entity.setDescription(task.getDescription());
-        entity.setStatus(task.getStatus());
-
-        return entity;
+    @Contract("_, _ -> new")
+    public static @NonNull TaskJPA toJpa(@NonNull Task task, BoardStatusJPA status) {
+        return new TaskJPA(
+                task.getId(),
+                task.getBoardId(),
+                task.getTitle(),
+                task.getDescription(),
+                task.getCreatedAt(),
+                status
+        );
     }
 }

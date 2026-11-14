@@ -21,15 +21,19 @@ public class BoardJPA {
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL)
+    @OrderBy("position ASC, id ASC")
+    private List<BoardStatusJPA> statuses = new ArrayList<>();
+
     public BoardJPA() {
         // Required by JPA
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -43,6 +47,15 @@ public class BoardJPA {
 
     public String getDescription() {
         return description;
+    }
+
+    public List<BoardStatusJPA> getStatuses() {
+        return statuses;
+    }
+
+    public void addStatus(BoardStatusJPA status) {
+        status.setBoard(this);
+        statuses.add(status);
     }
 
     public void setDescription(String description) {

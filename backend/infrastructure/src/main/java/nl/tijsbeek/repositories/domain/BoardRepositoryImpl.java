@@ -6,6 +6,7 @@ import nl.tijsbeek.mapper.BoardMapper;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.repositories.jpa.BoardJpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,12 +21,14 @@ private final BoardJpaRepository jpaRepository;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Board> findById(long id) {
         return jpaRepository.findById(id)
                 .map(BoardMapper::toDomain);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Board> findAll() {
         return jpaRepository.findAll()
                 .stream()
@@ -34,6 +37,7 @@ private final BoardJpaRepository jpaRepository;
     }
 
     @Override
+    @Transactional
     public Board save(Board board) {
         BoardJPA entity = BoardMapper.toJpa(board);
 

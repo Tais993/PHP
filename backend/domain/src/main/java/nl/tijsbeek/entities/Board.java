@@ -3,6 +3,7 @@ package nl.tijsbeek.entities;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 public class Board {
@@ -11,12 +12,19 @@ public class Board {
     private final Long id;
     private String title;
     private String description;
+    private final List<BoardStatus> statuses;
 
     @Contract(pure = true)
     public Board(Long id, String title, String description) {
+        this(id, title, description, List.of());
+    }
+
+    @Contract(pure = true)
+    public Board(Long id, String title, String description, List<BoardStatus> statuses) {
         this.id = id;
         this.title = title;
         this.description = description;
+        this.statuses = List.copyOf(statuses);
     }
 
 
@@ -50,6 +58,10 @@ public class Board {
 
     public String getDescription() {
         return description;
+    }
+
+    public List<BoardStatus> getStatuses() {
+        return statuses;
     }
 
     public void setDescription(String description) {

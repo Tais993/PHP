@@ -45,6 +45,7 @@ subprojects {
     extensions.configure<DependencyManagementExtension> {
         imports {
             mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.2")
+            mavenBom("org.springdoc:springdoc-openapi-bom:3.2.0")
         }
     }
 

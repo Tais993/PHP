@@ -1,6 +1,8 @@
 package nl.tijsbeek.services;
 
 import nl.tijsbeek.entities.Task;
+import nl.tijsbeek.entities.BoardStatus;
+import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.repositories.TaskRepository;
 import nl.tijsbeek.interfaces.services.TaskService;
@@ -15,15 +17,17 @@ import java.util.Optional;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
+    private final BoardRepository boardRepository;
 
     @Contract(pure = true)
-    public TaskServiceImpl(TaskRepository taskRepository) {
+    public TaskServiceImpl(TaskRepository taskRepository, BoardRepository boardRepository) {
         this.taskRepository = taskRepository;
+        this.boardRepository = boardRepository;
     }
 
     @Transactional
     @Override
-    public Task createTask(String title, Long boardId, String description, String status) {
+    public Task createTask(String title, Long boardId, String description, Long statusId) {
         // TODO automatically add it to default board
         // if board ID is null use the default one
         if (boardId == null) {
@@ -31,7 +35,17 @@ public class TaskServiceImpl implements TaskService {
         }
         // TODO add actual logic so the default one is opened, but that requires users so it's w/e for now
 
-        Task task = new Task(null, boardId, title, description, null,status);
+        BoardStatus status = null;
+        if (statusId != null) {
+            status = boardRepository.findById(boardId)
+                    .orElseThrow(() -> new IllegalArgumentException("Board was not found"))
+                    .getStatuses().stream()
+                    .filter(option -> statusId.equals(option.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Status does not belong to this board"));
+        }
+
+        Task task = new Task(null, boardId, title, description, null, status);
 
 
         return taskRepository.save(task);

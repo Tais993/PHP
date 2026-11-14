@@ -12,7 +12,9 @@ public record TaskResponse(
         String title,
         String description,
         LocalDateTime createdAt,
-        String status) {
+        StatusResponse status) {
+
+    public record StatusResponse(Long id, String name, int position) {}
 
 
     @Contract("_ -> new")
@@ -23,7 +25,11 @@ public record TaskResponse(
                 task.getTitle(),
                 task.getDescription(),
                 task.getCreatedAt(),
-                task.getStatus()
+                task.getStatus() == null ? null : new StatusResponse(
+                        task.getStatus().getId(),
+                        task.getStatus().getName(),
+                        task.getStatus().getPosition()
+                )
         );
     }
 }

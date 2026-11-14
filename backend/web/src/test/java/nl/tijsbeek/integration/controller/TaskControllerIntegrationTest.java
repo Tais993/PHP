@@ -27,11 +27,13 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     private final MockMvc mockMvc;
 
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     TaskControllerIntegrationTest(JdbcTemplate jdbcTemplate, MockMvc mockMvc, ObjectMapper objectMapper) {
         super(jdbcTemplate);
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Test
@@ -44,11 +46,12 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createTask_ThenDeleteTask_GetTaskReturnsNotFound() throws Exception {
+        long statusId = createStatus(1L, "unfinished", 0);
         CreateTaskRequest request = new CreateTaskRequest(
                 "test1250285028921930",
                 1L,
                 "Lorem ipsum",
-                "unfinished"
+                statusId
         );
 
         MvcResult result = mockMvc.perform(
@@ -61,7 +64,8 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.boardId").isNumber())
                 .andExpect(jsonPath("$.title").value("test1250285028921930"))
                 .andExpect(jsonPath("$.description").value("Lorem ipsum"))
-                .andExpect(jsonPath("$.status").value("unfinished"))
+                .andExpect(jsonPath("$.status.id").value(statusId))
+                .andExpect(jsonPath("$.status.name").value("unfinished"))
                 .andReturn();
 
         TaskResponse createdTask = objectMapper.readValue(
@@ -84,11 +88,12 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createTask_ThenGetById_ReturnsTask() throws Exception {
+        long statusId = createStatus(1L, "unfinished", 0);
         CreateTaskRequest request = new CreateTaskRequest(
                 "test",
                 1L,
                 "Lorem ipsum",
-                "unfinished"
+                statusId
         );
 
         MvcResult result = mockMvc.perform(
@@ -101,7 +106,9 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.title").value("test"))
                 .andExpect(jsonPath("$.description").value("Lorem ipsum"))
-                .andExpect(jsonPath("$.status").value("unfinished"))
+                .andExpect(jsonPath("$.status.id").value(statusId))
+                .andExpect(jsonPath("$.status.name").value("unfinished"))
+                .andExpect(jsonPath("$.status.position").value(0))
                 .andReturn();
 
         TaskResponse createdTask = objectMapper.readValue(
@@ -119,7 +126,9 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test"))
                 .andExpect(jsonPath("$.description").value("Lorem ipsum"))
-                .andExpect(jsonPath("$.status").value("unfinished"))
+                .andExpect(jsonPath("$.status.id").value(statusId))
+                .andExpect(jsonPath("$.status.name").value("unfinished"))
+                .andExpect(jsonPath("$.status.position").value(0))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
 
@@ -127,18 +136,20 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     @Test
     void createTasks_thenGetAll_ReturnsTasks() throws Exception {
         // Arrange
+        long unfinishedId = createStatus(1L, "unfinished", 0);
+        long finishedId = createStatus(1L, "finished", 1);
         CreateTaskRequest request1 = new CreateTaskRequest(
                 "Task 1",
                 1L,
                 "First task description",
-                "unfinished"
+                unfinishedId
         );
 
         CreateTaskRequest request2 = new CreateTaskRequest(
                 "Task 2",
                 1L,
                 "Second task description",
-                "finished"
+                finishedId
         );
 
         // Create first task
@@ -168,7 +179,8 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$[0].boardId").value(1L))
                 .andExpect(jsonPath("$[0].title").value("Task 1"))
                 .andExpect(jsonPath("$[0].description").value("First task description"))
-                .andExpect(jsonPath("$[0].status").value("unfinished"))
+                .andExpect(jsonPath("$[0].status.id").value(unfinishedId))
+                .andExpect(jsonPath("$[0].status.name").value("unfinished"))
                 .andExpect(jsonPath("$[0].createdAt").isNotEmpty())
 
                 // Second task
@@ -176,8 +188,15 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$[1].boardId").value(1L))
                 .andExpect(jsonPath("$[1].title").value("Task 2"))
                 .andExpect(jsonPath("$[1].description").value("Second task description"))
-                .andExpect(jsonPath("$[1].status").value("finished"))
+                .andExpect(jsonPath("$[1].status.id").value(finishedId))
+                .andExpect(jsonPath("$[1].status.name").value("finished"))
                 .andExpect(jsonPath("$[1].createdAt").isNotEmpty());
+    }
+
+    private long createStatus(long boardId, String name, int position) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO board_status (board_id, name, position) VALUES (?, ?, ?) RETURNING id",
+                Long.class, boardId, name, position);
     }
 
 }

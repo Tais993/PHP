@@ -27,7 +27,7 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@RequestBody CreateTaskRequest taskRequest) {
-        Task task = taskService.createTask(taskRequest.title(), taskRequest.boardId(), taskRequest.description(), taskRequest.status());
+        Task task = taskService.createTask(taskRequest.title(), taskRequest.boardId(), taskRequest.description(), taskRequest.statusId());
         return TaskResponse.fromDomain(task);
     }
 

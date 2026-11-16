@@ -43,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
                         {/*For now this routes to the first board, but in the future an unrelated index page will be added*/}
                         <Route index element={<Navigate to="/boards/1" replace />} />
                         <Route path="boards/:boardId" element={<BoardPage/>}/>
+                        <Route path="boards/:boardId/views/:boardViewId" element={<BoardPage/>}/>
                     </Route>
 
                     {/* Prototype needs its own layout */}

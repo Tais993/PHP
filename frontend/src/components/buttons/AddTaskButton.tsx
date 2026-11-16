@@ -8,7 +8,7 @@ import {
     Textarea,
     TextInput,
 } from '@mantine/core';
-import {TasksContext} from '../../providers/TasksProvider.tsx';
+import {TasksContext} from '../../providers/TasksContext.ts';
 
 export default function AddTaskButton() {
     const context = useContext(TasksContext);
@@ -53,7 +53,7 @@ export default function AddTaskButton() {
             await createTask({
                 title: title.trim(),
                 description: description.trim(),
-                status: 'TODO',
+                statusId: null,
             });
 
             setOpened(false);

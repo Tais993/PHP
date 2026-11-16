@@ -38,7 +38,7 @@ export function Task({ task }: Readonly<TaskProps>) {
                         radius="sm"
                         style={{ flexShrink: 0 }}
                     >
-                        {task.status}
+                        {task.status?.name ?? 'No status'}
                     </Badge>
                 </Group>
 

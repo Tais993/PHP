@@ -1,43 +1,45 @@
-import {createContext, type ReactNode, useEffect, useState} from 'react';
+import {type ReactNode, useContext, useEffect, useState} from 'react';
 import {apiUrl} from '../config.ts';
-import type {TaskData} from "../components/types/TaskData.ts";
+import {BoardViewsContext} from "./BoardViewsContext.ts";
+import type {TaskViewData} from "../components/types/TaskViewData.ts";
+import {TasksContext, type NewTask} from './TasksContext.ts';
 
-type NewTask = {
-    title: string;
-    description: string;
-    status: string;
-};
-
-type TasksContextValue = {
-    tasks: TaskData[];
-    loading: boolean;
+type TaskResult = {
+    requestKey: string;
+    data: TaskViewData | null;
     error: string | null;
-    createTask: (input: NewTask) => Promise<void>;
 };
-
-export const TasksContext = createContext<TasksContextValue | null>(null);
 
 export function TasksProvider({
     boardId,
     children,
 }: {
-    boardId: number;
-    children: ReactNode;
+    readonly boardId: number;
+    readonly children: ReactNode;
 }) {
-    const [tasks, setTasks] = useState<TaskData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<TaskResult | null>(null);
+    const [reloadCount, setReloadCount] = useState(0);
+
+    const viewsContext = useContext(BoardViewsContext);
+    const selectedViewId = viewsContext?.selectedViewId ?? null;
+    const requestKey = `${boardId}:${selectedViewId}:${reloadCount}`;
+    const currentResult = result?.requestKey === requestKey ? result : null;
+
+    const tasks = currentResult?.data ?? null;
+    const error = currentResult?.error ?? null;
+    const loading = selectedViewId !== null && currentResult === null;
 
     useEffect(() => {
-        const controller = new AbortController();
+        if (selectedViewId == null) {
+            return;
+        }
 
-        setLoading(true);
-        setError(null);
+        const controller = new AbortController();
 
         async function loadTasks() {
             try {
                 const response = await fetch(
-                    apiUrl(`/boards/${boardId}/tasks`),
+                    apiUrl(`/views/${selectedViewId}/tasks`),
                     {signal: controller.signal},
                 );
 
@@ -45,19 +47,15 @@ export function TasksProvider({
                     throw new Error('Could not load tasks');
                 }
 
-                const data: TaskData[] = await response.json();
+                const data: TaskViewData = await response.json();
 
                 if (!controller.signal.aborted) {
-                    setTasks(data);
+                    setResult({requestKey, data, error: null});
                 }
             } catch (exception) {
                 if (!controller.signal.aborted) {
-                    setError('Could not load tasks');
+                    setResult({requestKey, data: null, error: 'Could not load tasks'});
                     console.error(exception);
-                }
-            } finally {
-                if (!controller.signal.aborted) {
-                    setLoading(false);
                 }
             }
         }
@@ -65,9 +63,13 @@ export function TasksProvider({
         void loadTasks();
 
         return () => controller.abort();
-    }, [boardId]);
+    }, [selectedViewId, requestKey]);
 
     async function createTask(input: NewTask): Promise<void> {
+        if (selectedViewId === null) {
+            throw new Error('Select a board view before creating a task');
+        }
+
         // Prevent the initial load from overwriting a newly created task.
         if (loading) {
             throw new Error('Wait until tasks have finished loading');
@@ -99,13 +101,8 @@ export function TasksProvider({
             throw new Error('Could not create task');
         }
 
-        const createdTask: TaskData = await response.json();
-
-        setTasks(current =>
-            current.some(task => task.id === createdTask.id)
-                ? current
-                : [...current, createdTask],
-        );
+        // Reload groups and task ordering from the selected view after saving.
+        setReloadCount(current => current + 1);
     }
 
     return (

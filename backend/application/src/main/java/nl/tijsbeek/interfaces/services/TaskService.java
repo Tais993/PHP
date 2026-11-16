@@ -1,6 +1,7 @@
 package nl.tijsbeek.interfaces.services;
 
 import nl.tijsbeek.entities.Task;
+import nl.tijsbeek.results.TaskViewResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -19,6 +20,9 @@ public interface TaskService {
 
     @Transactional(readOnly = true)
     List<Task> getAllTasksByBoardId(long boardId);
+
+    @Transactional(readOnly = true)
+    TaskViewResult getTasksOfBoardView(long boardId);
 
     @Transactional
     Task changeTaskTitle(long id, String newTitle);

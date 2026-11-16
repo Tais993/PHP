@@ -103,16 +103,19 @@ export default function BoardLayout() {
                 </Group>
 
 
-                {
-                    Object.values(tasks?.groups ?? {})
-                        .sort((a, b) => a.position - b.position)
-                        .map(group => (
-                            <section key={group.id ?? "unassigned"}>
-                                <h2>{group.name}</h2>
-                                <TaskList tasks={group.items}/>
-                            </section>
-                        ))
-                }
+                <Group align="flex-start" wrap="nowrap" gap="md"
+                       style={{width: 'max-content'}}>
+                    {
+                        Object.values(tasks?.groups ?? {})
+                            .sort((a, b) => a.position - b.position)
+                            .map(group => (
+                                <section key={group.id ?? "unassigned"}>
+                                    <h2>{group.name}</h2>
+                                    <TaskList tasks={group.items}/>
+                                </section>
+                            ))
+                    }
+                </Group>
             </main>
 
         </>

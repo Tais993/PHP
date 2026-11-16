@@ -1,10 +1,12 @@
 package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.BoardResponse;
+import nl.tijsbeek.dto.BoardViewResponse;
 import nl.tijsbeek.dto.CreateBoardRequest;
 import nl.tijsbeek.dto.TaskResponse;
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.interfaces.services.BoardService;
+import nl.tijsbeek.interfaces.services.BoardViewService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import org.jetbrains.annotations.Contract;
 import org.springframework.http.HttpStatus;
@@ -18,14 +20,15 @@ import static java.util.Objects.requireNonNull;
 @RestController
 @RequestMapping("/boards")
 public class BoardController {
-
     private final BoardService boardService;
     private final TaskService taskService;
+    private final BoardViewService boardViewService;
 
     @Contract(pure = true)
-    public BoardController(BoardService boardService, TaskService taskService) {
+    public BoardController(BoardService boardService, TaskService taskService, BoardViewService boardViewService) {
         this.boardService = requireNonNull(boardService);
         this.taskService = taskService;
+        this.boardViewService = boardViewService;
     }
 
     @PostMapping
@@ -60,6 +63,15 @@ public class BoardController {
         return taskService.getAllTasksByBoardId(boardId)
                 .stream()
                 .map(TaskResponse::fromDomain)
+                .toList();
+    }
+
+    @GetMapping("/{boardId}/views")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BoardViewResponse> receiveViews(@PathVariable final long boardId) {
+        return boardViewService.getBoardViews(boardId)
+                .stream()
+                .map(BoardViewResponse::fromDomain)
                 .toList();
     }
 

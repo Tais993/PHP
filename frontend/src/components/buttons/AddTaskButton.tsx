@@ -2,6 +2,7 @@ import {useContext, useState} from 'react';
 import {
     Alert,
     Button,
+    type ButtonProps,
     Group,
     Modal,
     Stack,
@@ -10,7 +11,17 @@ import {
 } from '@mantine/core';
 import {TasksContext} from '../../providers/TasksContext.ts';
 
-export default function AddTaskButton() {
+type AddTaskButtonProps = Pick<ButtonProps, 'fullWidth' | 'mt'> & {
+    statusId?: number | null;
+    label?: string;
+};
+
+export default function AddTaskButton({
+    statusId = null,
+    label = '+ Add task',
+    fullWidth,
+    mt,
+}: Readonly<AddTaskButtonProps>) {
     const context = useContext(TasksContext);
 
     const [opened, setOpened] = useState(false);
@@ -53,7 +64,7 @@ export default function AddTaskButton() {
             await createTask({
                 title: title.trim(),
                 description: description.trim(),
-                statusId: null,
+                statusId,
             });
 
             setOpened(false);
@@ -73,10 +84,13 @@ export default function AddTaskButton() {
     return (
         <>
             <Button
+                variant="default"
+                fullWidth={fullWidth}
+                mt={mt}
                 onClick={openModal}
                 disabled={loading || Boolean(loadError)}
             >
-                + Add task
+                {label}
             </Button>
 
             <Modal

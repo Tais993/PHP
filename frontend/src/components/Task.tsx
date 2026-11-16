@@ -10,9 +10,8 @@ export function Task({ task }: Readonly<TaskProps>) {
         <Paper
             withBorder
             radius="sm"
-            p="md"
+            p="sm"
             w="100%"
-            maw={260}
         >
             <Stack gap="sm">
                 <Group justify="space-between" align="flex-start" wrap="nowrap">
@@ -21,11 +20,12 @@ export function Task({ task }: Readonly<TaskProps>) {
                         wrap="nowrap"
                         style={{ minWidth: 0 }}
                     >
-                        <Text size="xs" c="dimmed">
+                        <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
                             #{task.id}
                         </Text>
 
                         <Text
+                            size="sm"
                             fw={600}
                             style={{ overflowWrap: 'anywhere', minWidth: 0 }}
                         >
@@ -35,7 +35,9 @@ export function Task({ task }: Readonly<TaskProps>) {
 
                     <Badge
                         variant="light"
+                        color="gray"
                         radius="sm"
+                        size="sm"
                         style={{ flexShrink: 0 }}
                     >
                         {task.status?.name ?? 'No status'}

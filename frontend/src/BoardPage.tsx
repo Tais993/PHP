@@ -1,6 +1,6 @@
 import {useParams} from "react-router";
 import {TasksProvider} from "./providers/TasksProvider.tsx";
-import BoardLayout from "./components/layout/BoardLayout.tsx";
+import BoardLayout from "./components/boards/BoardLayout.tsx";
 import {BoardViewsProvider} from "./providers/BoardViewsProvider.tsx";
 
 export default function BoardPage() {

@@ -26,9 +26,11 @@ export function BoardViewsProvider({
     const invalidView = !loading && currentResult.error === null &&
         boardViewId !== undefined && !boardViews.some(view => view.id === boardViewId);
     const error = currentResult?.error ?? (invalidView ? 'View does not belong to this board' : null);
-    const selectedViewId = loading || error
+    const selectedView = loading || error
         ? null
-        : boardViewId ?? boardViews[0]?.id ?? null;
+        : boardViewId === undefined
+            ? boardViews[0] ?? null
+            : boardViews.find(view => view.id === boardViewId) ?? null;
 
     useEffect(() => {
         const controller = new AbortController();
@@ -67,7 +69,7 @@ export function BoardViewsProvider({
         <BoardViewsContext.Provider
             value={{
                 boardViews,
-                selectedViewId,
+                selectedView,
                 loading,
                 error,
             }}

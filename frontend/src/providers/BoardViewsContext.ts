@@ -3,9 +3,10 @@ import type {BoardViewData} from '../components/types/BoardViewData.ts';
 
 type BoardViewsContextValue = {
     boardViews: BoardViewData[];
-    selectedViewId: number | null;
+    selectedView: BoardViewData | null;
     loading: boolean;
     error: string | null;
 };
 
-export const BoardViewsContext = createContext<BoardViewsContextValue | null>(null);
+export const BoardViewsContext =
+    createContext<BoardViewsContextValue | null>(null);

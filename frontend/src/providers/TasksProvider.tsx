@@ -21,7 +21,7 @@ export function TasksProvider({
     const [reloadCount, setReloadCount] = useState(0);
 
     const viewsContext = useContext(BoardViewsContext);
-    const selectedViewId = viewsContext?.selectedViewId ?? null;
+    const selectedViewId = viewsContext?.selectedView?.id ?? null;
     const requestKey = `${boardId}:${selectedViewId}:${reloadCount}`;
     const currentResult = result?.requestKey === requestKey ? result : null;
 

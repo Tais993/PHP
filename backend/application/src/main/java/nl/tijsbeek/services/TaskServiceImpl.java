@@ -5,16 +5,18 @@ import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
+import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
 import nl.tijsbeek.interfaces.repositories.TaskRepository;
+import nl.tijsbeek.interfaces.services.TaskGroupingService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import nl.tijsbeek.results.TaskViewResult;
 import org.jetbrains.annotations.Contract;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -22,12 +24,16 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final BoardViewRepository boardViewRepository;
     private final BoardRepository boardRepository;
+    private final BoardStatusRepository boardStatusRepository;
+    private final TaskGroupingService taskGroupingService;
 
     @Contract(pure = true)
-    public TaskServiceImpl(TaskRepository taskRepository, BoardViewRepository boardViewRepository, BoardRepository boardRepository) {
+    public TaskServiceImpl(TaskRepository taskRepository, BoardViewRepository boardViewRepository, BoardRepository boardRepository, BoardStatusRepository boardStatusRepository, TaskGroupingService taskGroupingService) {
         this.taskRepository = taskRepository;
         this.boardViewRepository = boardViewRepository;
         this.boardRepository = boardRepository;
+        this.boardStatusRepository = boardStatusRepository;
+        this.taskGroupingService = taskGroupingService;
     }
 
     @Transactional
@@ -82,45 +88,11 @@ public class TaskServiceImpl implements TaskService {
                         new IllegalArgumentException("Board view was not found"));
 
         List<Task> tasks = taskRepository.findAllForView(boardViewId);
+        List<BoardStatus> boardStatuses = boardStatusRepository.findAllByBoardId(view.getBoardId());
 
         return switch (view.getGroupBy()) {
-            case STATUS -> groupTasks(tasks, BoardView.GroupBy.STATUS, task -> {
-                BoardStatus status = task.getStatus();
-
-                return status == null
-                        ? new GroupKey(null, "No status", 0)
-                        : new GroupKey(status.getId(), status.getName(), status.getPosition());
-            });
+            case STATUS -> taskGroupingService.groupByStatus(tasks, boardStatuses);
         };
-    }
-
-
-    private record GroupKey(Long id, String name, int position) {}
-
-    private TaskViewResult groupTasks(
-            List<Task> tasks,
-            BoardView.GroupBy groupBy,
-            Function<Task, GroupKey> keyExtractor
-    ) {
-        Map<GroupKey, List<Task>> grouped = new LinkedHashMap<>();
-
-        tasks.forEach(task -> {
-            grouped.computeIfAbsent(
-                    keyExtractor.apply(task),
-                    ignored -> new ArrayList<>()
-            ).add(task);
-        });
-
-        List<TaskViewResult.Group> groups = grouped.entrySet().stream()
-                .map(entry -> new TaskViewResult.Group(
-                        entry.getKey().id(),
-                        entry.getKey().name(),
-                        entry.getKey().position(),
-                        List.copyOf(entry.getValue())
-                ))
-                .toList();
-
-        return new TaskViewResult(groupBy, groups);
     }
 
     @Transactional

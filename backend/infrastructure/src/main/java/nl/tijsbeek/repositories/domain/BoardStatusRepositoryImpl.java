@@ -1,21 +1,27 @@
 package nl.tijsbeek.repositories.domain;
 
+import jakarta.persistence.EntityManager;
+import nl.tijsbeek.entities.BoardJPA;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardStatusJPA;
 import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.mapper.BoardStatusMapper;
 import nl.tijsbeek.repositories.jpa.BoardStatusJpaRepository;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class BoardStatusRepositoryImpl implements BoardStatusRepository {
 
     private final BoardStatusJpaRepository jpaRepository;
+    private final EntityManager entityManager;
 
-    public BoardStatusRepositoryImpl(BoardStatusJpaRepository jpaRepository) {
+    public BoardStatusRepositoryImpl(BoardStatusJpaRepository jpaRepository, EntityManager entityManager) {
         this.jpaRepository = jpaRepository;
+        this.entityManager = entityManager;
     }
 
 
@@ -36,6 +42,7 @@ public class BoardStatusRepositoryImpl implements BoardStatusRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BoardStatus> findAllByBoardId(long boardId) {
         return jpaRepository.findAllByBoardId(boardId)
                 .stream()
@@ -47,6 +54,8 @@ public class BoardStatusRepositoryImpl implements BoardStatusRepository {
     @Transactional
     public BoardStatus save(BoardStatus boardStatus) {
         BoardStatusJPA entity = BoardStatusMapper.toJpa(boardStatus);
+        entity.setBoard(boardStatus.getBoardId() == null ? null :
+                entityManager.getReference(BoardJPA.class, boardStatus.getBoardId()));
 
         BoardStatusJPA saved = jpaRepository.save(entity);
 

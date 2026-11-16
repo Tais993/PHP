@@ -287,7 +287,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     void saveTask_WithMissingStatus_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
-        BoardStatus missingStatus = new BoardStatus(Long.MAX_VALUE, "Missing status", 0);
+        BoardStatus missingStatus = new BoardStatus(Long.MAX_VALUE, board.getId(), "Missing status", 0);
         Task task = new Task(null, board.getId(), "TaskOne", "Task with missing status", null, missingStatus);
 
         // Act & Assert
@@ -337,8 +337,8 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
 
     private Board createBoard(String title) {
         return boardRepository.save(new Board(null, title, "Description for " + title, List.of(
-                new BoardStatus(null, "To do", 0),
-                new BoardStatus(null, "Done", 1)
+                new BoardStatus(null, null, "To do", 0),
+                new BoardStatus(null, null, "Done", 1)
         )));
     }
 

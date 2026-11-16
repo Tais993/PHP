@@ -1,7 +1,7 @@
 import {useContext} from 'react'
 import {Button, Divider, Group, ScrollArea} from "@mantine/core";
 import {TaskList} from "../TaskList.tsx";
-import {BoardsContext} from "../../providers/BoardsProvider.tsx";
+import {BoardsContext} from "../../providers/BoardsContext.ts";
 import {Link} from "react-router";
 import {TasksContext} from "../../providers/TasksProvider.tsx";
 import AddTaskButton from "../buttons/AddTaskButton.tsx";

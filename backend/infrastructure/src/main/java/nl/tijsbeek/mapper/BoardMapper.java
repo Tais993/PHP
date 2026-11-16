@@ -17,11 +17,7 @@ public class BoardMapper {
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getStatuses().stream()
-                        .map(status -> new BoardStatus(
-                                status.getId(),
-                                status.getName(),
-                                status.getPosition()
-                        ))
+                        .map(BoardStatusMapper::toDomain)
                         .toList()
         );
     }
@@ -39,18 +35,9 @@ public class BoardMapper {
 
         board.getStatuses()
                 .stream()
-                .map(BoardMapper::statusToJpa)
+                .map(BoardStatusMapper::toJpa)
                 .forEach(entity::addStatus);
 
         return entity;
-    }
-
-    private static BoardStatusJPA statusToJpa(BoardStatus status) {
-        return new BoardStatusJPA(
-                status.getId(),
-                null,
-                status.getName(),
-                status.getPosition()
-        );
     }
 }

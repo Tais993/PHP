@@ -125,8 +125,8 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
     void saveBoardWithStatuses_ThenFindById_ReturnsPersistedStatuses() {
         // Arrange
         Board board = new Board(null, "BoardOne", "Board with statuses", List.of(
-                new BoardStatus(null, "To do", 0),
-                new BoardStatus(null, "Done", 1)
+                new BoardStatus(null, null, "To do", 0),
+                new BoardStatus(null, null, "Done", 1)
         ));
 
         // Act
@@ -153,9 +153,9 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
         // Arrange
         Board savedBoard = boardRepository.save(
                 new Board(null, "BoardOne", "Board with unordered statuses", List.of(
-                        new BoardStatus(null, "Done", 20),
-                        new BoardStatus(null, "To do", 0),
-                        new BoardStatus(null, "In progress", 10)
+                        new BoardStatus(null, null, "Done", 20),
+                        new BoardStatus(null, null, "To do", 0),
+                        new BoardStatus(null, null, "In progress", 10)
                 ))
         );
 
@@ -193,8 +193,8 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
         // Arrange
         Board savedBoard = boardRepository.save(
                 new Board(null, "BoardOne", "Board with statuses to delete", List.of(
-                        new BoardStatus(null, "To do", 0),
-                        new BoardStatus(null, "Done", 1)
+                        new BoardStatus(null, null, "To do", 0),
+                        new BoardStatus(null, null, "Done", 1)
                 ))
         );
         assertThat(jdbcTemplate.queryForObject(

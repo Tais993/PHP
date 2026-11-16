@@ -1,9 +1,8 @@
 package nl.tijsbeek.mapper;
 
+import nl.tijsbeek.entities.BoardStatusJPA;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
-import nl.tijsbeek.entities.BoardStatus;
-import nl.tijsbeek.entities.BoardStatusJPA;
 import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
 
@@ -18,11 +17,7 @@ public class TaskMapper {
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getCreatedAt(),
-                entity.getStatus() == null ? null : new BoardStatus(
-                        entity.getStatus().getId(),
-                        entity.getStatus().getName(),
-                        entity.getStatus().getPosition()
-                )
+                entity.getStatus() == null ? null : BoardStatusMapper.toDomain(entity.getStatus())
         );
     }
 

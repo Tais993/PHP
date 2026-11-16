@@ -6,7 +6,6 @@ import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
@@ -14,11 +13,8 @@ import org.springframework.test.context.TestConstructor;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.*;
 
-@SpringBootTest
 @IntegrationTest
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class BoardRepositoryIntegrationTest extends IntegrationTestBase {

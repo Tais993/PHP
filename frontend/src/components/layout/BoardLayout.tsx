@@ -4,7 +4,7 @@ import {TaskList} from "../TaskList.tsx";
 import {BoardsContext} from "../../providers/BoardsProvider.tsx";
 import {Link} from "react-router";
 import {TasksContext} from "../../providers/TasksProvider.tsx";
-import AddTaskButton from "../AddTaskButton.tsx";
+import AddTaskButton from "../buttons/AddTaskButton.tsx";
 
 
 export default function BoardLayout() {

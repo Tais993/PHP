@@ -8,10 +8,10 @@ import {
     Textarea,
     TextInput,
 } from '@mantine/core';
-import {BoardsContext} from "../providers/BoardsProvider.tsx";
+import {TasksContext} from '../../providers/TasksProvider.tsx';
 
-export default function AddBoardButton() {
-    const context = useContext(BoardsContext);
+export default function AddTaskButton() {
+    const context = useContext(TasksContext);
 
     const [opened, setOpened] = useState(false);
     const [title, setTitle] = useState('');
@@ -20,10 +20,10 @@ export default function AddBoardButton() {
     const [error, setError] = useState<string | null>(null);
 
     if (!context) {
-        throw new Error('AddBoardButton must be inside BoardsProvider');
+        throw new Error('AddTaskButton must be inside TasksProvider');
     }
 
-    const {createBoard, loading, error: loadError} = context;
+    const {createTask, loading, error: loadError} = context;
 
     function openModal() {
         setTitle('');
@@ -38,11 +38,11 @@ export default function AddBoardButton() {
         }
     }
 
-    async function submitBoard() {
+    async function submitTask() {
         if (saving) return;
 
         if (!title.trim()) {
-            setError('Enter a board title');
+            setError('Enter a task title');
             return;
         }
 
@@ -50,9 +50,10 @@ export default function AddBoardButton() {
         setError(null);
 
         try {
-            await createBoard({
+            await createTask({
                 title: title.trim(),
                 description: description.trim(),
+                status: 'TODO',
             });
 
             setOpened(false);
@@ -62,7 +63,7 @@ export default function AddBoardButton() {
             setError(
                 exception instanceof Error
                     ? exception.message
-                    : 'Could not create board',
+                    : 'Could not create task',
             );
         } finally {
             setSaving(false);
@@ -75,13 +76,13 @@ export default function AddBoardButton() {
                 onClick={openModal}
                 disabled={loading || Boolean(loadError)}
             >
-                + Add board
+                + Add task
             </Button>
 
             <Modal
                 opened={opened}
                 onClose={closeModal}
-                title="Add board"
+                title="Add task"
                 centered
                 closeOnClickOutside={!saving}
                 closeOnEscape={!saving}
@@ -90,7 +91,7 @@ export default function AddBoardButton() {
                 <form
                     onSubmit={(event) => {
                         event.preventDefault();
-                        void submitBoard();
+                        void submitTask();
                     }}
                 >
                     <Stack>
@@ -144,7 +145,7 @@ export default function AddBoardButton() {
                                     || !title.trim()
                                 }
                             >
-                                Create board
+                                Create task
                             </Button>
                         </Group>
                     </Stack>

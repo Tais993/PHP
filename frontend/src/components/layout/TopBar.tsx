@@ -1,6 +1,6 @@
 import {Button, Divider, Group} from "@mantine/core";
 import {Link} from "react-router";
-import AddBoardButton from "../AddBoardButton.tsx";
+import AddBoardButton from "../buttons/AddBoardButton.tsx";
 
 export default function TopBar() {
     return (

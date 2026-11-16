@@ -1,21 +1,7 @@
-import {createContext, type ReactNode, useEffect, useState} from 'react';
+import {type ReactNode, useEffect, useState} from 'react';
 import type {BoardData} from "../components/types/BoardData.ts";
 import {apiUrl} from '../config.ts';
-import type {TaskData} from "../components/types/TaskData.ts";
-
-type NewBoard = {
-    title: string;
-    description: string;
-};
-
-type BoardsContextValue = {
-    boards: BoardData[];
-    loading: boolean;
-    error: string | null;
-    createBoard: (input: NewBoard) => Promise<void>;
-};
-
-export const BoardsContext = createContext<BoardsContextValue | null>(null);
+import {BoardsContext, type NewBoard} from './BoardsContext.ts';
 
 export function BoardsProvider({children}: { children: ReactNode }) {
     const [boards, setBoards] = useState<BoardData[]>([])
@@ -25,9 +11,6 @@ export function BoardsProvider({children}: { children: ReactNode }) {
 
     useEffect(() => {
         const controller = new AbortController();
-
-        setLoading(true);
-        setError(null);
 
         async function loadBoards() {
             try {
@@ -39,7 +22,7 @@ export function BoardsProvider({children}: { children: ReactNode }) {
                 if (!response.ok) {
                     throw new Error('Could not load boards');
                 }
-                const data: TaskData[] = await response.json();
+                const data: BoardData[] = await response.json();
 
                 if (!controller.signal.aborted) {
                     setBoards(data);
@@ -62,15 +45,19 @@ export function BoardsProvider({children}: { children: ReactNode }) {
     }, [])
 
     async function createBoard(input: NewBoard): Promise<void> {
-        // Prevent the initial load from overwriting a newly created task.
+        // Prevent the initial load from overwriting a newly created board.
         if (loading) {
             throw new Error('Wait until boards have finished loading');
+        }
+
+        if (error) {
+            throw new Error('Reload the boards before creating a board');
         }
 
         const title = input.title.trim();
 
         if (!title || title.length > 255) {
-            throw new Error('Task title must contain 1–255 characters');
+            throw new Error('Board title must contain 1–255 characters');
         }
 
         const response = await fetch(apiUrl('/boards'), {

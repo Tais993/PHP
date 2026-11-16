@@ -8,7 +8,7 @@ import {
     Textarea,
     TextInput,
 } from '@mantine/core';
-import {BoardsContext} from "../../providers/BoardsProvider.tsx";
+import {BoardsContext} from "../../providers/BoardsContext.ts";
 
 export default function AddBoardButton() {
     const context = useContext(BoardsContext);

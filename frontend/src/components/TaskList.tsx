@@ -1,4 +1,4 @@
-import { Stack, Text } from '@mantine/core'
+import { Paper, Stack, Text } from '@mantine/core'
 import { Task } from './Task'
 import type {TaskData} from "./types/TaskData.ts";
 
@@ -9,14 +9,16 @@ type TaskListProps = {
 export function TaskList({ tasks }: Readonly<TaskListProps>) {
     if (tasks.length === 0) {
         return (
-            <Text c="dimmed">
-                No tasks to display.
-            </Text>
+            <Paper withBorder radius="sm" p="lg">
+                <Text size="sm" c="dimmed" ta="center">
+                    No tasks with this status
+                </Text>
+            </Paper>
         )
     }
 
     return (
-        <Stack gap="sm" align="flex-start">
+        <Stack gap="sm">
             {tasks.map(task => (
                 <Task key={task.id} task={task} />
             ))}

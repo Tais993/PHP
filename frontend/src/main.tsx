@@ -16,7 +16,7 @@ function AppLayout() {
         <AppShell
             header={{height: 60}}
             footer={{height: 44}}
-            padding="lg"
+            padding="0"
         >
             <AppShell.Header>
                 <TopBar/>

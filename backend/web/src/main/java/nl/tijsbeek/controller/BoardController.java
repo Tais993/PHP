@@ -5,12 +5,12 @@ import nl.tijsbeek.dto.BoardViewResponse;
 import nl.tijsbeek.dto.CreateBoardRequest;
 import nl.tijsbeek.dto.TaskResponse;
 import nl.tijsbeek.entities.Board;
+import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardService;
 import nl.tijsbeek.interfaces.services.BoardViewService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import org.jetbrains.annotations.Contract;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,11 +50,10 @@ public class BoardController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<BoardResponse> receive(@PathVariable final long id) {
-        return  boardService.getBoard(id)
+    public BoardResponse receive(@PathVariable final long id) {
+        return boardService.getBoard(id)
                 .map(BoardResponse::fromDomain)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new BoardNotFoundException(id));
     }
 
     @GetMapping("/{boardId}/tasks")

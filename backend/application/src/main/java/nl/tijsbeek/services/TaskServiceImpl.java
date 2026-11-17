@@ -1,9 +1,12 @@
 package nl.tijsbeek.services;
 
+import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
+import nl.tijsbeek.exceptions.BoardViewNotFoundException;
+import nl.tijsbeek.exceptions.InvalidTaskReferenceException;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
@@ -39,22 +42,21 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     @Override
     public Task createTask(String title, Long boardId, String description, Long statusId) {
-        // if board ID is null use the default one
-        if (boardId == null) {
-            boardId = 1L;
-        }
+        long selectedBoardId = boardId == null ? 1L : boardId;
+        Board board = boardRepository.findById(selectedBoardId)
+                .orElseThrow(() -> new InvalidTaskReferenceException(
+                        "Board with ID " + selectedBoardId + " was not found"));
 
         BoardStatus status = null;
         if (statusId != null) {
-            status = boardRepository.findById(boardId)
-                    .orElseThrow(() -> new IllegalArgumentException("Board was not found"))
-                    .getStatuses().stream()
+            status = board.getStatuses().stream()
                     .filter(option -> statusId.equals(option.getId()))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Status does not belong to this board"));
+                    .orElseThrow(() -> new InvalidTaskReferenceException(
+                            "Status does not exist on the selected board"));
         }
 
-        Task task = new Task(null, boardId, title, description, null, status);
+        Task task = new Task(null, selectedBoardId, title, description, null, status);
 
 
         return taskRepository.save(task);
@@ -84,8 +86,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskViewResult getTasksOfBoardView(long boardViewId) {
         BoardView view = boardViewRepository.findById(boardViewId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Board view was not found"));
+                .orElseThrow(() -> new BoardViewNotFoundException(boardViewId));
 
         List<Task> tasks = taskRepository.findAllForView(boardViewId);
         List<BoardStatus> boardStatuses = boardStatusRepository.findAllByBoardId(view.getBoardId());

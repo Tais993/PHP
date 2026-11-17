@@ -2,8 +2,10 @@ package nl.tijsbeek.integration.repository;
 
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardStatus;
+import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
+import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,11 +22,15 @@ import static org.assertj.core.api.Assertions.*;
 class BoardRepositoryIntegrationTest extends IntegrationTestBase {
 
     private final BoardRepository boardRepository;
+    private final BoardViewRepository boardViewRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    BoardRepositoryIntegrationTest(JdbcTemplate jdbcTemplate, BoardRepository boardRepository) {
+    BoardRepositoryIntegrationTest(JdbcTemplate jdbcTemplate,
+                                   BoardRepository boardRepository,
+                                   BoardViewRepository boardViewRepository) {
         super(jdbcTemplate);
         this.boardRepository = boardRepository;
+        this.boardViewRepository = boardViewRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -214,6 +220,32 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    void deleteBoardWithViews_RemovesAssociatedViews() {
+        // Arrange
+        Board board = boardRepository.save(new Board(null, "BoardOne", "Board to delete"));
+        Board otherBoard = boardRepository.save(new Board(null, "OtherBoard", "Board to preserve"));
+        BoardView firstView = saveView(board, "First view", 0);
+        BoardView secondView = saveView(board, "Second view", 1);
+        BoardView otherView = saveView(otherBoard, "Other view", 0);
+
+        // Act
+        boardRepository.deleteById(board.getId());
+
+        // Assert
+        assertThat(boardRepository.findById(board.getId())).isEmpty();
+        assertThat(boardViewRepository.findById(firstView.getId())).isEmpty();
+        assertThat(boardViewRepository.findById(secondView.getId())).isEmpty();
+        assertThat(boardViewRepository.findAllByBoardId(board.getId())).isEmpty();
+        assertThat(boardViewRepository.findAll())
+                .extracting(BoardView::getId, BoardView::getBoardId, BoardView::getName, BoardView::getPosition)
+                .containsExactly(tuple(otherView.getId(), otherBoard.getId(), "Other view", 0));
+        assertThat(boardRepository.findById(otherBoard.getId())).hasValueSatisfying(foundBoard -> {
+            assertThat(foundBoard.getTitle()).isEqualTo("OtherBoard");
+            assertThat(foundBoard.getDescription()).isEqualTo("Board to preserve");
+        });
+    }
+
+    @Test
     void saveBoard_WithNullTitle_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = new Board(null, null, "Board without a title");
@@ -224,5 +256,10 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("title");
         assertThat(boardRepository.findAll()).hasSize(boardCountBeforeSave);
+    }
+
+    private BoardView saveView(Board board, String name, int position) {
+        return boardViewRepository.save(new BoardView(null, board.getId(), name, BoardView.ViewType.BOARD,
+                BoardView.GroupBy.STATUS, BoardView.SortBy.TITLE, BoardView.SortDirection.ASC, position));
     }
 }

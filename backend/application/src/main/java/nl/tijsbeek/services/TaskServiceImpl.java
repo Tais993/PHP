@@ -106,4 +106,28 @@ public class TaskServiceImpl implements TaskService {
 
         return taskRepository.save(task);
     }
+
+    @Transactional
+    @Override
+    public Task changeTaskStatus(long id, Long statusId) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
+
+        BoardStatus status = null;
+        if (statusId != null) {
+            Board board = boardRepository.findById(task.getBoardId())
+                    .orElseThrow(() -> new InvalidTaskReferenceException(
+                            "Board with ID " + task.getBoardId() + " was not found"));
+
+            status = board.getStatuses().stream()
+                    .filter(option -> statusId.equals(option.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new InvalidTaskReferenceException(
+                            "Status does not exist on the selected board"));
+        }
+
+        task.setStatus(status);
+
+        return taskRepository.save(task);
+    }
 }

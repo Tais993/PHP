@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -48,7 +49,13 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
     public void getFakeBoard_ReturnsNotFound() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/boards/{id}", 0L))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.title").value("Not Found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("Board with ID 0 was not found"))
+                .andExpect(jsonPath("$.instance").value("/boards/0"));
     }
 
     @Test
@@ -261,5 +268,32 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$[0].status.id").value(unfinishedId))
                 .andExpect(jsonPath("$[0].status.name").value("unfinished"))
                 .andExpect(jsonPath("$[0].createdAt").isNotEmpty());
+    }
+
+    @Test
+    void getBoardViews_ReturnsOnlyRequestedBoardsViewsInOrder() throws Exception {
+        // Arrange
+        long otherBoardId = createBoard("Other board", "");
+        createView(otherBoardId, "Other board view", 0);
+        long lastId = createView(1L, "Last view", 9);
+        long firstId = createView(1L, "First view", 2);
+        long secondId = createView(1L, "Second view", 2);
+
+        // Act & Assert
+        mockMvc.perform(get("/boards/{id}/views", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[*].id", contains((int) firstId, (int) secondId, (int) lastId)))
+                .andExpect(jsonPath("$[*].name", contains("First view", "Second view", "Last view")))
+                .andExpect(jsonPath("$[*].boardId", contains(1, 1, 1)))
+                .andExpect(jsonPath("$[*].position", contains(2, 2, 9)))
+                .andExpect(jsonPath("$[0].type").value("BOARD"))
+                .andExpect(jsonPath("$[0].groupBy").value("STATUS"))
+                .andExpect(jsonPath("$[0].sortBy").value("CREATED_AT"))
+                .andExpect(jsonPath("$[0].sortDirection").value("DESC"));
+    }
+
+    private long createView(long boardId, String name, int position) {
+        return createView(boardId, name, "BOARD", "STATUS", "CREATED_AT", "DESC", position);
     }
 }

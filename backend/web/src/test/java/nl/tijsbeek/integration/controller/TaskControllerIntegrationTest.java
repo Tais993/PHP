@@ -48,7 +48,13 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(
                         get("/tasks/{id}", "9999")
                 )
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.title").value("Not Found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("Task with ID 9999 was not found"))
+                .andExpect(jsonPath("$.instance").value("/tasks/9999"));
     }
 
     @Test
@@ -331,4 +337,73 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status.position").value(7))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
+
+    @ParameterizedTest
+    @EnumSource(InvalidTaskReference.class)
+    void createTask_InvalidBoardOrStatus_RejectsRequestAndPersistsNothing(InvalidTaskReference invalidReference)
+            throws Exception {
+        // Arrange
+        long statusId = createStatus(1L, "To do", 0);
+        long otherBoardId = createBoard("Other board", "");
+        long otherStatusId = createStatus(otherBoardId, "To do", 0);
+        createTask(1L, "Existing task", "Must remain unchanged", statusId);
+        List<Map<String, Object>> tasksBefore = readTaskRows();
+        long boardId = switch (invalidReference) {
+            case MISSING_BOARD, MISSING_BOARD_WITHOUT_STATUS -> Long.MAX_VALUE;
+            default -> 1L;
+        };
+        Long requestedStatusId = switch (invalidReference) {
+            case MISSING_BOARD -> statusId;
+            case MISSING_BOARD_WITHOUT_STATUS -> null;
+            case MISSING_STATUS -> Long.MAX_VALUE;
+            case STATUS_FROM_ANOTHER_BOARD -> otherStatusId;
+        };
+        CreateTaskRequest request = new CreateTaskRequest(
+                "Rejected task",
+                boardId,
+                "Invalid reference",
+                requestedStatusId
+        );
+
+        // Act & Assert
+        try {
+            mockMvc.perform(post("/tasks")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                    .andExpect(jsonPath("$.type").value("about:blank"))
+                    .andExpect(jsonPath("$.title").value("Bad Request"))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.detail").value(boardId == Long.MAX_VALUE
+                            ? "Board with ID " + boardId + " was not found"
+                            : "Status does not exist on the selected board"))
+                    .andExpect(jsonPath("$.instance").value("/tasks"));
+        } finally {
+            // Verify existing tasks remain unchanged and no task was created
+            assertThat(readTaskRows()).isEqualTo(tasksBefore);
+        }
+    }
+
+    enum InvalidTaskReference {
+        MISSING_BOARD, MISSING_BOARD_WITHOUT_STATUS, MISSING_STATUS, STATUS_FROM_ANOTHER_BOARD
+    }
+
+    @Test
+    void createTask_MalformedJson_ReturnsBadRequestProblemDetail() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.instance").value("/tasks"));
+    }
+
+    private List<Map<String, Object>> readTaskRows() {
+        return jdbcTemplate.queryForList("SELECT * FROM task ORDER BY id");
+    }
+
 }

@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -32,7 +33,6 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
-    private final JdbcTemplate jdbcTemplate;
 
     BoardControllerIntegrationTest(
             JdbcTemplate jdbcTemplate,
@@ -42,7 +42,6 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
         super(jdbcTemplate);
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Test
@@ -262,11 +261,5 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$[0].status.id").value(unfinishedId))
                 .andExpect(jsonPath("$[0].status.name").value("unfinished"))
                 .andExpect(jsonPath("$[0].createdAt").isNotEmpty());
-    }
-
-    private long createStatus(long boardId, String name, int position) {
-        return jdbcTemplate.queryForObject(
-                "INSERT INTO board_status (board_id, name, position) VALUES (?, ?, ?) RETURNING id",
-                Long.class, boardId, name, position);
     }
 }

@@ -1,8 +1,8 @@
-import {type ReactNode, useContext, useEffect, useState} from 'react';
-import {apiUrl} from '../config.ts';
-import {BoardViewsContext} from "./BoardViewsContext.ts";
-import type {TaskViewData} from "../components/types/TaskViewData.ts";
-import {TasksContext, type NewTask} from './TasksContext.ts';
+import { type ReactNode, useContext, useEffect, useState } from 'react';
+import { apiUrl } from '../config.ts';
+import { BoardViewsContext } from './BoardViewsContext.ts';
+import type { TaskViewData } from '../components/types/TaskViewData.ts';
+import { TasksContext, type NewTask } from './TasksContext.ts';
 
 type TaskResult = {
     requestKey: string;
@@ -40,7 +40,7 @@ export function TasksProvider({
             try {
                 const response = await fetch(
                     apiUrl(`/views/${selectedViewId}/tasks`),
-                    {signal: controller.signal},
+                    { signal: controller.signal },
                 );
 
                 if (!response.ok) {
@@ -50,11 +50,11 @@ export function TasksProvider({
                 const data: TaskViewData = await response.json();
 
                 if (!controller.signal.aborted) {
-                    setResult({requestKey, data, error: null});
+                    setResult({ requestKey, data, error: null });
                 }
             } catch (exception) {
                 if (!controller.signal.aborted) {
-                    setResult({requestKey, data: null, error: 'Could not load tasks'});
+                    setResult({ requestKey, data: null, error: 'Could not load tasks' });
                     console.error(exception);
                 }
             }
@@ -105,8 +105,31 @@ export function TasksProvider({
         setReloadCount(current => current + 1);
     }
 
+    async function moveTask(taskId: number, statusId: number | null): Promise<void> {
+        if (selectedViewId === null) {
+            throw new Error('Select a board view before moving a task');
+        }
+
+        const response = await fetch(apiUrl(`/tasks/${taskId}/status`), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                statusId,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Could not update task status');
+        }
+
+        // Reload view tasks after status change
+        setReloadCount(current => current + 1);
+    }
+
     return (
-        <TasksContext.Provider value={{tasks, loading, error, createTask}}>
+        <TasksContext.Provider value={{ tasks, loading, error, createTask, moveTask }}>
             {children}
         </TasksContext.Provider>
     );

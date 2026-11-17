@@ -1,5 +1,5 @@
-import {createContext} from 'react';
-import type {TaskViewData} from '../components/types/TaskViewData.ts';
+import { createContext } from 'react';
+import type { TaskViewData } from '../components/types/TaskViewData.ts';
 
 export type NewTask = {
     title: string;
@@ -12,6 +12,7 @@ type TasksContextValue = {
     loading: boolean;
     error: string | null;
     createTask: (input: NewTask) => Promise<void>;
+    moveTask: (taskId: number, statusId: number | null) => Promise<void>;
 };
 
 export const TasksContext = createContext<TasksContextValue | null>(null);

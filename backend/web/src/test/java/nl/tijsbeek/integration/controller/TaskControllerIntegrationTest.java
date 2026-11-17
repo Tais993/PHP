@@ -6,6 +6,8 @@ import nl.tijsbeek.dto.TaskResponse;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -15,7 +17,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -325,11 +331,4 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status.position").value(7))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
-
-    private long createStatus(long boardId, String name, int position) {
-        return jdbcTemplate.queryForObject(
-                "INSERT INTO board_status (board_id, name, position) VALUES (?, ?, ?) RETURNING id",
-                Long.class, boardId, name, position);
-    }
-
 }

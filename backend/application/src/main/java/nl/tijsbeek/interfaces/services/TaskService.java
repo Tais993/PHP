@@ -28,5 +28,8 @@ public interface TaskService {
     Task changeTaskTitle(long id, String newTitle);
 
     @Transactional
+    Task changeTaskStatus(long id, Long statusId);
+
+    @Transactional
     void deleteTask(long id);
 }

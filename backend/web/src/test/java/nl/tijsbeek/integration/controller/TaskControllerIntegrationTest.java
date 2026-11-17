@@ -402,6 +402,69 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.instance").value("/tasks"));
     }
 
+    @Test
+    void updateTaskStatus_ValidStatus_UpdatesAndReturnsTask() throws Exception {
+        long status1Id = createStatus(1L, "todo", 0);
+        long status2Id = createStatus(1L, "done", 1);
+        long taskId = createTask(1L, "Test task", "Description", status1Id);
+
+        mockMvc.perform(post("/tasks/{id}/status", taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("statusId", status2Id))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.status.id").value(status2Id))
+                .andExpect(jsonPath("$.status.name").value("done"));
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status.id").value(status2Id))
+                .andExpect(jsonPath("$.status.name").value("done"));
+    }
+
+    @Test
+    void updateTaskStatus_NullStatus_ClearsStatusAndReturnsTask() throws Exception {
+        long statusId = createStatus(1L, "todo", 0);
+        long taskId = createTask(1L, "Test task", "Description", statusId);
+
+        mockMvc.perform(post("/tasks/{id}/status", taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"statusId\": null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.status").value(nullValue()));
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(nullValue()));
+    }
+
+    @Test
+    void updateTaskStatus_NonExistingTask_ReturnsNotFound() throws Exception {
+        long statusId = createStatus(1L, "todo", 0);
+
+        mockMvc.perform(post("/tasks/{id}/status", 99999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("statusId", statusId))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Task with ID 99999 was not found"));
+    }
+
+    @Test
+    void updateTaskStatus_StatusFromAnotherBoard_ReturnsBadRequest() throws Exception {
+        long status1Id = createStatus(1L, "todo", 0);
+        long otherBoardId = createBoard("Other board", "");
+        long otherStatusId = createStatus(otherBoardId, "other", 0);
+        long taskId = createTask(1L, "Test task", "Description", status1Id);
+
+        mockMvc.perform(post("/tasks/{id}/status", taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("statusId", otherStatusId))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Status does not exist on the selected board"));
+    }
+
     private List<Map<String, Object>> readTaskRows() {
         return jdbcTemplate.queryForList("SELECT * FROM task ORDER BY id");
     }

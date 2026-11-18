@@ -68,9 +68,9 @@ Content-Type: application/json
 ----
 
 The end-to-end implemented flow is:
-.Task creation workflow
 
-plantuml::UML/task-create-flow.puml[format=svg]
+.Task creation workflow
+image::diagrams/task-create-flow.svg[Sequence of task creation from the board through the API and database]
 
 For task creation there is a clear distinction. *The POST response does NOT update the displayed task list. A subsequent GET does.*
 
@@ -267,7 +267,7 @@ The request contains:
 
 The focused frontend flow is:
 
-plantuml::UML/focused-frontend-flow.puml[format=svg]
+image::diagrams/focused-frontend-flow.svg[Frontend task form submission and board refresh]
 
 == Backend
 
@@ -469,7 +469,7 @@ Sources are each project's respective `backend/*/build.gradle.kts` file.
 
 An important distinction is that the service calls the infrastructure implementation at runtime, but the module is compiled against the interface/contract.
 
-plantuml::UML/dependency-direction-backend.puml[format=svg]
+image::diagrams/dependency-direction-backend.svg[Dependencies between the web, application, and infrastructure layers]
 
 === Mapping to JPA and saving
 
@@ -617,7 +617,7 @@ In case a task had a status set, it receives a nested status:
 }
 ----
 
-plantuml::UML/representation-mapping.puml[format=svg]
+image::diagrams/representation-mapping.svg[Mapping between frontend, API, domain, and persistence models]
 
 === Error handling and security
 

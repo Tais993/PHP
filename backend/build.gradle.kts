@@ -10,7 +10,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7" apply false
     id("org.asciidoctor.jvm.convert") version "4.0.5" apply false
 
-    id("org.sonarqube") version "7.5.0.8588"
+    id("org.sonarqube") version "7.6.0.18749"
 }
 
 group = "nl.tijsbeek"

@@ -7,7 +7,7 @@
 .git
 .github
 .idea
-.UML
+.docs/UML
 
 **/build
 frontend/

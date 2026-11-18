@@ -1,0 +1,38 @@
+@startuml
+start
+:BoardPage supplies boardId;
+:BoardViewsProvider selects view;
+:TasksProvider loads TaskViewData;
+:User opens AddTaskButton modal;
+:Store title and description in local state;
+:Submit and trim values;
+
+if (Valid title and provider ready?) then (yes)
+  :Set saving = true;
+  :POST /api/tasks;
+  if (HTTP response is successful?) then (yes)
+    :Increment reloadCount;
+    fork
+      :Resolve createTask;
+      :Close modal and clear form;
+    fork again
+      :Invalidate current task result;
+      :GET selected view tasks;
+      if (Reload succeeds?) then (yes)
+        :Store TaskViewData;
+        :Render groups and tasks;
+      else (no)
+        :Show Could not load tasks;
+        :Disable creation until page reload;
+      endif
+    end fork
+  else (no)
+    :Show Could not create task;
+    :Keep form values;
+  endif
+  :Clear saving;
+else (no)
+  :Show validation/readiness error;
+endif
+stop
+@enduml

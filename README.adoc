@@ -72,6 +72,7 @@ PHP/
 ----
 
 The backend follows a layered architecture inspired by Clean Architecture:
+
 * *Domain*: Core business models (`Task`, `Board`, `BoardStatus`, `BoardView`), independent of frameworks or databases.
 * *Application*: Use cases, business logic, and repository contracts (`TaskService`, `BoardService`, `BoardViewService`).
 * *Infrastructure*: Implements repository contracts with Spring Data JPA and PostgreSQL.
@@ -119,13 +120,6 @@ Backend settings are configured in `backend/web/src/main/resources/application.p
 |Comma-separated allowed CORS origins (scheme + host + port, no trailing slash).
 |`http://localhost:5173,http://127.0.0.1:5173` (local profile)
 |===
-
-Example for a deployed environment:
-
-[source,dotenv]
-----
-FRONTEND_ORIGINS=https://php-frontend.tijs-ca5.workers.dev
-----
 
 ==== Frontend Environment Variables
 
@@ -337,6 +331,7 @@ JaCoCo generates aggregated unit and integration coverage reports:
 ----
 
 Reports are generated in:
+
 * `backend/build/reports/jacoco/unit/html/`
 * `backend/build/reports/jacoco/integration/html/`
 

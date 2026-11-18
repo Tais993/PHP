@@ -30,12 +30,19 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: .docs/package-lock.json
+      - name: Set up Java for PlantUML
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/develop'
         id: pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Install documentation dependencies
         run: npm --prefix .docs ci
+      - name: Render PlantUML diagrams
+        run: ./backend/gradlew -p .docs renderDiagrams
       - name: Build documentation
         run: npm --prefix .docs run build
         env:

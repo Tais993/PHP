@@ -299,7 +299,16 @@ Coverage is also uploaded to Codecov. The workflows are defined in `.github/work
 
 The https://tais993.github.io/PHP/[documentation site] will become the main project portfolio.
 All existing documents will be converted to Asciidoc, as the time passes.
-To build the site locally with Node.js 24, run `npm --prefix .docs ci` and `npm --prefix .docs run build` from the repository root, then open `.docs/build/site/index.html`.
+To build the site locally, use Node.js 24 and set `JAVA_HOME` to your JDK 25 installation. Run these commands from the repository root (use `./backend/gradlew.bat` on Windows), then open `.docs/build/site/index.html`.
+
+[source,shell]
+----
+./backend/gradlew -p .docs renderDiagrams
+npm --prefix .docs ci
+npm --prefix .docs run build
+----
+
+The `renderDiagrams` task generates SVGs from `.docs/UML/task-creation/`. Edit the `.puml` files there and run the task again before rebuilding the site.
 
 Old project documentation is maintained in the project portfolio:
 

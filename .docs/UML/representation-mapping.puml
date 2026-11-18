@@ -1,0 +1,58 @@
+----
+@startuml
+top to bottom direction
+
+class NewTask <<TypeScript>> {
+  title: string
+  description: string
+  statusId: number | null
+}
+class CreateTaskRequest <<Java record>> {
+  title: String
+  boardId: Long
+  description: String
+  statusId: Long
+}
+class Task <<domain>> {
+  id: Long
+  boardId: Long
+  title: String
+  description: String
+  createdAt: LocalDateTime
+  status: BoardStatus
+}
+class TaskJPA <<persistence>> {
+  id: Long
+  boardId: Long
+  title: String
+  description: String
+  createdAt: LocalDateTime
+  status: BoardStatusJPA
+}
+class TaskResponse <<Java record>> {
+  id: Long
+  boardId: Long
+  title: String
+  description: String
+  createdAt: LocalDateTime
+  status: StatusResponse
+}
+class TaskData <<TypeScript>> {
+  id: number
+  boardId: number
+  title: string
+  description: string
+  createdAt: string
+  status: TaskDataStatus | null
+  dueDate: string
+}
+
+NewTask --> CreateTaskRequest : JSON + provider boardId
+CreateTaskRequest --> Task : service resolves board/status
+Task --> TaskJPA : TaskMapper.toJpa
+TaskJPA --> Task : TaskMapper.toDomain
+Task --> TaskResponse : TaskResponse.fromDomain
+TaskResponse ..> TaskData : matching task shape,\nexcept dueDate / nullability
+
+@enduml
+----

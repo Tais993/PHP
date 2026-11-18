@@ -1,0 +1,727 @@
+= Task Creation Flow
+Tijs Beek
+September 2026
+:description: PHP: Personal Home Page
+:revdate: 2026-11-17
+:toc: left
+:toc-title: Table of contents
+:toclevels: 3
+:sectnums:
+:source-highlighter: rouge
+:icons: font
+:experimental:
+:repo: https://github.com/Tais993/PHP
+:commit: c03ad35dd9eb863dbf26fe207d9d4e5a18e9c2bd
+:src: {repo}/blob/{commit}
+:tree: {repo}/tree/{commit}
+
+PHP: Personal Home Page
+
+== Introduction
+
+=== Context:
+
+As an ITer, photographer, videographer and other tasks I’m constantly spending time figuring out what to do next and what has to be done. Tasks are maintained across multiple applications and systems. This sometimes results in deadlines being forgotten, or incorrectly remembered.
+
+Additionally, I’d like to follow the news more proactively. Existing news sites contain a lot of information, and requires opening multiple before getting a good overview.
+
+PHP is an application, a homepage being focused primarily on task management. This project will have functionalities such as tasks, Kanban boards, views, deadlines, users and eventually other non-task management related features.
+
+=== Purpose of this document:
+
+The purpose of this document is to showcase the implementation of the decided design and architecture of the project.
+
+It will cover the front-end, the interaction, and follow it fully to the end with the database connection. 
+
+The goal of this is to show-case how the application runs, in practice and not in theory.
+
+== Frontend
+
+=== User action
+
+The user has to open a board, and click on either the “New task” or “+ Add task” button.
+
+For the main example, we will visit `/boards/1` and click on "Add task" at the top right.
+
+image::Task_Creation_Flow_Attachments/image-2026-11-17-19-42-51-070.png[]
+
+The follow information will be submitted:
+[cols="1,2,2",options="header"]
+|===
+|Field |User input |Submitted value
+|Title |`"  Prepare sprint demo  "` |`"Prepare sprint demo"`
+|Description |`"  Demonstrate task creation  "` |`"Demonstrate task creation"`
+|Board |Selected through the URL |`1`
+|Status |Top-level button supplies none |`null`
+|===
+
+Which results in the following (local) HTTP request:
+
+[source,http]
+----
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Prepare sprint demo",
+  "description": "Demonstrate task creation",
+  "statusId": null,
+  "boardId": 1
+}
+----
+
+The end-to-end implemented flow is:
+.Task creation workflow
+
+plantuml::UML/task-create-flow.puml[format=svg]
+
+For task creation there is a clear distinction. *The POST response does NOT update the displayed task list. A subsequent GET does.*
+
+The backend groups and orders the tasks, the frontend doesn't.
+
+=== Routing, page, layout
+
+Sources:
+
+* {src}/frontend/src/main.tsx[`frontend/src/main.tsx`]
+* {src}/frontend/src/BoardPage.tsx[`frontend/src/BoardPage.tsx`]
+* {src}/frontend/src/providers/BoardViewsProvider.tsx[`frontend/src/providers/BoardViewsProvider.tsx`]
+* {src}/frontend/src/components/boards/BoardLayout.tsx[`frontend/src/components/boards/BoardLayout.tsx`]
+
+`main.tsx` establishes the application shell and routes using React Router.
+
+[source,tsx]
+----
+<Route index element={<Navigate to="/boards/1" replace />} />
+<Route path="boards/:boardId" element={<BoardPage/>}/>
+<Route path="boards/:boardId/views/:boardViewId" element={<BoardPage/>}/>
+----
+
+
+[cols="1,3",options="header"]
+|===
+|Element |Responsibility in this workflow
+|`AppLayout` | Sets the (Mantine and Topbar) base of every page, and fowrads based on the routes set.
+|`BoardsProvider` |Loads boards for navigation
+|`BoardPage` | Reads and validate route ID's, and composes the providers.
+|`BoardViewsProvider` |Loads board views and determines the selected view
+|`TasksProvider` |Loads the selected view's tasks and performs task creation
+|`BoardLayout` |Displays views, groups, task lists, and creation buttons
+|`AddTaskButton` |Creates and owns the task creation modal
+|`TaskList` / `Task` |Renders tasks
+|===
+
+To go more in depth on some of these, we will start with the `BoardPage`.
+
+It rejects any IDs that do not match a positive-integer, and they are converted to a Number.
+
+[source,tsx]
+----
+<BoardViewsProvider key={boardId} boardId={Number(boardId)}>
+    <TasksProvider key={boardId} boardId={Number(boardId)}>
+        <BoardLayout/>
+    </TasksProvider>
+</BoardViewsProvider>
+----
+
+This automatically updates the provider states when switching between boards.
+
+As changing `boardId` changes the React keys. It causes the board-scoped providers to remount again, which makes their local state reset and their effects load data again with the new board Id.
+
+`BoardViewsProvider` loads:
+[source,http]
+----
+GET /api/boards/1/views
+----
+
+It automatically select the first view, if none was given. The backend returns the views ordered by position already.
+
+`TasksProvider` loads:
+[source,http]
+----
+GET /api/views/{selectedViewId}/tasks
+----
+
+`BoardLayout` renders the actual board, views and groups.
+
+[source,tsx]
+----
+<AddTaskButton label="New task"/>
+
+<AddTaskButton statusId={group.id} fullWidth mt="auto"/>
+----
+
+=== Form state, default, and input
+
+Source: {src}/frontend/src/components/buttons/AddTaskButton.tsx[`frontend/src/components/buttons/AddTaskButton.tsx`].
+
+`AddTaskButton` has these local values:
+
+[cols="1,1,3",options="header"]
+|===
+|State |Initial value |Purpose
+|`opened` |`false` |Modal visibility
+|`title` |`''` |Controlled title input
+|`description` |`''` |Controlled description input
+|`saving` |`false` |Submission in progress
+|`error` |`null` |Form/submission error text
+|===
+
+Its props include:
+
+[source,tsx]
+----
+statusId?: number | null;
+label?: string;
+----
+
+`statusId` defaults to `null`; `label` defaults to `'+ Add task'`.
+
+`openModal()` clears previous input and errors. Failed submissions keep their values, unless the modal is re-opened or the task creation happens successfully.
+
+
+=== Frontend types and their API meaning
+
+Sources:
+
+* {src}/frontend/src/providers/TasksContext.ts[`frontend/src/providers/TasksContext.ts`]
+* {src}/frontend/src/components/types/TaskData.ts[`frontend/src/components/types/TaskData.ts`]
+
+The form's submission type is:
+
+[source,tsx]
+----
+export type NewTask = {
+    title: string;
+    description: string;
+    statusId: number | null;
+};
+----
+
+`NewTask` does not contain a `boardId`. The `TasksProvider` supplies that already, and this way a form cannot accidentally choose a different board through a typed call.
+
+All actual tasks use the TaskData, this is a 1:1 representation of the back-end's TaskResponse.
+[source,tsx]
+----
+export type TaskData = {
+    id: number
+    boardId: number
+    title: string
+    description: string
+    createdAt: string
+    status: TaskDataStatus | null
+    dueDate: string
+}
+----
+
+=== Client-side validation and failure behaviour
+
+Validation exists at three frontend points:
+
+[cols="1,2,2",options="header"]
+|===
+|Location |Rule |Failure behaviour
+|`TextInput` |`required`, `maxLength={+255+}` |Browser input/form constraints
+|`submitTask()` |Reject blank trimmed title |Sets `"Enter a task title"` and returns
+|`TasksProvider.createTask()` |Trimmed title length must be 1–255 |Throws an `Error`, displayed in modal
+|===
+
+In case the title is empty after a trim, the submit button also gets disabled. While this validation does not replace backend validation, it offers immediate feedback for the user.
+
+=== Submission and the HTTP boundary
+
+Sources:
+
+* {src}/frontend/src/providers/TasksProvider.tsx[`frontend/src/providers/TasksProvider.tsx`]
+* {src}/frontend/src/config.ts[`frontend/src/config.ts`]
+
+The form calls `submitTask`, which calls the TasksProviders `createTask` method.
+
+`TasksProvider.createTask` sends the task-creation request and triggers a reload of the selected view after the request succeeds.
+
+[source,tsx]
+----
+const response = await fetch(apiUrl('/tasks'), {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        ...input,
+        title,
+        boardId,
+    }),
+});
+----
+
+The apiURL is based on the configured `VITE_API_BASE_URL`
+The request contains:
+
+[cols="1,3",options="header"]
+|===
+|Part |Implemented value
+|Method |`POST`
+|Path |`/tasks`, appended to API base
+|Explicit header |`Content-Type: application/json`
+|Body |JSON containing `title`, `description`, `statusId`, `boardId`
+|===
+
+=== Loading, repeated submissions, success, and errors
+
+The focused frontend flow is:
+
+plantuml::UML/focused-frontend-flow.puml[format=svg]
+
+== Backend
+
+=== HTTP routing, CORS, and deserialisation
+
+Sources:
+
+* {src}/backend/web/src/main/java/nl/tijsbeek/controller/TaskController.java[`backend/web/src/main/java/nl/tijsbeek/controller/TaskController.java`]
+* {src}/backend/web/src/main/java/nl/tijsbeek/dto/CreateTaskRequest.java[`backend/web/src/main/java/nl/tijsbeek/dto/CreateTaskRequest.java`]
+* {src}/backend/web/src/main/java/nl/tijsbeek/config/WebConfig.java[`backend/web/src/main/java/nl/tijsbeek/config/WebConfig.java`]
+* {src}/backend/web/src/main/resources/application.properties[`backend/web/src/main/resources/application.properties`]
+
+The effective endpoint combines:
+
+[source,properties]
+----
+server.servlet.context-path=/api
+----
+
+with:
+
+[source,java]
+----
+@RequestMapping("/tasks")
+@PostMapping
+----
+
+This results in the external route becoming `POST /api/tasks`
+
+As CORS is configured, browser requests are only allowed from configured origins. This does not authenticate or prevent direct calls to the API.
+
+In the development setup, localhost is allowed. Outside of that, the `FRONTEND_ORIGINS` environmental variable has to be configured.
+
+
+Spring MVC reads the request body, it reads the JSON and constructs a `CreateTaskRequest`
+
+[source,java]
+----
+public record CreateTaskRequest(
+        String title,
+        Long boardId,
+        String description,
+        Long statusId
+) {}
+----
+
+This contains no validation, there are absolutely no constraints. In case a malformed JSON is received, Spring throws an exception. This exception is handled and results in a 400 error response.
+
+=== Controller responsibility and request mapping
+Sources:
+
+* {src}/backend/web/src/main/java/nl/tijsbeek/controller/TaskController.java[`backend/web/src/main/java/nl/tijsbeek/controller/TaskController.java`]
+
+The create handler is:
+
+[source,java]
+----
+@PostMapping
+@ResponseStatus(HttpStatus.CREATED)
+public TaskResponse create(@RequestBody CreateTaskRequest taskRequest) {
+    Task task = taskService.createTask(
+            taskRequest.title(),
+            taskRequest.boardId(),
+            taskRequest.description(),
+            taskRequest.statusId()
+    );
+    return TaskResponse.fromDomain(task);
+}
+----
+
+It performs 3 tasks.
+
+* Extracts the fields
+* Calls the application service
+* Maps the domain object into a response DTO
+
+As the service call doesn't require many arguments, direct mapping is fine.
+
+=== Application service and business rules
+
+Source: {src}/backend/application/src/main/java/nl/tijsbeek/services/TaskServiceImpl.java[`backend/application/src/main/java/nl/tijsbeek/services/TaskServiceImpl.java`].
+
+`createTask` is transactional:
+
+[source,java]
+----
+@Transactional
+@Override
+public Task createTask(
+        String title,
+        Long boardId,
+        String description,
+        Long statusId
+) {
+    // ...
+}
+----
+
+The execution order is:
+
+. Load the board through `BoardRepository`.
+. Reject a missing board with `InvalidTaskReferenceException`.
+. If `statusId` is non-null, find it in that board's status list.
+. Reject a missing or foreign-board status.
+. Construct the new domain task.
+. Save it through `TaskRepository`.
+
+Construction is:
+
+[source,java]
+----
+Task task = new Task(
+        null, selectedBoardId, title, description, null, status
+);
+----
+
+At this point:
+
+[cols="1,3",options="header"]
+|===
+|Value |State
+|ID |`null`, because the database has not generated it
+|Board ID |`1L`, after applying the default if needed
+|Title and description |Unchanged from the controller
+|Creation timestamp |`null`
+|Status |`null`, or a resolved `BoardStatus`
+|===
+
+=== Domain object and validation inconsistencies
+
+Source: {src}/backend/domain/src/main/java/nl/tijsbeek/entities/Task.java[`backend/domain/src/main/java/nl/tijsbeek/entities/Task.java`].
+
+`Task` contains:
+
+[cols="1,3",options="header"]
+|===
+|Field |Purpose
+|`Long id` |Persisted task identity; null before creation
+|`Long boardId` |Board membership
+|`String title` |Task title
+|`String description` |Description
+|`LocalDateTime createdAt` |Database-origin creation time
+|`BoardStatus status` |Optional resolved status
+|===
+
+=== Repository abstractions, implementations, and dependency injection
+
+Sources:
+
+* {src}/backend/application/src/main/java/nl/tijsbeek/interfaces/repositories/TaskRepository.java[`backend/application/src/main/java/nl/tijsbeek/interfaces/repositories/TaskRepository.java`]
+* {src}/backend/infrastructure/src/main/java/nl/tijsbeek/repositories/domain/TaskRepositoryImpl.java[`backend/infrastructure/src/main/java/nl/tijsbeek/repositories/domain/TaskRepositoryImpl.java`]
+* {src}/backend/infrastructure/src/main/java/nl/tijsbeek/repositories/domain/BoardRepositoryImpl.java[`backend/infrastructure/src/main/java/nl/tijsbeek/repositories/domain/BoardRepositoryImpl.java`]
+* {src}/backend/infrastructure/src/main/java/nl/tijsbeek/repositories/jpa/TaskJpaRepository.java[`backend/infrastructure/src/main/java/nl/tijsbeek/repositories/jpa/TaskJpaRepository.java`]
+
+The application interface exposes domain types:
+
+[source,java]
+----
+Task save(Task task);
+Optional<Task> findById(long id);
+----
+
+It does not expose anything related to JPA, Spring Data or the `EntityManager`.
+
+
+`TaskRepositoryImpl` implements that interface. It is an infrastructure implementation marked `@Repository`.
+
+`TaskJpaRepository` is a different interface:
+
+[source,java]
+----
+public interface TaskJpaRepository
+        extends JpaRepository<TaskJPA, Long>, TaskViewQueries {
+}
+----
+
+The JPARepository implementation is provided by the framework, which Spring Data provides in runtime.
+
+Dependency injection is enabled through the `@SpringBootApplication` annotation on `Main`.
+
+Spring discovers both `TaskServiceImpl` and `TaskRepositoryImpl` through component scanning. Constructor injection supplies the matching beans, allowing `TaskServiceImpl` to depend on the `TaskRepository` interface, NOT the implementation.
+
+Additionally, Spring Data creates the implementation of the `TaskJpaRepository` interface.
+
+=== Runtime calls versus module dependencies
+
+The Gradle dependencies are:
+
+[cols="1,3",options="header"]
+|===
+|Module |Relevant compile-time dependencies
+|`domain` |No project dependencies
+|`application` |`domain`, Spring context, Spring transactions
+|`infrastructure` |`domain`, `application`, persistence libraries
+|`web` |`domain`, `application`, `infrastructure`
+|===
+
+Sources are each project's respective `backend/*/build.gradle.kts` file.
+
+An important distinction is that the service calls the infrastructure implementation at runtime, but the module is compiled against the interface/contract.
+
+plantuml::UML/dependency-direction-backend.puml[format=svg]
+
+=== Mapping to JPA and saving
+
+Sources:
+
+* {src}/backend/infrastructure/src/main/java/nl/tijsbeek/mapper/TaskMapper.java[`backend/infrastructure/src/main/java/nl/tijsbeek/mapper/TaskMapper.java`]
+* {src}/backend/infrastructure/src/main/java/nl/tijsbeek/entities/TaskJPA.java[`backend/infrastructure/src/main/java/nl/tijsbeek/entities/TaskJPA.java`]
+
+`TaskRepositoryImpl.save` performs:
+
+[source,java]
+----
+BoardStatusJPA status = task.getStatus() == null ? null :
+        entityManager.getReference(
+                BoardStatusJPA.class,
+                task.getStatus().getId());
+
+TaskJPA entity = TaskMapper.toJpa(task, status);
+TaskJPA saved = jpaRepository.save(entity);
+
+return TaskMapper.toDomain(saved);
+----
+
+
+For a column-created task, `getReference` received an entity reference for an existing status. It does not create a new status.
+
+`TaskMapper.toJpa` copies ID, board ID, title, description, and creation time, and uses the given status reference.
+
+[cols="1,3",options="header"]
+|===
+|Java member |Database mapping
+|`id` |Primary key with `GenerationType.IDENTITY`
+|`boardId` |Scalar `board_id`, non-null
+|`title` |`title`, non-null, length 255
+|`description` |`description`, non-null text
+|`createdAt` |`created_at`, non-null, excluded from inserts and updates
+|`status` |Lazy `ManyToOne` through column `status`
+|===
+
+PostgreSQL generates the identity ID, and Hibernate makes it available on the saved entity. Based on the received TaskJPA, a new domain Task entity is created so the original is not mutated.
+
+=== Database-generated creation time
+
+The schema sets:
+
+[source,sql]
+----
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+----
+
+The entity sets:
+
+[source,java]
+----
+@Column(
+    name = "created_at",
+    nullable = false,
+    insertable = false,
+    updatable = false
+)
+private LocalDateTime createdAt;
+----
+
+* PostgreSQL generates a value in the row.
+* Hibernate does not try to write the value to the row.
+
+=== Transactions and failure timing
+
+The `TaskService.createTask` and the `TaskRepository.save` method both have `@Transactional` annotated.
+
+In this case the benefit is minimal, as this method is a single database write. In more advanced methods there is a clear benefit.
+
+In case of a failure, within the transactions logic, all changes would be rolled back. That would result in the insert/save being reverted, and nothing being changed.
+
+=== Schema and migration history
+
+Sources: {tree}/backend/infrastructure/src/main/resources/db/migration[`backend/infrastructure/src/main/resources/db/migration`].
+
+Flyway automatically runs any schema migrations; `spring.jpa.hibernate.dll-auto=validate` tells Hibernate to validate the scheme with the JPA Entities.
+
+[cols="2,3",options="header"]
+|===
+|Migration |Relevant effect
+|`V1__added_tasks.sql` |Creates task ID, title, description, timestamp, and original textual status
+|`V2__added_boards.sql` |Creates boards, inserts Inbox, assigns existing tasks to it, makes `board_id` required
+|...|....
+|`V5__added_board_views.sql` |Creates view configuration used by the frontend's task GET
+|===
+
+=== Response DTO and HTTP result
+
+Source: {src}/backend/web/src/main/java/nl/tijsbeek/dto/TaskResponse.java[`backend/web/src/main/java/nl/tijsbeek/dto/TaskResponse.java`].
+
+The response record contains:
+
+[source,java]
+----
+public record TaskResponse(
+        Long id,
+        Long boardId,
+        String title,
+        String description,
+        LocalDateTime createdAt,
+        StatusResponse status
+) {
+    public record StatusResponse(
+            Long id, String name, int position
+    ) {}
+}
+----
+
+`TaskResponse.fromDomain` copies task values and contains all status values, if any.
+
+This is a useful separation:
+
+* Persistence relationships or domain entities never become the API response
+* Clients receive applicable status display data
+* The status omits the board ID, it's already available on the task.
+
+With the example we mentioned before, assuming PostgreSQL generated `42` as ID, the expection response is:
+
+[source,http]
+----
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 42,
+  "boardId": 1,
+  "title": "Prepare sprint demo",
+  "description": "Demonstrate task creation",
+  "createdAt": null,
+  "status": null
+}
+----
+
+In case a task had a status set, it receives a nested status:
+
+[source,json]
+----
+{
+  "id": 7,
+  "name": "To do",
+  "position": 0
+}
+----
+
+plantuml::UML/representation-mapping.puml[format=svg]
+
+=== Error handling and security
+
+Source: {src}/backend/web/src/main/java/nl/tijsbeek/errors/GlobalExceptionHandler.java[`backend/web/src/main/java/nl/tijsbeek/errors/GlobalExceptionHandler.java`].
+
+The handler explicitly maps:
+
+[cols="2,3",options="header"]
+|===
+|Failure |HTTP behavior
+|`InvalidTaskReferenceException` |400 `ProblemDetail`
+|Task/board/view not found exceptions |404 `ProblemDetail`
+|===
+
+This ensures that regardless of where the error came up, regardless of in what service or controller the error is handled properly and the HTTP Response contain all required information for the front-end to inform the user.
+
+[source, java]
+----
+@ExceptionHandler({
+        TaskNotFoundException.class,
+        BoardNotFoundException.class,
+        BoardViewNotFoundException.class
+})
+public ProblemDetail handleNotFound(RuntimeException exception) {
+    return createProblem(HttpStatus.NOT_FOUND, exception.getMessage());
+}
+----
+
+
+=== Finishing the round trip: the view GET and updated UI
+
+Sources:
+
+* {src}/backend/web/src/main/java/nl/tijsbeek/controller/ViewController.java[`backend/web/src/main/java/nl/tijsbeek/controller/ViewController.java`]
+* {src}/backend/infrastructure/src/main/java/nl/tijsbeek/repositories/jpa/TaskViewQueriesImpl.java[`backend/infrastructure/src/main/java/nl/tijsbeek/repositories/jpa/TaskViewQueriesImpl.java`]
+* {src}/backend/application/src/main/java/nl/tijsbeek/services/TaskGroupingServiceImpl.java[`backend/application/src/main/java/nl/tijsbeek/services/TaskGroupingServiceImpl.java`]
+* {src}/backend/web/src/main/java/nl/tijsbeek/dto/TaskViewResponse.java[`backend/web/src/main/java/nl/tijsbeek/dto/TaskViewResponse.java`]
+
+After the POST succeeds:
+
+[source,typescript]
+----
+setReloadCount(current => current + 1);
+----
+
+The provider's key is:
+
+[source,typescript]
+----
+const requestKey =
+    `${boardId}:${selectedViewId}:${reloadCount}`;
+----
+
+Changing it makes the old result ineligible:
+
+[source,typescript]
+----
+const currentResult =
+    result?.requestKey === requestKey ? result : null;
+----
+
+This results in an automatic reload of the board's view.
+
+In the backend:
+
+. The respective `BoardView` is loaded
+. All tasks, corresponding to the view are sorted and loaded from the database
+. All board's statuses are loaded
+. The tasks are grouped by their status
+. Each task is mapped to a `TaskResponse`
+. A TaskViewResponse is created and returned by the controller
+
+In our example, this results in the following JSON:
+
+[source,json]
+----
+{
+  "groupedBy": "STATUS",
+  "groups": {
+    "0": {
+      "id": null,
+      "name": "Unassigned",
+      "position": 2147483647,
+      "items": [
+        {
+          "id": 42,
+          "boardId": 1,
+          "title": "Prepare sprint demo",
+          "description": "Demonstrate task creation",
+          "createdAt": "2026-11-17T16:30:00",
+          "status": null
+        }
+      ]
+    }
+  }
+}
+----
+
+The frontend:
+
+. Stores the response
+. Reads all groups and sorts them by position
+. Passes each groups Items to a `TaskList`
+. Renders all tasks

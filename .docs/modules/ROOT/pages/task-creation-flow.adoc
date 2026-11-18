@@ -3,11 +3,8 @@ Tijs Beek
 September 2026
 :description: PHP: Personal Home Page
 :revdate: 2026-11-17
-:toc: left
-:toc-title: Table of contents
 :toclevels: 3
 :sectnums:
-:source-highlighter: rouge
 :icons: font
 :experimental:
 :repo: https://github.com/Tais993/PHP
@@ -43,7 +40,7 @@ The user has to open a board, and click on either the “New task” or “+ Add
 
 For the main example, we will visit `/boards/1` and click on "Add task" at the top right.
 
-image::Task_Creation_Flow_Attachments/image-2026-11-17-19-42-51-070.png[]
+image::task-board.png[Kanban board with a New task button and an Add task button in each column]
 
 The follow information will be submitted:
 [cols="1,2,2",options="header"]

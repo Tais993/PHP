@@ -64,7 +64,9 @@ replay_pid*
 
 # Image files
 *.png
+!/.docs/modules/ROOT/images/task-board.png
 
+/.docs/build/
 
 
 **/node_modules/

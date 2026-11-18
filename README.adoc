@@ -57,7 +57,7 @@ The backend follows a layered architecture inspired by Clean Architecture. The d
 
 Dependencies are organised so that the core business behaviour does not need to know about database implementations. JPA entities and mapping code are kept in infrastructure rather than in the domain model.
 
-image::.UML/architecture/architecture-diagram.svg[Backend architecture]
+image::.docs/UML/architecture/architecture-diagram.svg[Backend architecture]
 
 == Running the project
 
@@ -297,12 +297,17 @@ Coverage is also uploaded to Codecov. The workflows are defined in `.github/work
 
 == Documentation
 
-Further project documentation is maintained in the project portfolio:
+The https://tais993.github.io/PHP/[documentation site] will become the main project portfolio.
+All existing documents will be converted to Asciidoc, as the time passes.
+To build the site locally with Node.js 24, run `npm --prefix .docs ci` and `npm --prefix .docs run build` from the repository root, then open `.docs/build/site/index.html`.
+
+Old project documentation is maintained in the project portfolio:
 
 * Project plan
 * Analysis document
 * Architecture / design document
 * Management document
+* And more
 
 == Technologies
 

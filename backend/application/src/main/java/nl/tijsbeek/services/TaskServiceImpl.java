@@ -4,9 +4,9 @@ import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
-import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.exceptions.BoardViewNotFoundException;
 import nl.tijsbeek.exceptions.InvalidTaskReferenceException;
+import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
@@ -43,15 +43,14 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Task createTask(String title, Long boardId, String description, Long statusId) {
         long selectedBoardId = boardId == null ? 1L : boardId;
-        Board board = boardRepository.findById(selectedBoardId)
-                .orElseThrow(() -> new InvalidTaskReferenceException(
-                        "Board with ID " + selectedBoardId + " was not found"));
+
+        if (!boardRepository.existsById(selectedBoardId)) {
+            throw new InvalidTaskReferenceException("Board with ID " + selectedBoardId + " was not found");
+        }
 
         BoardStatus status = null;
         if (statusId != null) {
-            status = board.getStatuses().stream()
-                    .filter(option -> statusId.equals(option.getId()))
-                    .findFirst()
+            status = boardStatusRepository.findByIdAndboardId(statusId, selectedBoardId)
                     .orElseThrow(() -> new InvalidTaskReferenceException(
                             "Status does not exist on the selected board"));
         }

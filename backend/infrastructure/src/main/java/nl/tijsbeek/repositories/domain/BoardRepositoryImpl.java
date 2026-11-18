@@ -2,8 +2,8 @@ package nl.tijsbeek.repositories.domain;
 
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardJPA;
-import nl.tijsbeek.mapper.BoardMapper;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
+import nl.tijsbeek.mapper.BoardMapper;
 import nl.tijsbeek.repositories.jpa.BoardJpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +18,11 @@ private final BoardJpaRepository jpaRepository;
 
     public BoardRepositoryImpl(BoardJpaRepository jpaRepository) {
         this.jpaRepository = jpaRepository;
+    }
+
+    @Override
+    public boolean existsById(long id) {
+        return jpaRepository.existsById(id);
     }
 
     @Override

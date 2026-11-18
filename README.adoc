@@ -310,6 +310,8 @@ npm --prefix .docs run build
 
 The `renderDiagrams` task generates SVGs from `.docs/UML/task-creation/`. Edit the `.puml` files there and run the task again before rebuilding the site.
 
+In GitHub Actions, open a completed *Documentation Exports* run and download the `task-creation-flow` artifact. It contains a PDF and a standalone HTML file, both with syntax highlighting. The workflow writes both files to `.docs/build/exports/` and runs on documentation changes targeting `develop` or when started manually.
+
 Old project documentation is maintained in the project portfolio:
 
 * Project plan

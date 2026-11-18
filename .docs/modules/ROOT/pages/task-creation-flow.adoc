@@ -354,23 +354,34 @@ Source: {src}/backend/application/src/main/java/nl/tijsbeek/services/TaskService
 
 [source,java]
 ----
-@Transactional
-@Override
-public Task createTask(
-        String title,
-        Long boardId,
-        String description,
-        Long statusId
-) {
-    // ...
-}
+    @Transactional
+    @Override
+    public Task createTask(String title, Long boardId, String description, Long statusId) {
+        long selectedBoardId = boardId == null ? 1L : boardId;
+
+        if (!boardRepository.existsById(selectedBoardId)) {
+            throw new InvalidTaskReferenceException("Board with ID " + selectedBoardId + " was not found");
+        }
+
+        BoardStatus status = null;
+        if (statusId != null) {
+            status = boardStatusRepository.findByIdAndboardId(statusId, selectedBoardId)
+                    .orElseThrow(() -> new InvalidTaskReferenceException(
+                            "Status does not exist on the selected board"));
+        }
+
+        Task task = new Task(null, selectedBoardId, title, description, null, status);
+
+
+        return taskRepository.save(task);
+    }
 ----
 
 The execution order is:
 
-. Load the board through `BoardRepository`.
+. Verify or the board exists through `BoardRepository`
 . Reject a missing board with `InvalidTaskReferenceException`.
-. If `statusId` is non-null, find it in that board's status list.
+. If `statusId` is non-null, retrieve the status if it exists on the board
 . Reject a missing or foreign-board status.
 . Construct the new domain task.
 . Save it through `TaskRepository`.
@@ -396,7 +407,7 @@ At this point:
 |Status |`null`, or a resolved `BoardStatus`
 |===
 
-=== Domain object and validation inconsistencies
+=== Domain object
 
 Source: {src}/backend/domain/src/main/java/nl/tijsbeek/entities/Task.java[`backend/domain/src/main/java/nl/tijsbeek/entities/Task.java`].
 

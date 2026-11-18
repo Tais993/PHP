@@ -1,0 +1,69 @@
+name: Documentation Exports
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.docs/**'
+      - '.github/workflows/documentation-exports.yml'
+      - 'backend/gradle/wrapper/**'
+      - 'backend/gradlew'
+  pull_request:
+    branches: [develop]
+    paths:
+      - '.docs/**'
+      - '.github/workflows/documentation-exports.yml'
+      - 'backend/gradle/wrapper/**'
+      - 'backend/gradlew'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Java for PlantUML
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Ruby for Asciidoctor
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        with:
+          ruby-version: '3.4.12'
+      - name: Install Asciidoctor and Rouge
+        run: gem install --no-document asciidoctor-pdf:2.3.27 rouge:5.1.0
+      - name: Render PlantUML diagrams
+        run: ./backend/gradlew -p .docs renderDiagrams
+      - name: Export PDF
+        run: >-
+          asciidoctor-pdf --failure-level WARN
+          -r ./.docs/pdf/svg-text-spacing.rb
+          -a source-highlighter=rouge
+          -a imagesdir=../images
+          -D .docs/build/exports
+          .docs/modules/ROOT/pages/task-creation-flow.adoc
+      - name: Export standalone HTML
+        run: >-
+          asciidoctor --failure-level WARN
+          -a source-highlighter=rouge
+          -a imagesdir=../images
+          -a data-uri
+          -a 'webfonts!'
+          -a 'icons!'
+          -D .docs/build/exports
+          .docs/modules/ROOT/pages/task-creation-flow.adoc
+      - name: Upload document exports
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: task-creation-flow
+          path: |
+            .docs/build/exports/task-creation-flow.pdf
+            .docs/build/exports/task-creation-flow.html
+          if-no-files-found: error

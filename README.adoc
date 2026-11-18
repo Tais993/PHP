@@ -7,330 +7,369 @@ image:https://sonarcloud.io/api/project_badges/measure?project=Tais993_PHP&metri
 image:https://sonarcloud.io/api/project_badges/measure?project=Tais993_PHP&metric=reliability_rating[Reliability Rating,link=https://sonarcloud.io/summary/new_code?id=Tais993_PHP]
 image:https://sonarcloud.io/api/project_badges/measure?project=Tais993_PHP&metric=security_rating[Security Rating,link=https://sonarcloud.io/summary/new_code?id=Tais993_PHP]
 
-PHP (Personal Home Page) is a self-hosted application for managing tasks and eventually, organising work across multiple boards and sprints.
 
-The project started from my personal frustration with keeping tracks of TODOs, deadlines and work planned. Its goal is to provide a personal browser homepage where daily tasks and long-term work can be managed in one easily accessible place.
 
-== Status
-This project is under active development.
+PHP (Personal Home Page) is a self-hosted application for managing tasks, tracking deadlines, and organising work across multiple Kanban-style boards and sprint views.
 
-The current version is merely for testing, but the next version will focus on the following:
+The project started from a personal frustration with keeping track of TODOs, deadlines, and planned work. Its goal is to provide a unified browser homepage where daily tasks and long-term project work can be managed in one easily accessible place.
 
-* Maintaining and creating TODOs
-* Creating and organising boards
+== Live Environments
 
-Some planned features, such as user account creation, are still in development.
+[cols="1,2,2",options="header"]
+|===
+|Component |Platform |URL
 
-== Features
+|Frontend
+|Cloudflare Workers
+|https://php-frontend.tijs-ca5.workers.dev/boards/1[php-frontend.tijs-ca5.workers.dev^] (connected to Heroku backend)
 
-=== Currently implemented
+|Backend (Dev)
+|Azure Container Apps
+|https://homepage-dev.calmrock-5a326db7.germanywestcentral.azurecontainerapps.io[homepage-dev on Azure^]
 
-* REST endpoints for creating, retrieving and deleting tasks
+|Backend (Live)
+|Heroku
+|https://personal-home-page-30cd48c1ef7c.herokuapp.com/[personal-home-page on Heroku^]
+
+|Documentation
+|GitHub Pages
+|https://tais993.github.io/PHP/[Documentation Site^]
+|===
+
+== Status & Features
+
+=== Currently Implemented
+
+* *Backend REST API*: Layered Clean Architecture for managing boards, tasks, statuses, and grouped board views.
+* *Interactive Frontend*: React 19 + TypeScript + Vite SPA featuring Kanban boards with drag-and-drop task status transitions.
+* *OpenAPI & Swagger UI*: Interactive API documentation and exploratory testing interface at `/api/swagger-ui/index.html`.
+* *Continuous Delivery*: Automated CI/CD pipelines deploying backend containers to Azure Container Apps and frontend assets to Cloudflare Workers.
+* *Containerisation*: Multi-stage Docker builds and Docker Compose support for local development and self-hosted environments.
 
 === Planned
 
-* Browser-based task management interface
-* Multiple boards with Kanban style
-* Task editing and status management through the website
-* User accounts and multi-user workflows
-
+* User accounts, authentication, and multi-user workflows
+* Board customisation, tags, and deadline notifications
+* Personal dashboard widgets and homepage integrations
 
 == Project Structure
 
 [source,text]
 ----
 PHP/
-    frontend/             React/Vite application, built and deployed as static files
+    frontend/             React/Vite single-page application (deployed to Cloudflare Workers)
     backend/
-        domain/           Core domain entities
-        application/      Services, use cases and repository contracts
-        infrastructure/   JPA persistence, mapping and database migrations
-        web/              Spring Boot entry point, REST controllers and DTOs
-        test-fixtures/    Shared test containers, annotations and fixtures
-        buildSrc/         Gradle conventions for testing and coverage
-    .github/workflows/    CI, quality analysis and Docker workflows
-    compose.dev.yaml      PostgreSQL only, for local development
-    compose.yaml          Backend and PostgreSQL containers
+        domain/           Core domain entities (Board, Task, BoardStatus, BoardView)
+        application/      Services, use cases, and repository interfaces
+        infrastructure/   JPA persistence, Flyway migrations, and domain mappers
+        web/              Spring Boot entry point, REST controllers, DTOs, and OpenAPI config
+        test-fixtures/    Shared test containers, base classes, and test fixtures
+        buildSrc/         Gradle conventions for testing and coverage aggregation
+    .github/workflows/    CI/CD, code quality analysis, Pages, and Docker publish workflows
+    compose.dev.yaml      PostgreSQL container only (for local backend development)
+    compose.yaml          Full stack compose: Spring Boot backend and PostgreSQL containers
+    heroku.yml            Heroku Docker deployment manifest
 ----
 
-The backend follows a layered architecture inspired by Clean Architecture. The domain contains the core models. The application layer defines business logic and repository contracts they need. The infrastructure implements those contracts using JPA and PostgreSQL. And last but not least, the web layer handles HTTP request.
-
-Dependencies are organised so that the core business behaviour does not need to know about database implementations. JPA entities and mapping code are kept in infrastructure rather than in the domain model.
+The backend follows a layered architecture inspired by Clean Architecture:
+* *Domain*: Core business models (`Task`, `Board`, `BoardStatus`, `BoardView`), independent of frameworks or databases.
+* *Application*: Use cases, business logic, and repository contracts (`TaskService`, `BoardService`, `BoardViewService`).
+* *Infrastructure*: Implements repository contracts with Spring Data JPA and PostgreSQL.
+* *Web*: Handles HTTP requests, CORS, DTO transformations, validation, and Swagger documentation.
 
 image::.docs/UML/architecture/architecture-diagram.svg[Backend architecture]
 
-== Running the project
+== Running the Project Locally
 
 === Prerequisites
 
 * Java 27 JDK
-* Node.js 24 for the frontend
-* Docker Desktop or another Docker Engine
+* Node.js 24
+* Docker Desktop or compatible Docker Engine
 
-The repository includes a Gradle wrapper, so a Gradle installation is not required.
+The repository includes a Gradle wrapper in `backend/`, so an external Gradle installation is not required.
 
-=== Configuration
+=== Configuration Reference
 
-Local development works with the default settings. When deploying the frontend
-and backend separately, configure their URLs as described below.
+==== Backend Environment Variables
 
-==== Backend
+Backend settings are configured in `backend/web/src/main/resources/application.properties` under the servlet context path `/api`.
 
-Backend settings are defined in
-`backend/web/src/main/resources/application.properties`.
-For deployment, set these environment variables on your backend host:
-
-[cols="1,2",options="header"]
+[cols="1,2,1",options="header"]
 |===
-|Variable |Purpose
+|Variable |Purpose |Default
 
 |`PORT`
-|HTTP port. Defaults to `8080`; Heroku provides this automatically.
+|HTTP server port (Heroku and Azure provide this automatically).
+|`8080`
 
 |`SPRING_DATASOURCE_URL`
-|PostgreSQL JDBC connection URL.
+|PostgreSQL JDBC connection string.
+|`jdbc:postgresql://localhost:5434/homepage` (in compose)
 
 |`SPRING_DATASOURCE_USERNAME`
-|Database username.
+|Database user.
+|`homepage`
 
 |`SPRING_DATASOURCE_PASSWORD`
 |Database password.
+|`homepage`
 
 |`FRONTEND_ORIGINS`
-|Frontend URLs allowed to call the backend from a browser.
+|Comma-separated allowed CORS origins (scheme + host + port, no trailing slash).
+|`http://localhost:5173,http://127.0.0.1:5173` (local profile)
 |===
 
-For example, set this on the backend host:
+Example for a deployed environment:
 
 [source,dotenv]
 ----
-FRONTEND_ORIGINS=https://your-frontend.example
+FRONTEND_ORIGINS=https://php-frontend.tijs-ca5.workers.dev
 ----
 
-Use the frontend's origin only: no path or trailing slash. Separate multiple
-origins with commas. Without this setting, production rejects cross-origin
-browser requests.
+==== Frontend Environment Variables
 
-For local development, `:web:bootRun` activates the `local` profile automatically.
-This profile allows frontend requests from `http://localhost:5173` and
-`http://127.0.0.1:5173`.
+Frontend configuration is centralised in `frontend/src/config.ts`. Copy `frontend/.env.example` to `frontend/.env.local` for local overrides:
 
-==== Frontend
-
-Frontend settings are read in `frontend/src/config.ts`.
-The API URL is configured through `VITE_API_BASE_URL`.
-
-For local overrides:
-
-. Copy `frontend/.env.example` to `frontend/.env.local`.
-. Set the backend URL in that file, including `/api`:
-+
-[source,dotenv]
-----
-VITE_API_BASE_URL=http://localhost:8080/api
-----
-
-For a separately hosted frontend, set the deployed backend URL in the frontend
-build environment:
-
-[source,dotenv]
-----
-VITE_API_BASE_URL=https://your-backend.example/api
-----
-
-Set this *before* running `npm run build`. The URL is embedded in the generated
-files, so changing it requires a new build. Frontend settings are public and must
-not contain secrets.
-
-See link:frontend/README.md[the frontend README] for build and hosting instructions.
-
-==== Local database
-
-Docker Compose uses these development defaults:
-
-[cols="1,1",options="header"]
+[cols="1,2,1",options="header"]
 |===
-|Setting |Value
-|Database |`homepage`
-|Username |`homepage`
-|Password |`homepage`
-|Host port |`5434`
+|Variable |Purpose |Default
+
+|`VITE_API_BASE_URL`
+|Public backend API base URL, including the `/api` prefix.
+|`http://localhost:8080/api` (dev) / `/api` (prod)
 |===
 
-Use separate credentials when deploying to a live environment.
+NOTE: `VITE_` variables are embedded into static assets during build time (`npm run build`). Changing the API URL for production requires rebuilding the frontend.
 
-== Local development
+=== Local Development Steps
 
-Start the Spring Boot backend:
+==== 1. Start the Backend
+
+From the `backend/` directory:
 
 [source,bash]
 ----
-cd backend
+# Linux / macOS
 ./gradlew :web:bootRun
+
+# Windows
+gradlew.bat :web:bootRun
 ----
 
-On Windows, use `gradlew.bat` instead of `./gradlew`.
+The `local` profile automatically starts PostgreSQL using `compose.dev.yaml` via Spring Boot Docker Compose integration. The backend listens at `http://localhost:8080/api`.
 
-In the local profile, Spring Boot is configured to use `compose.dev.yaml`. This profile only runs PostgreSQL. This allows the backend to be ran locally for development and debugging.
-
-The backend usually listens to `http://localhost:8080`. At present, this exposes REST endpoints.
-
-Start the frontend separately from `frontend/` with `npm ci` and `npm run dev`.
-Open `http://localhost:5173`; its default development API URL is
-`http://localhost:8080/api`.
-
-If you rather run the development database manually, run the following command from the repository root:
+Alternatively, run the development database independently from the repository root:
 
 [source,bash]
 ----
 docker compose -f compose.dev.yaml up -d
 ----
 
-Avoid running the full application container and `bootRun` simultaneously on port `8080`.
+==== 2. Start the Frontend
 
-=== Docker
+From the `frontend/` directory:
 
-To run both the application and its PostgreSQL database in container, run this from the repository root.
+[source,bash]
+----
+npm ci
+npm run dev
+----
+
+Open `http://localhost:5173` in your browser. The frontend connects to `http://localhost:8080/api` by default.
+
+==== 3. Full Stack via Docker Compose
+
+To launch the complete containerised stack (backend and PostgreSQL 17) locally:
 
 [source,bash]
 ----
 docker compose up -d --build
 ----
 
-The full `compose.yaml` defines the backend container and a PostgreSQL 17 container
-with a persistent PostgreSQL volume. The API is exposed on `http://localhost:8080/api`.
-The Docker image contains only the backend. Build the frontend with `npm run build`
-from `frontend/` and publish `frontend/dist/` separately.
+* API is accessible at `http://localhost:8080/api`
+* PostgreSQL is exposed on port `5434`
+* To stop the containers while preserving database volume: `docker compose down`
 
-To stop the containers:
+== REST API & OpenAPI Documentation
 
-[source,bash]
-----
-docker compose down
-----
+Interactive API documentation and schema exploration are provided by SpringDoc OpenAPI.
 
-This keeps the database volume. Do not add `-v` unless you intentionally want to remove the Compose-managed volume and its stored data.
+* *Swagger UI*: `http://localhost:8080/api/swagger-ui/index.html` (or `<backend-url>/api/swagger-ui/index.html`)
+* *OpenAPI JSON*: `http://localhost:8080/api/v3/api-docs`
 
-=== REST API
+=== Core Endpoints Summary
 
-The current controller exposes these routes:
+All routes are served relative to the `/api` context path:
+
 [cols="1,2,3",options="header"]
 |===
 |Method |Endpoint |Description
-|`POST` |`/task` |Create a task from a JSON request; returns `201 Created`
-|`GET` |`/task?id=1` |Retrieve a task by ID; returns `404 Not Found` if it does not exist
-|`DELETE` |`/task?id=1` |Delete a task by ID; returns `204 No Content` on success
+
+3+|*Boards*
+|`POST` |`/api/boards` |Create a new board (`201 Created`)
+|`GET` |`/api/boards` |List all boards (`200 OK`)
+|`GET` |`/api/boards/+{id}+` |Get board details by ID (`200 OK` or `404 Not Found`)
+|`GET` |`/api/boards/+{boardId}+/tasks` |Get all tasks belonging to a board (`200 OK`)
+|`GET` |`/api/boards/+{boardId}+/views` |Get all views configured for a board (`200 OK`)
+|`DELETE` |`/api/boards/+{id}+` |Delete a board by ID (`204 No Content`)
+
+3+|*Tasks*
+|`POST` |`/api/tasks` |Create a new task (`201 Created`)
+|`GET` |`/api/tasks` |List all tasks across boards (`200 OK`)
+|`GET` |`/api/tasks/+{id}+` |Get task details by ID (`200 OK` or `404 Not Found`)
+|`POST` |`/api/tasks/+{id}+/status` |Update task status / column (`200 OK`)
+|`DELETE` |`/api/tasks/+{id}+` |Delete a task by ID (`204 No Content`)
+
+3+|*Views*
+|`GET` |`/api/views/+{viewId}+` |Get a specific board view configuration (`200 OK`)
+|`GET` |`/api/views/+{viewId}+/tasks` |Get board tasks grouped by status for Kanban rendering (`200 OK`)
 |===
 
-Any more on this will be discussed later, Swagger UI will be added.
+== Deployment
 
-== Testing
+=== 1. Azure Container Apps (Backend)
 
-Tests are split up into unit and integration tests. Integration tests are marked with a JUnit tag named `integration`. They are run separately.
+The repository includes continuous deployment for the backend on pushes to the `develop` branch via `.github/workflows/docker-publish.yml`.
 
-Integration tests use Testcontainers to run against PostgreSQL rather to rely on the developer's local database.
+1. *Image Publishing*: GitHub Actions builds the multi-stage Docker image and publishes it to GitHub Container Registry (`ghcr.io/tais993/php:develop-<sha>`).
+2. *Azure Deployment*: The `deploy-azure` job logs into Azure using OpenID Connect (OIDC) and updates the Container App `homepage-dev` in resource group `rg-homepage-dev`.
+3. *Required GitHub Secrets*:
+   * `AZURE_CLIENT_ID`
+   * `AZURE_TENANT_ID`
+   * `AZURE_SUBSCRIPTION_ID`
+4. *Container App Environment Variables*:
+   * `PORT`: Set or handled by Azure Container Apps ingress.
+   * `SPRING_DATASOURCE_URL`: PostgreSQL connection URL (e.g., Azure Database for PostgreSQL).
+   * `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD`: Database credentials.
+   * `FRONTEND_ORIGINS`: Origin of the deployed frontend (e.g., `https://php-frontend.tijs-ca5.workers.dev`).
 
-Run commands from the `backend` directory.
+=== 2. Heroku (Backend)
 
-=== Unit tests
+Heroku deployment is configured via `heroku.yml` using container builds.
+
+1. *Configuration*: `heroku.yml` specifies building the `Dockerfile` for the `web` process.
+2. *Setup*:
++
+[source,bash]
+----
+heroku create <app-name>
+heroku stack:set container
+heroku addons:create heroku-postgresql:essential-0
+----
+3. *Config Vars*:
+   * `SPRING_DATASOURCE_URL`: PostgreSQL JDBC URL.
+   * `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD`: Postgres credentials.
+   * `FRONTEND_ORIGINS`: Allowed frontend origin URL(s).
+   * `PORT`: Injected automatically by Heroku.
+4. *Deploy*: Push changes to Heroku Git:
++
+[source,bash]
+----
+git push heroku main
+----
+
+=== 3. Cloudflare Workers (Frontend)
+
+The frontend is served as static assets through Cloudflare Workers as configured in `frontend/wrangler.jsonc`.
+
+1. *Cloudflare Project Settings*:
+   * *Root directory*: `frontend`
+   * *Build command*: `npm run build`
+   * *Deploy command*: `npx wrangler deploy`
+2. *Build Environment Variables*:
+   * `NODE_VERSION`: `24`
+   * `VITE_API_BASE_URL`: Public HTTPS backend URL including `/api` (e.g., `https://personal-home-page-30cd48c1ef7c.herokuapp.com/api` or `https://homepage-dev.calmrock-5a326db7.germanywestcentral.azurecontainerapps.io/api`).
+3. *Routing*: `wrangler.jsonc` specifies `"not_found_handling": "single-page-application"`, ensuring direct navigation and page reloads (e.g. `/boards/1`) route correctly to `index.html`.
+4. *CORS*: After obtaining the Cloudflare URL, add it to `FRONTEND_ORIGINS` in your backend deployment.
+
+=== 4. Self-Hosted (Docker Compose)
+
+For production hosting on your own server or VPS:
+
+1. Clone repository and configure environment variables in `.env`:
++
+[source,dotenv]
+----
+FRONTEND_ORIGINS=https://your-frontend.example.com
+----
+2. Run `docker compose up -d` to launch the backend and PostgreSQL containers.
+
+== Testing & Verification
+
+Commands are executed from the `backend/` directory:
+
+=== Unit Tests
 
 [source,bash]
 ----
 ./gradlew test
 ----
 
-=== Integration tests
+=== Integration Tests
+
+Integration tests use Testcontainers to spin up isolated PostgreSQL instances:
 
 [source,bash]
 ----
 ./gradlew integrationTest
 ----
 
-Docker must be available for integration tests that start PostgreSQL through Testcontainers.
+NOTE: Docker must be running for integration tests.
 
-=== Run all tests
+=== Verification & Build
+
+Run all checks, linters, and verification tasks:
 
 [source,bash]
 ----
 ./gradlew check
-----
-
-The project's testing conventions configure `check` to depend on integration tests. For a complete build including verification, use:
-
-[source,bash]
-----
 ./gradlew build
 ----
 
-=== Code coverage
+=== Code Coverage
 
-JaCoCo generates separate unit and integration coverage reports. To run both tests and produce aggregated reports:\
+JaCoCo generates aggregated unit and integration coverage reports:
 
 [source,bash]
 ----
 ./gradlew testAllWithAggregateCoverage
 ----
 
-The aggregated HTML reports are generated in:
+Reports are generated in:
+* `backend/build/reports/jacoco/unit/html/`
+* `backend/build/reports/jacoco/integration/html/`
 
-[source,text]
-----
-backend/build/reports/jacoco/unit/html/
-backend/build/reports/jacoco/integration/html/
-----
+== Continuous Integration & Workflows
 
-The matching XML are used by CI and Sonarcloud. The `test-fixtures` module is excluded from coverage.
+GitHub Actions workflows in `.github/workflows/` manage CI/CD:
 
-=== Continuous integration
+* *Gradle Build*: Validates backend builds.
+* *Unit & Integration Tests*: Executes test suites and uploads coverage to SonarCloud & Codecov.
+* *SonarQube*: Analyses maintainability, security, and test coverage.
+* *Docker & Docker Publish*: Validates container builds and publishes images to GitHub Packages (`ghcr.io`).
+* *Deploy to Azure*: Deploys `develop` container releases to Azure Container Apps.
+* *Documentation Pages*: Renders PlantUML diagrams and builds the Antora AsciiDoc site to GitHub Pages.
 
-GitHub Actions workflows automate building, testing, code analysis and container publishing:
+== Documentation Site
 
-* *Gradle Build* assembles the Java backend.
-* *Unit Tests* executes the unit test suite and publishes coverage.
-* *Integration Tests* executes the integration suite and publishes coverage.
-* *SonarQube* analyses the code and uses the generated JaCoCo reports.
-* *Docker* checks the container build.
-* *Docker Publish* publishes a container image to GitHub Container Registry following the configured successful workflow on `main`.
-* *Dependency Graph* supports repository dependency reporting.
+The project documentation is built with Antora and AsciiDoc, hosted at https://tais993.github.io/PHP/[GitHub Pages^].
 
-Coverage is also uploaded to Codecov. The workflows are defined in `.github/workflows/`.
+To build the documentation site locally (requires Node.js 24 and JDK 25+):
 
-== Documentation
-
-The https://tais993.github.io/PHP/[documentation site] will become the main project portfolio.
-All existing documents will be converted to Asciidoc, as the time passes.
-To build the site locally, use Node.js 24 and set `JAVA_HOME` to your JDK 25 installation. Run these commands from the repository root (use `./backend/gradlew.bat` on Windows), then open `.docs/build/site/index.html`.
-
-[source,shell]
+[source,bash]
 ----
 ./backend/gradlew -p .docs renderDiagrams
 npm --prefix .docs ci
 npm --prefix .docs run build
 ----
 
-The `renderDiagrams` task generates SVGs from `.docs/UML/task-creation/`. Edit the `.puml` files there and run the task again before rebuilding the site.
-
-In GitHub Actions, open a completed *Documentation Exports* run and download the `task-creation-flow` artifact. It contains a PDF and a standalone HTML file, both with syntax highlighting. The workflow writes both files to `.docs/build/exports/` and runs on documentation changes targeting `develop` or when started manually.
-
-Old project documentation is maintained in the project portfolio:
-
-* Project plan
-* Analysis document
-* Architecture / design document
-* Management document
-* And more
+Open `.docs/build/site/index.html` in your browser.
 
 == Technologies
 
-* Java 27
-* Gradle
-* Docker and Docker Compose
-* PostgreSQL 17
-
-* Flyway
-* JaCoCo
-* SonarQube and CodeCov
-
-=== Spring Boot
-* Web MVC
-* Data JPA/Hibernate
+* *Backend*: Java 27, Spring Boot 3 (Web MVC, Data JPA), Hibernate, Flyway, SpringDoc OpenAPI (Swagger UI)
+* *Frontend*: React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons
+* *Database*: PostgreSQL 17
+* *Testing*: JUnit 5, Mockito, Testcontainers, JaCoCo, SonarCloud, Codecov
+* *Hosting & DevOps*: Docker, Docker Compose, Azure Container Apps, Heroku, Cloudflare Workers, GitHub Actions, GitHub Pages

@@ -33,6 +33,12 @@ public class BoardStatusRepositoryImpl implements BoardStatusRepository {
     }
 
     @Override
+    public Optional<BoardStatus> findByIdAndboardId(long statusId, long boardId) {
+        return jpaRepository.findByIdAndBoardId(statusId, boardId)
+                .map(BoardStatusMapper::toDomain);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<BoardStatus> findAll() {
         return jpaRepository.findAll()

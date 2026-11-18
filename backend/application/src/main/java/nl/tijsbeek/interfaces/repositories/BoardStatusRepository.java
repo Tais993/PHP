@@ -9,6 +9,8 @@ public interface BoardStatusRepository {
 
     Optional<BoardStatus> findById(long id);
 
+    Optional<BoardStatus> findByIdAndboardId(long statusId, long boardId);
+
     List<BoardStatus> findAll();
 
     List<BoardStatus> findAllByBoardId(long boardId);

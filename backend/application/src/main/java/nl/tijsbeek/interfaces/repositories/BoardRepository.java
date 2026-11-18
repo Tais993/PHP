@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface BoardRepository {
 
+    boolean existsById(long id);
+
     Optional<Board> findById(long id);
 
     List<Board> findAll();

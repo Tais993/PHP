@@ -1,8 +1,7 @@
 package nl.tijsbeek.dto.response;
 
 import nl.tijsbeek.results.TaskViewResult;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,8 +16,7 @@ public record TaskViewResponse(
             int position,
             List<TaskResponse> items
     ) {
-        @Contract("_ -> new")
-        public static @NotNull Group fromDomain(TaskViewResult.Group group) {
+        public static @NonNull Group fromDomain(TaskViewResult.Group group) {
             return new Group(
                     group.id(),
                     group.name(),
@@ -30,8 +28,7 @@ public record TaskViewResponse(
         }
     }
 
-    @Contract("_ -> new")
-    public static @NotNull TaskViewResponse fromDomain(TaskViewResult result) {
+    public static @NonNull TaskViewResponse fromDomain(TaskViewResult result) {
         LinkedHashMap<Long, Group> groups = new LinkedHashMap<>();
 
         result.groups().forEach((id, group) ->

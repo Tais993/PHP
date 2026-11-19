@@ -6,8 +6,7 @@ import nl.tijsbeek.dto.response.TaskViewResponse;
 import nl.tijsbeek.exceptions.BoardViewNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardViewService;
 import nl.tijsbeek.interfaces.services.TaskService;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,6 @@ public class ViewController {
     private final TaskService taskService;
     private final BoardViewService boardViewService;
 
-    @Contract(pure = true)
     public ViewController(TaskService taskService, BoardViewService boardViewService) {
         this.boardViewService = boardViewService;
         this.taskService = taskService;
@@ -26,14 +24,14 @@ public class ViewController {
 
     @GetMapping("/{viewId}")
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull BoardViewResponse receive(@PathVariable final long viewId) {
+    public @NonNull BoardViewResponse receive(@PathVariable final long viewId) {
         return boardViewService.getBoardView(viewId)
                 .map(BoardViewResponse::fromDomain)
                 .orElseThrow(() -> new BoardViewNotFoundException(viewId));
     }
 
     @PutMapping("/{viewId}/filter-rules")
-    public @NotNull BoardViewResponse replaceFilterRules(
+    public @NonNull BoardViewResponse replaceFilterRules(
             @PathVariable final long viewId,
             @RequestBody ReplaceFilterRulesRequest request
     ) {
@@ -42,7 +40,7 @@ public class ViewController {
 
     @GetMapping("/{viewId}/tasks")
     @ResponseStatus(HttpStatus.OK)
-    public @NotNull TaskViewResponse receiveTasksOfView(@PathVariable final long viewId) {
+    public @NonNull TaskViewResponse receiveTasksOfView(@PathVariable final long viewId) {
         return TaskViewResponse.fromDomain(taskService.getTasksOfBoardView(viewId));
     }
 }

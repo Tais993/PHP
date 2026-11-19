@@ -1,6 +1,6 @@
 package nl.tijsbeek.entities;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -37,7 +37,7 @@ public class Task {
     }
 
 
-    public void changeTitle(@NotNull String newTitle) {
+    public void changeTitle(@NonNull String newTitle) {
         Objects.requireNonNull(newTitle);
 
         if (newTitle.isBlank()) {

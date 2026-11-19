@@ -14,7 +14,6 @@ import nl.tijsbeek.interfaces.repositories.TaskRepository;
 import nl.tijsbeek.interfaces.services.TaskGroupingService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import nl.tijsbeek.results.TaskViewResult;
-import org.jetbrains.annotations.Contract;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +29,6 @@ public class TaskServiceImpl implements TaskService {
     private final BoardStatusRepository boardStatusRepository;
     private final TaskGroupingService taskGroupingService;
 
-    @Contract(pure = true)
     public TaskServiceImpl(TaskRepository taskRepository, BoardViewRepository boardViewRepository, BoardRepository boardRepository, BoardStatusRepository boardStatusRepository, TaskGroupingService taskGroupingService) {
         this.taskRepository = taskRepository;
         this.boardViewRepository = boardViewRepository;

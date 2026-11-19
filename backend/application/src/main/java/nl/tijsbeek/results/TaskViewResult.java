@@ -3,8 +3,8 @@ package nl.tijsbeek.results;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
+import org.springframework.lang.Contract;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

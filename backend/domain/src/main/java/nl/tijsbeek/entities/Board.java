@@ -1,7 +1,6 @@
 package nl.tijsbeek.entities;
 
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,12 +13,10 @@ public class Board {
     private String description;
     private final List<BoardStatus> statuses;
 
-    @Contract(pure = true)
     public Board(Long id, String title, String description) {
         this(id, title, description, List.of());
     }
 
-    @Contract(pure = true)
     public Board(Long id, String title, String description, List<BoardStatus> statuses) {
         this.id = id;
         this.title = title;
@@ -28,7 +25,7 @@ public class Board {
     }
 
 
-    public void changeTitle(@NotNull String newTitle) {
+    public void changeTitle(@NonNull String newTitle) {
         Objects.requireNonNull(newTitle);
 
         if (newTitle.isBlank()) {

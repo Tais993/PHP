@@ -6,8 +6,8 @@ import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.FilterRule;
 import nl.tijsbeek.entities.FilterRule.FilterOperator;
 import nl.tijsbeek.entities.TaskJPA;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
+import org.springframework.lang.Contract;
 import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -120,7 +120,6 @@ public class TaskViewQueriesImpl implements TaskViewQueries {
         };
     }
 
-    @Contract("_ -> new")
     private @NonNull IllegalArgumentException unsupportedOperator(@NonNull FilterRule rule) {
         return new IllegalArgumentException(
                 "Unsupported operator " + rule.operator() + " for " + rule.field()

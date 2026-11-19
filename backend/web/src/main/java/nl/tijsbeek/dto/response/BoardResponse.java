@@ -1,7 +1,6 @@
 package nl.tijsbeek.dto.response;
 
 import nl.tijsbeek.entities.Board;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
 
 public record BoardResponse(
@@ -10,7 +9,6 @@ public record BoardResponse(
         String description) {
 
 
-    @Contract("_ -> new")
     public static @NonNull BoardResponse fromDomain(@NonNull Board board) {
         return new BoardResponse(
                 board.getId(),

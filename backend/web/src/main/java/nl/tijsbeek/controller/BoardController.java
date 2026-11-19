@@ -9,7 +9,6 @@ import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardService;
 import nl.tijsbeek.interfaces.services.BoardViewService;
 import nl.tijsbeek.interfaces.services.TaskService;
-import org.jetbrains.annotations.Contract;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +23,6 @@ public class BoardController {
     private final TaskService taskService;
     private final BoardViewService boardViewService;
 
-    @Contract(pure = true)
     public BoardController(BoardService boardService, TaskService taskService, BoardViewService boardViewService) {
         this.boardService = requireNonNull(boardService);
         this.taskService = taskService;

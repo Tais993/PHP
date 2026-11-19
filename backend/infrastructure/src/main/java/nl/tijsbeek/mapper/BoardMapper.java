@@ -4,8 +4,8 @@ import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardJPA;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardStatusJPA;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
+import org.springframework.lang.Contract;
 
 public class BoardMapper {
     private BoardMapper() {}

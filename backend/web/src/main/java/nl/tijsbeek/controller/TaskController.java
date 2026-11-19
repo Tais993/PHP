@@ -6,7 +6,6 @@ import nl.tijsbeek.dto.request.UpdateTaskStatusRequest;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.services.TaskService;
-import org.jetbrains.annotations.Contract;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,6 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    @Contract(pure = true)
     public TaskController(TaskService taskService) {
         this.taskService = requireNonNull(taskService);
     }

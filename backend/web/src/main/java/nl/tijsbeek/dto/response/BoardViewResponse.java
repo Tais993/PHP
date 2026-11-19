@@ -1,8 +1,6 @@
 package nl.tijsbeek.dto.response;
 
 import nl.tijsbeek.entities.BoardView;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -19,8 +17,7 @@ public record BoardViewResponse(
         List<FilterRuleResponse> filterRules
 ) {
 
-    @Contract("_ -> new")
-    public static @NotNull BoardViewResponse fromDomain(@NonNull BoardView boardView) {
+    public static @NonNull BoardViewResponse fromDomain(@NonNull BoardView boardView) {
         return new BoardViewResponse(
                 boardView.getId(),
                 boardView.getBoardId(),

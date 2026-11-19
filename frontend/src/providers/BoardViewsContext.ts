@@ -1,12 +1,11 @@
 import {createContext} from 'react';
-import type {BoardViewData} from '../components/types/BoardViewData.ts';
+import type {BoardViewData, FilterRule, ViewSorting} from '../components/types/BoardViewData.ts';
+import type {ViewSettingsStatus} from './boardViewSettings.ts';
 
-export type NewBoardView = {
+export type NewBoardView = ViewSorting & {
     name: string;
     type: 'BOARD' | 'TABLE' | 'ROADMAP';
     groupBy: 'STATUS';
-    sortBy: 'TITLE' | 'CREATED_AT';
-    sortDirection: 'ASC' | 'DESC';
 };
 
 type BoardViewsContextValue = {
@@ -15,6 +14,11 @@ type BoardViewsContextValue = {
     loading: boolean;
     error: string | null;
     createView: (input: NewBoardView) => Promise<void>;
+    settingsStatus: ViewSettingsStatus;
+    settingsRevision: number;
+    saveFilterRules: (viewId: number, filterRules: FilterRule[]) => Promise<boolean>;
+    saveSorting: (viewId: number, sorting: ViewSorting) => Promise<boolean>;
+    reloadViewSettings: (viewId: number) => Promise<boolean>;
 };
 
 export const BoardViewsContext =

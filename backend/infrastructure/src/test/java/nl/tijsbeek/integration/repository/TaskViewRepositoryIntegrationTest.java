@@ -3,6 +3,9 @@ package nl.tijsbeek.integration.repository;
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardView;
+import nl.tijsbeek.entities.FilterRule;
+import nl.tijsbeek.entities.FilterRule.FilterField;
+import nl.tijsbeek.entities.FilterRule.FilterOperator;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
@@ -12,6 +15,7 @@ import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
@@ -146,6 +150,140 @@ class TaskViewRepositoryIntegrationTest extends IntegrationTestBase {
         assertThat(result).isEmpty();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = FilterOperator.class, names = {"IN", "NOT_IN"})
+    void findAllForView_WithStatusFilter_ReturnsMatchingTasksInConfiguredOrder(FilterOperator operator) {
+        // Arrange
+        Board board = createBoard("BoardOne", List.of(
+                new BoardStatus(null, null, "To Do", 0),
+                new BoardStatus(null, null, "In Progress", 1),
+                new BoardStatus(null, null, "Done", 2)
+        ));
+        List<BoardStatus> statuses = board.getStatuses();
+        Task todo = saveTask(board, "Z", statuses.get(0), FIRST_CREATED_AT);
+        Task inProgress = saveTask(board, "A", statuses.get(1), FIRST_CREATED_AT);
+        Task done = saveTask(board, "Done", statuses.get(2), FIRST_CREATED_AT);
+        saveTask(board, "Unassigned", null, FIRST_CREATED_AT);
+        FilterRule rule = new FilterRule(FilterField.STATUS, operator,
+                List.of(statuses.get(0).getId().toString(), statuses.get(1).getId().toString()));
+        BoardView view = saveFilteredView(board, rule);
+        List<Long> expectedIds = operator == FilterOperator.IN
+                ? List.of(todo.getId(), inProgress.getId()) : List.of(done.getId());
+
+        // Act
+        List<Task> result = taskRepository.findAllForView(view.getId());
+
+        // Assert
+        assertThat(result).extracting(Task::getId).containsExactlyElementsOf(expectedIds);
+    }
+
+    @ParameterizedTest
+    @MethodSource("titleFilters")
+    void findAllForView_WithTitleFilter_ReturnsMatchingBoardTasks(
+            FilterOperator operator,
+            String value,
+            List<String> expectedTitles
+    ) {
+        // Arrange
+        Board board = createBoard("BoardOne", List.of());
+        saveTask(board, "Bug fix in auth", null, FIRST_CREATED_AT);
+        saveTask(board, "Feature user profile", null, FIRST_CREATED_AT);
+        saveTask(board, "Refactor Auth service", null, FIRST_CREATED_AT);
+        saveTask(board, "Track 100%_! complete", null, FIRST_CREATED_AT);
+        saveTask(board, "Track 100xy! complete", null, FIRST_CREATED_AT);
+        saveTask(board, "Check ' OR TRUE --", null, FIRST_CREATED_AT);
+        Board otherBoard = createBoard("OtherBoard", List.of());
+        saveTask(otherBoard, "Bug fix in auth", null, FIRST_CREATED_AT);
+        BoardView view = saveFilteredView(board, new FilterRule(FilterField.TITLE, operator, List.of(value)));
+
+        // Act
+        List<Task> result = taskRepository.findAllForView(view.getId());
+
+        // Assert
+        assertThat(result).extracting(Task::getTitle).containsExactlyElementsOf(expectedTitles);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dueDateFilters")
+    void findAllForView_WithDueDateFilter_ReturnsMatchingTasks(
+            FilterOperator operator,
+            List<String> values,
+            List<String> expectedTitles
+    ) {
+        // Arrange
+        Board board = createBoard("BoardOne", List.of());
+        saveTaskWithDueDate(board, "A past", FIRST_CREATED_AT.minusDays(1));
+        saveTaskWithDueDate(board, "B boundary", FIRST_CREATED_AT);
+        saveTaskWithDueDate(board, "C future", FIRST_CREATED_AT.plusDays(1));
+        saveTaskWithDueDate(board, "D no due date", null);
+        BoardView view = saveFilteredView(board, new FilterRule(FilterField.DUE_DATE, operator, values));
+
+        // Act
+        List<Task> result = taskRepository.findAllForView(view.getId());
+
+        // Assert
+        assertThat(result).extracting(Task::getTitle).containsExactlyElementsOf(expectedTitles);
+    }
+
+    @Test
+    void findAllForView_WithMultipleFilters_ReturnsTasksMatchingAllRules() {
+        // Arrange
+        Board board = createBoard("BoardOne", List.of(
+                new BoardStatus(null, null, "To Do", 0),
+                new BoardStatus(null, null, "Done", 1)
+        ));
+        BoardStatus todo = board.getStatuses().get(0);
+        BoardStatus done = board.getStatuses().get(1);
+        saveTask(board, "Bug fix in auth", todo, FIRST_CREATED_AT);
+        saveTask(board, "Feature user profile", todo, FIRST_CREATED_AT);
+        saveTask(board, "Refactor auth service", done, FIRST_CREATED_AT);
+        BoardView view = saveFilteredView(board,
+                new FilterRule(FilterField.STATUS, FilterOperator.IN, List.of(todo.getId().toString())),
+                new FilterRule(FilterField.TITLE, FilterOperator.CONTAINS, List.of("auth")));
+
+        // Act
+        List<Task> result = taskRepository.findAllForView(view.getId());
+
+        // Assert
+        assertThat(result).extracting(Task::getTitle).containsExactly("Bug fix in auth");
+    }
+
+    @Test
+    void findAllForView_WithNullFilterRules_ReturnsAllBoardTasksInOrder() {
+        // Arrange
+        Board board = createBoard("BoardOne", List.of());
+        saveTask(board, "B", null, FIRST_CREATED_AT);
+        saveTask(board, "A", null, FIRST_CREATED_AT);
+        BoardView view = boardViewRepository.save(new BoardView(null, board.getId(), "Board view",
+                BoardView.ViewType.BOARD, null, BoardView.SortBy.TITLE, BoardView.SortDirection.ASC, 0, null));
+
+        // Act
+        List<Task> result = taskRepository.findAllForView(view.getId());
+
+        // Assert
+        assertThat(result).extracting(Task::getTitle).containsExactly("A", "B");
+    }
+
+    private static Stream<Arguments> titleFilters() {
+        return Stream.of(
+                Arguments.of(FilterOperator.CONTAINS, "AUTH", List.of("Bug fix in auth", "Refactor Auth service")),
+                Arguments.of(FilterOperator.CONTAINS, "%_!", List.of("Track 100%_! complete")),
+                Arguments.of(FilterOperator.CONTAINS, "' OR TRUE --", List.of("Check ' OR TRUE --")),
+                Arguments.of(FilterOperator.EQUALS, "Bug fix in auth", List.of("Bug fix in auth")),
+                Arguments.of(FilterOperator.EQUALS, "bug fix in auth", List.of())
+        );
+    }
+
+    private static Stream<Arguments> dueDateFilters() {
+        List<String> boundary = List.of(FIRST_CREATED_AT.toString());
+        return Stream.of(
+                Arguments.of(FilterOperator.LESS_THAN_OR_EQUAL, boundary, List.of("A past", "B boundary")),
+                Arguments.of(FilterOperator.GREATER_THAN_OR_EQUAL, boundary, List.of("B boundary", "C future")),
+                Arguments.of(FilterOperator.IS_NULL, List.of(), List.of("D no due date")),
+                Arguments.of(FilterOperator.IS_NOT_NULL, List.of(), List.of("A past", "B boundary", "C future"))
+        );
+    }
+
     private static Stream<Arguments> sortingOptions() {
         return Stream.of(
                 Arguments.of(BoardView.SortBy.TITLE, BoardView.SortDirection.ASC, List.of("B", "D", "A", "C", "E")),
@@ -162,6 +300,15 @@ class TaskViewRepositoryIntegrationTest extends IntegrationTestBase {
     private BoardView saveView(Board board, BoardView.SortBy sortBy, BoardView.SortDirection sortDirection) {
         return boardViewRepository.save(new BoardView(null, board.getId(), "Board view", BoardView.ViewType.BOARD,
                 BoardView.GroupBy.STATUS, sortBy, sortDirection, 0));
+    }
+
+    private BoardView saveFilteredView(Board board, FilterRule... rules) {
+        return boardViewRepository.save(new BoardView(null, board.getId(), "Filtered view", BoardView.ViewType.BOARD,
+                BoardView.GroupBy.STATUS, BoardView.SortBy.TITLE, BoardView.SortDirection.ASC, 0, List.of(rules)));
+    }
+
+    private void saveTaskWithDueDate(Board board, String title, LocalDateTime dueDate) {
+        taskRepository.save(new Task(board.getId(), title, "Description for " + title, dueDate, null));
     }
 
     private Task saveTask(Board board, String title, BoardStatus status, LocalDateTime createdAt) {

@@ -53,7 +53,8 @@ public record FilterRule(
         }
 
         if (!values.isEmpty()) {
-            LocalDateTime.parse(values.getFirst());
+            // Validates or it parses correctly, but doesn't need the value itself.
+            LocalDateTime.parse(values.getFirst()); // NOSONAR
         }
     }
 

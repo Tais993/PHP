@@ -14,11 +14,13 @@ public class BoardView {
     private int position;
     private List<FilterRule> filterRules;
 
+    @SuppressWarnings("java:S107") /* Maximum parameter count of 7 for constructors, doesn't matter, it's a constructor */
     public BoardView(Long id, Long boardId, String name, ViewType type,
                      GroupBy groupBy, SortBy sortBy, SortDirection sortDirection, int position) {
         this(id, boardId, name, type, groupBy, sortBy, sortDirection, position, List.of());
     }
 
+    @SuppressWarnings("java:S107") /* Maximum parameter count of 7 for constructors, doesn't matter, it's a constructor */
     public BoardView(Long id, Long boardId, String name, ViewType type,
                      GroupBy groupBy, SortBy sortBy, SortDirection sortDirection, int position,
                      List<FilterRule> filterRules) {

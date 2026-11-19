@@ -4,6 +4,7 @@ import {BoardsContext} from "../../providers/BoardsContext.ts";
 import {BoardViewsContext} from "../../providers/BoardViewsContext.ts";
 import {TasksContext} from "../../providers/TasksContext.ts";
 import {Link} from "react-router";
+import AddViewButton from "../buttons/AddViewButton.tsx";
 
 export default function BoardTopBar() {
     const boardsContext = useContext(BoardsContext);
@@ -77,13 +78,7 @@ export default function BoardTopBar() {
 
                 <Divider orientation="vertical" my="sm"/>
 
-                <Button
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                >
-                    + Add view
-                </Button>
+                <AddViewButton/>
             </Group>
 
             <Divider/>

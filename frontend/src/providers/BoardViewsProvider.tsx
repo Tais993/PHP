@@ -1,7 +1,7 @@
 import {type ReactNode, useEffect, useState} from 'react';
 import {apiUrl} from '../config.ts';
 import type {BoardViewData} from '../components/types/BoardViewData.ts';
-import {BoardViewsContext} from './BoardViewsContext.ts';
+import {BoardViewsContext, type NewBoardView} from './BoardViewsContext.ts';
 
 type BoardViewsResult = {
     boardId: number;
@@ -65,6 +65,49 @@ export function BoardViewsProvider({
         return () => controller.abort();
     }, [boardId]);
 
+    async function createView(input: NewBoardView): Promise<void> {
+        if (loading) {
+            throw new Error('Wait until board views have finished loading');
+        }
+
+        if (error) {
+            throw new Error('Reload the board before creating a view');
+        }
+
+        const name = input.name.trim();
+
+        if (!name || name.length > 255) {
+            throw new Error('View name must contain 1–255 characters');
+        }
+
+        const position = (boardViews.at(-1)?.position ?? -1) + 1;
+        const response = await fetch(apiUrl('/views'), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                ...input,
+                boardId,
+                name,
+                position,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Could not create view');
+        }
+
+        const createdView: BoardViewData = await response.json();
+
+        setResult(current => {
+            if (!current || current.boardId !== boardId || current.data.some(view => view.id === createdView.id)) {
+                return current;
+            }
+
+            const data = [...current.data, createdView].sort((a, b) => a.position - b.position || a.id - b.id);
+            return {...current, data};
+        });
+    }
+
     return (
         <BoardViewsContext.Provider
             value={{
@@ -72,6 +115,7 @@ export function BoardViewsProvider({
                 selectedView,
                 loading,
                 error,
+                createView,
             }}
         >
             {children}

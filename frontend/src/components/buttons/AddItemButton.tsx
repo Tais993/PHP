@@ -1,8 +1,9 @@
-import {type SubmitEvent, useState} from 'react';
+import {type ReactNode, type SubmitEvent, useState} from 'react';
 import {
     Alert,
     Button,
     type ButtonProps,
+    Fieldset,
     Group,
     Modal,
     Stack,
@@ -13,15 +14,23 @@ import {
 type AddItemButtonProps = {
     itemName: string;
     label?: string;
-    buttonProps?: Pick<ButtonProps, 'variant' | 'fullWidth' | 'mt'>;
+    buttonProps?: Pick<ButtonProps, 'variant' | 'color' | 'size' | 'fullWidth' | 'mt'>;
+    titleLabel?: string;
+    titlePlaceholder?: string;
+    showDescription?: boolean;
+    fields?: ReactNode;
     disabled: boolean;
-    onCreate: (input: {title: string; description: string}) => Promise<void>;
+    onCreate: (input: {title: string; description: string}, fields: FormData) => Promise<void>;
 };
 
 export default function AddItemButton({
     itemName,
     label = `+ Add ${itemName}`,
     buttonProps,
+    titleLabel = 'Title',
+    titlePlaceholder = 'What needs doing?',
+    showDescription = true,
+    fields,
     disabled,
     onCreate,
 }: Readonly<AddItemButtonProps>) {
@@ -50,7 +59,7 @@ export default function AddItemButton({
         if (saving || disabled) return;
 
         if (!trimmedTitle) {
-            setError(`Enter a ${itemName} title`);
+            setError(`Enter a ${itemName} ${titleLabel.toLowerCase()}`);
             return;
         }
 
@@ -61,7 +70,7 @@ export default function AddItemButton({
             await onCreate({
                 title: trimmedTitle,
                 description: description.trim(),
-            });
+            }, new FormData(event.currentTarget));
 
             setOpened(false);
             setTitle('');
@@ -101,8 +110,8 @@ export default function AddItemButton({
                         )}
 
                         <TextInput
-                            label="Title"
-                            placeholder="What needs doing?"
+                            label={titleLabel}
+                            placeholder={titlePlaceholder}
                             value={title}
                             onChange={(event) => setTitle(event.currentTarget.value)}
                             required
@@ -111,15 +120,23 @@ export default function AddItemButton({
                             data-autofocus
                         />
 
-                        <Textarea
-                            label="Description"
-                            placeholder="Optional details"
-                            value={description}
-                            onChange={(event) => setDescription(event.currentTarget.value)}
-                            minRows={3}
-                            autosize
-                            disabled={saving}
-                        />
+                        {showDescription && (
+                            <Textarea
+                                label="Description"
+                                placeholder="Optional details"
+                                value={description}
+                                onChange={(event) => setDescription(event.currentTarget.value)}
+                                minRows={3}
+                                autosize
+                                disabled={saving}
+                            />
+                        )}
+
+                        {fields && (
+                            <Fieldset variant="unstyled" disabled={saving}>
+                                <Stack>{fields}</Stack>
+                            </Fieldset>
+                        )}
 
                         <Group justify="flex-end">
                             <Button

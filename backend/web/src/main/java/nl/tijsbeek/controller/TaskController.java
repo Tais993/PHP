@@ -1,8 +1,8 @@
 package nl.tijsbeek.controller;
 
-import nl.tijsbeek.dto.CreateTaskRequest;
-import nl.tijsbeek.dto.TaskResponse;
-import nl.tijsbeek.dto.UpdateTaskStatus;
+import nl.tijsbeek.dto.request.CreateTaskRequest;
+import nl.tijsbeek.dto.response.TaskResponse;
+import nl.tijsbeek.dto.request.UpdateTaskStatusRequest;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.services.TaskService;
@@ -51,8 +51,8 @@ public class TaskController {
 
     @PostMapping("/{id}/status")
     @ResponseStatus(HttpStatus.OK)
-    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskStatus updateTaskStatus) {
-        Task task = taskService.changeTaskStatus(id, updateTaskStatus.statusId());
+    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskStatusRequest updateTaskStatusRequest) {
+        Task task = taskService.changeTaskStatus(id, updateTaskStatusRequest.statusId());
         return TaskResponse.fromDomain(task);
     }
 

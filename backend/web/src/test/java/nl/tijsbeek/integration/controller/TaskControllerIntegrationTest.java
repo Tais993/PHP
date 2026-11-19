@@ -1,7 +1,7 @@
 package nl.tijsbeek.integration.controller;
 
-import nl.tijsbeek.dto.CreateTaskRequest;
-import nl.tijsbeek.dto.TaskResponse;
+import nl.tijsbeek.dto.request.CreateTaskRequest;
+import nl.tijsbeek.dto.response.TaskResponse;
 
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.testing.annotations.IntegrationTest;

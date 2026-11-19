@@ -1,4 +1,4 @@
-package nl.tijsbeek.dto;
+package nl.tijsbeek.dto.request;
 
 import java.time.LocalDateTime;
 

@@ -1,8 +1,8 @@
 package nl.tijsbeek.controller;
 
-import nl.tijsbeek.dto.BoardViewResponse;
-import nl.tijsbeek.dto.ReplaceFilterRulesRequest;
-import nl.tijsbeek.dto.TaskViewResponse;
+import nl.tijsbeek.dto.response.BoardViewResponse;
+import nl.tijsbeek.dto.request.ReplaceFilterRulesRequest;
+import nl.tijsbeek.dto.response.TaskViewResponse;
 import nl.tijsbeek.exceptions.BoardViewNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardViewService;
 import nl.tijsbeek.interfaces.services.TaskService;

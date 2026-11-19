@@ -1,9 +1,9 @@
 
 package nl.tijsbeek.integration.controller;
 
-import nl.tijsbeek.dto.BoardResponse;
-import nl.tijsbeek.dto.CreateBoardRequest;
-import nl.tijsbeek.dto.CreateTaskRequest;
+import nl.tijsbeek.dto.response.BoardResponse;
+import nl.tijsbeek.dto.request.CreateBoardRequest;
+import nl.tijsbeek.dto.request.CreateTaskRequest;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;

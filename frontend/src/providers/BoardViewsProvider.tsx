@@ -1,27 +1,38 @@
-import {type ReactNode, useEffect, useState} from 'react';
+import {type ReactNode, useEffect, useState, useSyncExternalStore} from 'react';
 import {apiUrl} from '../config.ts';
-import type {BoardViewData} from '../components/types/BoardViewData.ts';
+import type {BoardViewData, FilterRule, ViewSorting} from '../components/types/BoardViewData.ts';
 import {BoardViewsContext, type NewBoardView} from './BoardViewsContext.ts';
+import {
+    getSettingsRevision, getViewSettings, initialSettings, subscribeToViewSettings, updateViewSettings,
+} from './boardViewSettings.ts';
 
 type BoardViewsResult = {
     boardId: number;
     data: BoardViewData[];
+    settingsRevisionAtRead: number;
     error: string | null;
 };
 
 export function BoardViewsProvider({
-                                       boardId,
-                                       boardViewId,
-                                       children,
-                                   }: {
+    boardId,
+    boardViewId,
+    children,
+}: {
     readonly boardId: number;
     readonly boardViewId?: number;
     readonly children: ReactNode;
 }) {
 
     const [result, setResult] = useState<BoardViewsResult | null>(null);
+    const settings = useSyncExternalStore(subscribeToViewSettings, getViewSettings);
     const currentResult = result?.boardId === boardId ? result : null;
-    const boardViews = currentResult?.data ?? [];
+    const boardViews = currentResult?.data.map(view => {
+        const updated = settings.get(view.id);
+        // A save can finish while the board's view list is loading.
+        return updated?.savedView && updated.revision > currentResult.settingsRevisionAtRead
+            ? updated.savedView
+            : view;
+    }) ?? [];
     const loading = currentResult === null;
     const invalidView = !loading && currentResult.error === null &&
         boardViewId !== undefined && !boardViews.some(view => view.id === boardViewId);
@@ -32,11 +43,14 @@ export function BoardViewsProvider({
             ? boardViews[0] ?? null
             : boardViews.find(view => view.id === boardViewId) ?? null;
 
+    const selectedSettings = (selectedView && settings.get(selectedView.id)) || initialSettings;
+
     useEffect(() => {
         const controller = new AbortController();
 
         async function loadBoardViews() {
             try {
+                const settingsRevisionAtRead = getSettingsRevision();
                 const response = await fetch(
                     apiUrl(`/boards/${boardId}/views`),
                     {signal: controller.signal},
@@ -49,12 +63,17 @@ export function BoardViewsProvider({
                 const data: BoardViewData[] = await response.json();
 
                 if (!controller.signal.aborted) {
-                    setResult({boardId, data, error: null});
+                    setResult({boardId, data, settingsRevisionAtRead, error: null});
                 }
 
             } catch (exception) {
                 if (!controller.signal.aborted) {
-                    setResult({boardId, data: [], error: 'Could not load board views'});
+                    setResult({
+                        boardId,
+                        data: [],
+                        settingsRevisionAtRead: getSettingsRevision(),
+                        error: 'Could not load board views',
+                    });
                     console.error(exception);
                 }
             }
@@ -64,6 +83,24 @@ export function BoardViewsProvider({
 
         return () => controller.abort();
     }, [boardId]);
+
+    function saveFilterRules(viewId: number, filterRules: FilterRule[]) {
+        return boardViews.some(view => view.id === viewId)
+            ? updateViewSettings(viewId, 'filter-rules', {filterRules})
+            : Promise.resolve(false);
+    }
+
+    function saveSorting(viewId: number, sorting: ViewSorting) {
+        return boardViews.some(view => view.id === viewId)
+            ? updateViewSettings(viewId, 'sorting', sorting)
+            : Promise.resolve(false);
+    }
+
+    function reloadViewSettings(viewId: number) {
+        return boardViews.some(view => view.id === viewId)
+            ? updateViewSettings(viewId)
+            : Promise.resolve(false);
+    }
 
     async function createView(input: NewBoardView): Promise<void> {
         if (loading) {
@@ -116,6 +153,11 @@ export function BoardViewsProvider({
                 loading,
                 error,
                 createView,
+                settingsStatus: selectedSettings,
+                settingsRevision: selectedSettings.revision,
+                saveFilterRules,
+                saveSorting,
+                reloadViewSettings,
             }}
         >
             {children}

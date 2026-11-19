@@ -22,7 +22,8 @@ export function TasksProvider({
 
     const viewsContext = useContext(BoardViewsContext);
     const selectedViewId = viewsContext?.selectedView?.id ?? null;
-    const requestKey = `${boardId}:${selectedViewId}:${reloadCount}`;
+    const settingsRevision = viewsContext?.settingsRevision ?? 0;
+    const requestKey = `${boardId}:${selectedViewId}:${reloadCount}:${settingsRevision}`;
     const currentResult = result?.requestKey === requestKey ? result : null;
 
     const tasks = currentResult?.data ?? null;

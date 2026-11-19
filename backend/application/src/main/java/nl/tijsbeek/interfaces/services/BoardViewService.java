@@ -1,6 +1,7 @@
 package nl.tijsbeek.interfaces.services;
 
 import nl.tijsbeek.entities.BoardView;
+import nl.tijsbeek.entities.FilterRule;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -20,4 +21,7 @@ public interface BoardViewService {
 
     @Transactional
     BoardView createBoardView(final BoardView boardView);
+
+    @Transactional
+    BoardView replaceFilterRules(long viewId, List<FilterRule> rules);
 }

@@ -1,5 +1,6 @@
 package nl.tijsbeek.controller;
 
+import nl.tijsbeek.dto.request.CreateBoardViewRequest;
 import nl.tijsbeek.dto.response.BoardViewResponse;
 import nl.tijsbeek.dto.request.ReplaceFilterRulesRequest;
 import nl.tijsbeek.dto.response.TaskViewResponse;
@@ -28,6 +29,11 @@ public class ViewController {
         return boardViewService.getBoardView(viewId)
                 .map(BoardViewResponse::fromDomain)
                 .orElseThrow(() -> new BoardViewNotFoundException(viewId));
+    }
+
+    @PostMapping
+    public @NonNull BoardViewResponse create(@RequestBody CreateBoardViewRequest request) {
+        return BoardViewResponse.fromDomain(boardViewService.createBoardView(request.toDomain()));
     }
 
     @PutMapping("/{viewId}/filter-rules")

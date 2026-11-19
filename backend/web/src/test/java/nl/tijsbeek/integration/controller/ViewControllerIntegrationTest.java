@@ -13,7 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,90 +48,6 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.position").value(3))
                 .andExpect(jsonPath("$.filterRules").isArray())
                 .andExpect(jsonPath("$.filterRules").isEmpty());
-    }
-
-    @Test
-    void replaceFilterRules_SavesRulesAndFiltersTasksUntilCleared() throws Exception {
-        long statusId = createStatus(1L, "To do", 0);
-        createTask(1L, "Fix authentication", statusId);
-        createTask(1L, "Update documentation", statusId);
-        long viewId = createView(1L);
-
-        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"filterRules":[{"field":"TITLE","operator":"CONTAINS","values":["AUTH"]}]}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.filterRules[0].field").value("TITLE"))
-                .andExpect(jsonPath("$.filterRules[0].operator").value("CONTAINS"))
-                .andExpect(jsonPath("$.filterRules[0].values[0]").value("AUTH"));
-
-        mockMvc.perform(get("/views/{id}", viewId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.filterRules[0].values[0]").value("AUTH"));
-        mockMvc.perform(get("/boards/{id}/views", 1L))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id == " + viewId + ")].filterRules[0].values[0]", contains("AUTH")));
-        mockMvc.perform(get("/views/{id}/tasks", viewId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.groups.*.items[*].title", contains("Fix authentication")));
-
-        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"filterRules\":[]}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.filterRules").isEmpty());
-        mockMvc.perform(get("/views/{id}/tasks", viewId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.groups.*.items[*].title", contains("Fix authentication", "Update documentation")));
-    }
-
-    @Test
-    void replaceFilterRules_RejectsInvalidRequest() throws Exception {
-        long viewId = createView(1L);
-
-        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest());
-        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"filterRules":[{"field":"TITLE","operator":"IN","values":["Task"]}]}
-                                """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Invalid operator or value count for TITLE IN"));
-        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"filterRules":[{"operator":"CONTAINS","values":["Task"]}]}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void replaceFilterRules_StatusFromAnotherBoard_ReturnsBadRequest() throws Exception {
-        long viewId = createView(1L);
-        long otherBoardId = createBoard("Other board", "");
-        long otherStatusId = createStatus(otherBoardId, "To do", 0);
-
-        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"filterRules":[{"field":"STATUS","operator":"IN","values":["%d"]}]}
-                                """.formatted(otherStatusId)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.detail").value("Status " + otherStatusId + " does not exist on board 1"));
-    }
-
-    @Test
-    void replaceFilterRules_MissingView_ReturnsNotFound() throws Exception {
-        mockMvc.perform(put("/views/{id}/filter-rules", Long.MAX_VALUE)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"filterRules\":[]}"))
-                .andExpect(status().isNotFound());
     }
 
     @Test

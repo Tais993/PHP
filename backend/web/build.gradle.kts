@@ -7,6 +7,8 @@ description = "Web"
 
 extra["snippetsDir"] = file("build/generated-snippets")
 
+val mockitoAgent = configurations.create("mockitoAgent")
+
 dependencies {
     implementation(project(":domain"))
     implementation(project(":application"))
@@ -35,6 +37,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-jackson")
 
+    add(mockitoAgent.name, "org.mockito:mockito-core")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

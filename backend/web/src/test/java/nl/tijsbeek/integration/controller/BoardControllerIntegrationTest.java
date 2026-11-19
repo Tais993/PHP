@@ -228,6 +228,7 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 "Task 1",
                 boardOneId,
                 "First task description",
+                null,
                 unfinishedId
         );
 
@@ -235,6 +236,7 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 "Task 2",
                 boardTwoId,
                 "Second task description",
+                null,
                 finishedId
         );
 

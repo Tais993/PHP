@@ -39,13 +39,15 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional
     @Override
-    public Task createTask(String title, Long boardId, String description, Long statusId) {
+    public Task createTask(CreateTask command) {
+        Long boardId = command.boardId();
         long selectedBoardId = boardId == null ? 1L : boardId;
 
         if (!boardRepository.existsById(selectedBoardId)) {
             throw new InvalidTaskReferenceException("Board with ID " + selectedBoardId + " was not found");
         }
 
+        Long statusId = command.statusId();
         BoardStatus status = null;
         if (statusId != null) {
             status = boardStatusRepository.findByIdAndboardId(statusId, selectedBoardId)
@@ -53,9 +55,7 @@ public class TaskServiceImpl implements TaskService {
                             "Status does not exist on the selected board"));
         }
 
-        Task task = new Task(selectedBoardId, title, description, null, status);
-
-
+        Task task = new Task(selectedBoardId, command.title(), command.description(), null, status);
         return taskRepository.save(task);
     }
 
@@ -106,10 +106,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional
     @Override
-    public Task changeTaskStatus(long id, Long statusId) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException(id));
+    public Task changeTaskStatus(ChangeTaskStatus command) {
+        Task task = taskRepository.findById(command.taskId())
+                .orElseThrow(() -> new TaskNotFoundException(command.taskId()));
 
+        Long statusId = command.statusId();
         BoardStatus status = null;
         if (statusId != null) {
             Board board = boardRepository.findById(task.getBoardId())

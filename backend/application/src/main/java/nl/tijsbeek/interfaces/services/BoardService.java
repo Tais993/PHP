@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface BoardService {
 
     @Transactional
-    Board createBoard(String title, String description);
+    Board createBoard(Board board);
 
     @Transactional
     Optional<Board> getBoard(long id);

@@ -18,9 +18,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public Board createBoard(String title, String description) {
-        Board board = new Board(null, title, description);
-
+    public Board createBoard(Board board) {
         return boardRepository.save(board);
     }
 

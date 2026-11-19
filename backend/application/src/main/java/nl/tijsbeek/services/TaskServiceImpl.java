@@ -87,7 +87,7 @@ public class TaskServiceImpl implements TaskService {
         BoardView view = boardViewRepository.findById(boardViewId)
                 .orElseThrow(() -> new BoardViewNotFoundException(boardViewId));
 
-        List<Task> tasks = taskRepository.findAllForView(boardViewId);
+        List<Task> tasks = taskRepository.findAllForView(view);
         List<BoardStatus> boardStatuses = boardStatusRepository.findAllByBoardId(view.getBoardId());
 
         return switch (view.getGroupBy()) {

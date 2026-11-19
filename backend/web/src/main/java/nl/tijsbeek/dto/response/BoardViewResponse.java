@@ -1,6 +1,10 @@
 package nl.tijsbeek.dto.response;
 
 import nl.tijsbeek.entities.BoardView;
+import nl.tijsbeek.entities.BoardView.GroupBy;
+import nl.tijsbeek.entities.BoardView.SortBy;
+import nl.tijsbeek.entities.BoardView.SortDirection;
+import nl.tijsbeek.entities.BoardView.ViewType;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -9,10 +13,10 @@ public record BoardViewResponse(
         Long id,
         Long boardId,
         String name,
-        String type,
-        String groupBy,
-        String sortBy,
-        String sortDirection,
+        ViewType type,
+        GroupBy groupBy,
+        SortBy sortBy,
+        SortDirection sortDirection,
         int position,
         List<FilterRuleResponse> filterRules
 ) {
@@ -22,10 +26,10 @@ public record BoardViewResponse(
                 boardView.getId(),
                 boardView.getBoardId(),
                 boardView.getName(),
-                boardView.getType().toString(),
-                boardView.getGroupBy().toString(),
-                boardView.getSortBy().toString(),
-                boardView.getSortDirection().toString(),
+                boardView.getType(),
+                boardView.getGroupBy(),
+                boardView.getSortBy(),
+                boardView.getSortDirection(),
                 boardView.getPosition(),
                 boardView.getFilterRules().stream()
                         .map(FilterRuleResponse::fromDomain)

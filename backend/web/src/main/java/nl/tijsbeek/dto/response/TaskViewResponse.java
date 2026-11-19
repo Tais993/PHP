@@ -1,5 +1,6 @@
 package nl.tijsbeek.dto.response;
 
+import nl.tijsbeek.entities.BoardView.GroupBy;
 import nl.tijsbeek.results.TaskViewResult;
 import org.jspecify.annotations.NonNull;
 
@@ -7,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public record TaskViewResponse(
-        String groupedBy,
+        GroupBy groupedBy,
         LinkedHashMap<Long, Group> groups
 ) {
     public record Group(
@@ -35,6 +36,6 @@ public record TaskViewResponse(
                 groups.put(id, Group.fromDomain(group))
         );
 
-        return new TaskViewResponse(result.groupedBy().toString(), groups);
+        return new TaskViewResponse(result.groupedBy(), groups);
     }
 }

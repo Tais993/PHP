@@ -13,14 +13,26 @@ public class Task {
     private String title;
     private String description;
     private final LocalDateTime createdAt;
+    private LocalDateTime dueDate;
     private BoardStatus status;
 
-    public Task(Long id, Long boardId, String title, String description, LocalDateTime createdAt, BoardStatus status) {
+    public Task(Long boardId, String title, String description, LocalDateTime dueDate, BoardStatus status) {
+        this.id = null;
+        this.boardId = boardId;
+        this.title = title;
+        this.description = description;
+        this.createdAt = null;
+        this.dueDate = dueDate;
+        this.status = status;
+    }
+
+    public Task(Long id, Long boardId, String title, String description, LocalDateTime createdAt, LocalDateTime dueDate, BoardStatus status) {
         this.id = id;
         this.boardId = boardId;
         this.title = title;
         this.description = description;
         this.createdAt = createdAt;
+        this.dueDate = dueDate;
         this.status = status;
     }
 
@@ -71,6 +83,14 @@ public class Task {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
     }
 
     public BoardStatus getStatus() {

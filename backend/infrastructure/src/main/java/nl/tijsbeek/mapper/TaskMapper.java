@@ -17,6 +17,7 @@ public class TaskMapper {
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getCreatedAt(),
+                entity.getDueDate(),
                 entity.getStatus() == null ? null : BoardStatusMapper.toDomain(entity.getStatus())
         );
     }
@@ -29,6 +30,7 @@ public class TaskMapper {
                 task.getTitle(),
                 task.getDescription(),
                 task.getCreatedAt(),
+                task.getDueDate(),
                 status
         );
     }

@@ -26,6 +26,9 @@ public class TaskJPA {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "status")
     private BoardStatusJPA status;
@@ -35,12 +38,13 @@ public class TaskJPA {
     }
 
     public TaskJPA(Long id, Long boardId, String title, String description,
-                   LocalDateTime createdAt, BoardStatusJPA status) {
+                   LocalDateTime createdAt, LocalDateTime dueDate, BoardStatusJPA status) {
         this.id = id;
         this.boardId = boardId;
         this.title = title;
         this.description = description;
         this.createdAt = createdAt;
+        this.dueDate = dueDate;
         this.status = status;
     }
 
@@ -62,6 +66,10 @@ public class TaskJPA {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getDueDate() {
+        return dueDate;
     }
 
     public BoardStatusJPA getStatus() {

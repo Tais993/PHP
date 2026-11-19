@@ -1,8 +1,9 @@
 package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.request.CreateBoardViewRequest;
-import nl.tijsbeek.dto.response.BoardViewResponse;
 import nl.tijsbeek.dto.request.ReplaceFilterRulesRequest;
+import nl.tijsbeek.dto.request.UpdateSortingView;
+import nl.tijsbeek.dto.response.BoardViewResponse;
 import nl.tijsbeek.dto.response.TaskViewResponse;
 import nl.tijsbeek.exceptions.BoardViewNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardViewService;
@@ -42,6 +43,14 @@ public class ViewController {
             @RequestBody ReplaceFilterRulesRequest request
     ) {
         return BoardViewResponse.fromDomain(boardViewService.replaceFilterRules(viewId, request.toDomain()));
+    }
+
+    @PutMapping("/{viewId}/sorting")
+    public @NonNull BoardViewResponse updateSortingView(
+            @PathVariable final long viewId,
+            @RequestBody UpdateSortingView request
+    ) {
+        return BoardViewResponse.fromDomain(boardViewService.updateSortingOfBoardView(viewId, request.sortBy(), request.sortDirection()));
     }
 
     @GetMapping("/{viewId}/tasks")

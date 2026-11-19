@@ -23,5 +23,8 @@ public interface BoardViewService {
     BoardView createBoardView(final BoardView boardView);
 
     @Transactional
+    BoardView updateSortingOfBoardView(long viewId, BoardView.SortBy sortBy, BoardView.SortDirection sortDirection);
+
+    @Transactional
     BoardView replaceFilterRules(long viewId, List<FilterRule> rules);
 }

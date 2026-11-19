@@ -12,6 +12,7 @@ public record TaskResponse(
         String title,
         String description,
         LocalDateTime createdAt,
+        LocalDateTime dueDate,
         StatusResponse status) {
 
     public record StatusResponse(Long id, String name, int position) {}
@@ -25,6 +26,7 @@ public record TaskResponse(
                 task.getTitle(),
                 task.getDescription(),
                 task.getCreatedAt(),
+                task.getDueDate(),
                 task.getStatus() == null ? null : new StatusResponse(
                         task.getStatus().getId(),
                         task.getStatus().getName(),

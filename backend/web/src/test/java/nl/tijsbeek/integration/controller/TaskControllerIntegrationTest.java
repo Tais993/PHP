@@ -64,6 +64,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "test1250285028921930",
                 1L,
                 "Lorem ipsum",
+                null,
                 statusId
         );
 
@@ -106,6 +107,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "test",
                 1L,
                 "Lorem ipsum",
+                null,
                 statusId
         );
 
@@ -155,6 +157,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "Task 1",
                 1L,
                 "First task description",
+                null,
                 unfinishedId
         );
 
@@ -162,6 +165,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "Task 2",
                 1L,
                 "Second task description",
+                null,
                 finishedId
         );
 
@@ -212,6 +216,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "Task without status",
                 1L,
                 "Status is optional",
+                null,
                 null
         );
 
@@ -262,6 +267,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "Task on default board",
                 null,
                 "Uses the Inbox board",
+                null,
                 statusId
         );
 
@@ -305,6 +311,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "Finished task",
                 1L,
                 "Uses the selected status",
+                null,
                 selectedStatusId
         );
 
@@ -362,6 +369,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 "Rejected task",
                 boardId,
                 "Invalid reference",
+                null,
                 requestedStatusId
         );
 

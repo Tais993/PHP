@@ -1,0 +1,6 @@
+= Personal Home Page
+
+PHP is a self-hosted application for managing tasks on Kanban boards. It uses a React frontend, a Spring Boot backend, and PostgreSQL for persistence.
+
+* xref:task-creation-flow.adoc[] follows a task from the board UI through the API and database and back to the board.
+* The https://github.com/Tais993/PHP/blob/develop/README.adoc[project README] covers setup, local development, and testing.

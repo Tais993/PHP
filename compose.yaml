@@ -4,13 +4,14 @@ services:
       context: .
       dockerfile: Dockerfile
 
-    image: ghcr.io/tais993/php:latest
+    image: ghcr.io/tais993/php:develop
     restart: unless-stopped
 
     ports:
       - "8080:8080"
 
     environment:
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/homepage
       SPRING_DATASOURCE_USERNAME: homepage
       SPRING_DATASOURCE_PASSWORD: homepage

@@ -1,0 +1,48 @@
+@startuml
+actor User
+participant "AddTaskButton" as Form
+participant "TasksProvider" as Frontend
+boundary "Spring MVC\nTaskController" as HTTP
+participant "TaskServiceImpl" as Service
+participant "Repository adapters\n+ Spring Data JPA" as Repositories
+database PostgreSQL as DB
+
+User -> Form: Open New task and enter values
+Form -> Form: Trim and validate title
+Form -> Frontend: createTask(NewTask)
+Frontend -> Frontend: Check view, loading, error and title
+Frontend -> HTTP: POST /api/tasks\nJSON with boardId = 1, statusId = null
+HTTP -> HTTP: Deserialize CreateTaskRequest
+HTTP -> Service: createTask(title, boardId,\ndescription, statusId)
+activate Service
+Service -> Repositories: BoardRepository.findById(1)
+Repositories -> DB: Read board and its statuses
+DB --> Repositories: Board data
+Repositories --> Service: Board
+Service -> Service: new Task(null, 1, title,\ndescription, null, null)
+Service -> Repositories: TaskRepository.save(task)
+Repositories -> DB: INSERT task\nidentity ID, database timestamp
+DB --> Repositories: Generated ID
+Repositories --> Service: Task mapped from saved TaskJPA
+Service -> DB: Transaction commit
+Service --> HTTP: Task
+deactivate Service
+HTTP -> HTTP: TaskResponse.fromDomain(task)
+HTTP --> Frontend: 201 Created + TaskResponse
+note right of Frontend
+POST response body is not read.
+end note
+Frontend -> Frontend: Increment reloadCount
+Frontend --> Form: Promise<void> resolves
+Form -> Form: Close modal and clear inputs
+Frontend -> HTTP: GET /api/views/{selectedViewId}/tasks
+HTTP -> Service: getTasksOfBoardView(viewId)
+Service -> Repositories: Load view, tasks and statuses
+Repositories -> DB: Read ordered task data
+DB --> Repositories: Rows including created_at
+Repositories --> Service: Domain values
+Service --> HTTP: TaskViewResult
+HTTP --> Frontend: 200 + TaskViewResponse
+Frontend -> Frontend: setResult(requestKey, data)
+Frontend --> User: BoardLayout -> TaskList -> Task
+@enduml

@@ -1,10 +1,16 @@
+**/node_modules
+**/dist
+**/.gradle
+.env
+**/.env
+
 .git
 .github
 .idea
-.gradle
-.UML
+.docs/UML
 
 **/build
+frontend/
 
 *.iml
 README.md

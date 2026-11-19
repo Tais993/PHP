@@ -1,0 +1,112 @@
+﻿@startuml
+left to right direction
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 120
+
+
+entity "task" as task {
+  * id : int <<PK>>
+  --
+  * name : varchar(255)
+  * description : varchar(255)
+  * created_at : date
+  --
+  * status : task_status <<FK>>
+}
+
+entity "task_status" as task_status {
+  * name : varchar(60) <<pk>>
+  --
+  * display_name : varchar(60)
+  * description : varchar(255)
+}
+
+task_status ||--o{ task
+
+@enduml
+
+
+
+
+@startuml
+left to right direction
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 120
+
+
+entity "task" as task {
+  * id : int <<PK>>
+  --
+  * name : varchar(255)
+  * author : int <<FK>>
+  * event_date : date
+  --
+  parent_project_id : int <<FK>>
+}
+
+entity "project" as project {
+  * id : int <<PK>>
+  --
+  * name : varchar(255)
+  * path : varchar(260)
+  * event_date : date
+  --
+  parent_project_id : int <<FK>>
+}
+
+entity "image" as image {
+  * id : int <<PK>>
+  --
+  * file_name : varchar(255)
+  * file_type : varchar(20)
+  * relative_file_path : varchar(260)
+  --
+  * project_id : int <<FK>>
+}
+
+entity "metadata" as metadata {
+  * metadata_key : varchar(255) <<PK>>
+  --
+  * metadata_type : varchar(255)
+  * display_name : varchar(255)
+  * description : varchar(255)
+}
+
+entity "project_metadata" as project_metadata {
+  * project_id : int <<PK, FK>>
+  * metadata_key : varchar(255) <<PK, FK>>
+  --
+  * metadata_value : varchar(255)
+}
+
+entity "selection_session" as selection_session {
+  * id : int <<PK>>
+  --
+  * name : varchar(255)
+  * created_at : timestamp
+  --
+  * project_id : int <<FK>>
+}
+
+entity "selection_session_image" as selection_session_image {
+  * selection_session_id : int <<PK, FK>>
+  * image_id : int <<PK, FK>>
+}
+
+project ||--o{ project : parent
+project ||--o{ image
+project ||--o{ project_metadata
+project ||--o{ selection_session
+
+metadata ||--o{ project_metadata
+
+selection_session ||--o{ selection_session_image
+image ||--o{ selection_session_image
+
+@enduml

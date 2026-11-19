@@ -1,0 +1,34 @@
+@startuml
+top to bottom direction
+package web {
+  [TaskController]
+}
+package application {
+  interface TaskService
+  [TaskServiceImpl]
+  interface TaskRepository
+  interface BoardRepository
+}
+package infrastructure {
+  [TaskRepositoryImpl]
+  [BoardRepositoryImpl]
+  interface TaskJpaRepository
+}
+package domain {
+  [Task]
+  [Board]
+}
+database PostgreSQL
+
+[TaskController] --> TaskService : calls
+[TaskServiceImpl] ..|> TaskService
+[TaskServiceImpl] --> TaskRepository : calls port
+[TaskServiceImpl] --> BoardRepository : calls port
+[TaskRepositoryImpl] ..|> TaskRepository
+[BoardRepositoryImpl] ..|> BoardRepository
+[TaskRepositoryImpl] --> TaskJpaRepository : calls generated implementation
+TaskJpaRepository --> PostgreSQL : Hibernate / JDBC
+[TaskServiceImpl] --> [Task] : constructs
+[BoardRepositoryImpl] --> [Board] : returns mapped value
+
+@enduml

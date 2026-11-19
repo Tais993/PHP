@@ -1,0 +1,51 @@
+
+@startuml
+title PHP - Personal Home Page - Layered Architecture
+
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 35
+skinparam ranksep 45
+
+package "Web Layer" as Web {
+    component "Controllers" as Controllers
+    component "DTOs" as DTOs
+}
+
+package "Domain Layer" as Domain {
+    component "Entities" as Entities
+}
+
+package "Application Layer" as Application {
+    component "Services" as Services
+    component "Repository Interfaces" as Interfaces
+}
+
+package "Infrastructure Layer" as Infrastructure {
+    component "JPA Repositories" as Repositories
+    component "Flyway" as Flyway
+}
+
+package "Testing (test-fixtures)" as Testing {
+    component "Shared Integration Test Fixtures"
+}
+
+' Layout
+Web -[hidden]down-> Domain
+Domain -[hidden]down-> Application
+Application -[hidden]right-> Infrastructure
+Web -[hidden]right-> Testing
+
+' Actual relationships
+Controllers -[norank]-> Services
+Controllers -[norank]-> Entities
+
+Services -[norank]-> Entities
+Services -[norank]-> Interfaces
+
+Repositories ..|> Interfaces
+Repositories -[norank]-> Entities
+
+@enduml

@@ -22,7 +22,7 @@
 HELP.md
 .gradle
 build/
-!gradle/wrapper/gradle-wrapper.jar
+!backend/gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
@@ -64,3 +64,10 @@ replay_pid*
 
 # Image files
 *.png
+!/.docs/modules/ROOT/images/task-board.png
+
+/.docs/build/
+/.docs/modules/ROOT/images/diagrams/
+
+
+**/node_modules/

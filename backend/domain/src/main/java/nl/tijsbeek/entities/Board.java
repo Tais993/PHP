@@ -1,0 +1,67 @@
+package nl.tijsbeek.entities;
+
+import org.jspecify.annotations.NonNull;
+
+import java.util.List;
+import java.util.Objects;
+
+public class Board {
+    public static final int MAX_TITLE_LENGTH = 255;
+
+    private final Long id;
+    private String title;
+    private String description;
+    private final List<BoardStatus> statuses;
+
+    public Board(Long id, String title, String description) {
+        this(id, title, description, List.of());
+    }
+
+    public Board(Long id, String title, String description, List<BoardStatus> statuses) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.statuses = List.copyOf(statuses);
+    }
+
+
+    public void changeTitle(@NonNull String newTitle) {
+        Objects.requireNonNull(newTitle);
+
+        if (newTitle.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Task title cannot be empty"
+            );
+        }
+
+        if (newTitle.length() > MAX_TITLE_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Task title cannot exceed 255 characters"
+            );
+        }
+
+        this.title = newTitle;
+    }
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+
+    public String getDescription() {
+        return description;
+    }
+
+    public List<BoardStatus> getStatuses() {
+        return statuses;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+}

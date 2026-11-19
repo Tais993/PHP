@@ -1,0 +1,10 @@
+{
+  "name": "php-documentation",
+  "private": true,
+  "scripts": {
+    "build": "antora --clean --log-failure-level warn antora-playbook.yml"
+  },
+  "devDependencies": {
+    "antora": "3.2.3"
+  }
+}

@@ -1,18 +1,20 @@
-FROM eclipse-temurin:27-jdk AS build
+# Build backend
+FROM eclipse-temurin:27-jdk AS backend-build
 
-WORKDIR /app
+WORKDIR /backend
 
-COPY . .
+COPY backend/ ./
 
 RUN chmod +x gradlew
 RUN ./gradlew :web:bootJar --no-daemon
 
 
+# Run application
 FROM eclipse-temurin:27-jre
 
 WORKDIR /app
 
-COPY --from=build /app/web/build/libs/*.jar application.jar
+COPY --from=backend-build /backend/web/build/libs/*.jar application.jar
 
 EXPOSE 8080
 

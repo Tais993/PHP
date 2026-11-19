@@ -35,7 +35,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     void saveTaskWithoutStatus_ThenFindById_ReturnsPersistedTask() {
         // Arrange
         Board board = createBoard("BoardOne");
-        Task task = new Task(null, board.getId(), "TaskOne", "Task one for testing", null, null);
+        Task task = new Task(board.getId(), "TaskOne", "Task one for testing", null, null);
 
         // Act
         Task savedTask = taskRepository.save(task);
@@ -239,7 +239,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     void saveTask_WithNullTitle_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
-        Task task = new Task(null, board.getId(), null, "Task without a title", null, null);
+        Task task = new Task(board.getId(), null, "Task without a title", null, null);
 
         // Act & Assert
         assertThatThrownBy(() -> taskRepository.save(task))
@@ -252,7 +252,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     void saveTask_WithNullDescription_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
-        Task task = new Task(null, board.getId(), "TaskOne", null, null, null);
+        Task task = new Task(board.getId(), "TaskOne", null, null, null);
 
         // Act & Assert
         assertThatThrownBy(() -> taskRepository.save(task))
@@ -264,7 +264,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     @Test
     void saveTask_WithNullBoardId_ThrowsDataIntegrityViolationException() {
         // Arrange
-        Task task = new Task(null, null, "TaskOne", "Task without a board", null, null);
+        Task task = new Task(null, "TaskOne", "Task without a board", null, null);
 
         // Act & Assert
         assertThatThrownBy(() -> taskRepository.save(task))
@@ -275,7 +275,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     @Test
     void saveTask_WithMissingBoard_ThrowsDataIntegrityViolationException() {
         // Arrange
-        Task task = new Task(null, Long.MAX_VALUE, "TaskOne", "Task with missing board", null, null);
+        Task task = new Task(Long.MAX_VALUE, "TaskOne", "Task with missing board", null, null);
 
         // Act & Assert
         assertThatThrownBy(() -> taskRepository.save(task))
@@ -288,7 +288,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
         // Arrange
         Board board = createBoard("BoardOne");
         BoardStatus missingStatus = new BoardStatus(Long.MAX_VALUE, board.getId(), "Missing status", 0);
-        Task task = new Task(null, board.getId(), "TaskOne", "Task with missing status", null, missingStatus);
+        Task task = new Task(board.getId(), "TaskOne", "Task with missing status", null, missingStatus);
 
         // Act & Assert
         assertThatThrownBy(() -> taskRepository.save(task))
@@ -301,7 +301,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
         // Arrange
         Board firstBoard = createBoard("BoardOne");
         Board secondBoard = createBoard("BoardTwo");
-        Task task = new Task(null, firstBoard.getId(), "TaskOne", "Wrong board status", null,
+        Task task = new Task(firstBoard.getId(), "TaskOne", "Wrong board status", null,
                 secondBoard.getStatuses().get(0));
 
         // Act & Assert
@@ -343,6 +343,6 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     private Task saveTask(Board board, String title, BoardStatus status) {
-        return taskRepository.save(new Task(null, board.getId(), title, "Description for " + title, null, status));
+        return taskRepository.save(new Task(board.getId(), title, "Description for " + title, null, status));
     }
 }

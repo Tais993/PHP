@@ -289,7 +289,7 @@ class BoardStatusRepositoryIntegrationTest extends IntegrationTestBase {
         Board board = createBoard("BoardOne");
         BoardStatus status = saveStatus(board, "To do", 0);
         Task task = taskRepository.save(new Task(
-                null, board.getId(), "TaskOne", "Task with a status", null, status
+                board.getId(), "TaskOne", "Task with a status", null, status
         ));
         Task originalTask = taskRepository.findById(task.getId()).orElseThrow();
 

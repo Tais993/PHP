@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
         // MVC paths are relative to the /api servlet context path.
         registry.addMapping("/**")
                 .allowedOrigins(allowedOrigins)
-                .allowedMethods("GET", "POST", "DELETE")
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowedHeaders("Content-Type")
                 .maxAge(3600);
     }

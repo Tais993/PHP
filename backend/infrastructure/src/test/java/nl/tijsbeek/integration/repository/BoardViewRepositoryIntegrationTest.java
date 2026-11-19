@@ -2,6 +2,9 @@ package nl.tijsbeek.integration.repository;
 
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardView;
+import nl.tijsbeek.entities.FilterRule;
+import nl.tijsbeek.entities.FilterRule.FilterField;
+import nl.tijsbeek.entities.FilterRule.FilterOperator;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
@@ -20,6 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
 
+    private final JdbcTemplate jdbcTemplate;
     private final BoardViewRepository boardViewRepository;
     private final BoardRepository boardRepository;
 
@@ -27,6 +31,7 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
                                        BoardViewRepository boardViewRepository,
                                        BoardRepository boardRepository) {
         super(jdbcTemplate);
+        this.jdbcTemplate = jdbcTemplate;
         this.boardViewRepository = boardViewRepository;
         this.boardRepository = boardRepository;
     }
@@ -35,12 +40,27 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
     void saveView_ThenFindById_ReturnsPersistedView() {
         // Arrange
         Board board = createBoard("BoardOne");
+        List<FilterRule> rules = List.of(
+                new FilterRule(FilterField.STATUS, FilterOperator.IN, List.of("1", "2")),
+                new FilterRule(FilterField.TITLE, FilterOperator.CONTAINS, List.of("auth")),
+                new FilterRule(FilterField.DUE_DATE, FilterOperator.IS_NULL, List.of())
+        );
         BoardView view = new BoardView(null, board.getId(), "Board view", BoardView.ViewType.BOARD,
-                BoardView.GroupBy.STATUS, BoardView.SortBy.CREATED_AT, BoardView.SortDirection.DESC, 3);
+                BoardView.GroupBy.STATUS, BoardView.SortBy.CREATED_AT, BoardView.SortDirection.DESC, 3, rules);
+        String expectedJson = """
+                [
+                    {"field": "STATUS", "operator": "IN", "values": ["1", "2"]},
+                    {"field": "TITLE", "operator": "CONTAINS", "values": ["auth"]},
+                    {"field": "DUE_DATE", "operator": "IS_NULL", "values": []}
+                ]
+                """;
 
         // Act
         BoardView savedView = boardViewRepository.save(view);
         Optional<BoardView> result = boardViewRepository.findById(savedView.getId());
+        Boolean storesExpectedJson = jdbcTemplate.queryForObject(
+                "SELECT filter_rules = CAST(? AS jsonb) FROM board_view WHERE id = ?",
+                Boolean.class, expectedJson, savedView.getId());
 
         // Assert
         assertThat(savedView.getId()).isNotNull().isPositive();
@@ -53,7 +73,56 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
             assertThat(foundView.getSortBy()).isEqualTo(BoardView.SortBy.CREATED_AT);
             assertThat(foundView.getSortDirection()).isEqualTo(BoardView.SortDirection.DESC);
             assertThat(foundView.getPosition()).isEqualTo(3);
+            assertThat(foundView.getFilterRules()).containsExactlyElementsOf(rules);
         });
+        assertThat(storesExpectedJson).isTrue();
+    }
+
+    @Test
+    void insertView_WithoutFilterRules_DefaultsToEmptyList() {
+        // Arrange
+        Board board = createBoard("BoardOne");
+
+        // Act
+        Long viewId = jdbcTemplate.queryForObject("""
+                INSERT INTO board_view (board_id, name, type, sort_by, sort_direction, position)
+                VALUES (?, 'Default view', 'BOARD', 'TITLE', 'ASC', 0)
+                RETURNING id
+                """, Long.class, board.getId());
+        BoardView result = boardViewRepository.findById(viewId).orElseThrow();
+
+        // Assert
+        assertThat(result.getFilterRules()).isEmpty();
+    }
+
+    @Test
+    void updateView_WithFilterRulesJsonObject_ThrowsDataIntegrityViolationException() {
+        // Arrange
+        Board board = createBoard("BoardOne");
+        BoardView view = saveView(board, "Board view", 0);
+
+        // Act & Assert
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE board_view SET filter_rules = '{}'::jsonb WHERE id = ?", view.getId()))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("board_view_filter_rules_array");
+    }
+
+    @Test
+    void findById_FilterRulesWithNumericStatusIds_ReturnsStringValues() {
+        // Arrange
+        Board board = createBoard("BoardOne");
+        BoardView view = saveView(board, "Board view", 0);
+        jdbcTemplate.update("UPDATE board_view SET filter_rules = CAST(? AS jsonb) WHERE id = ?", """
+                [{"field": "STATUS", "operator": "IN", "values": [1, 2]}]
+                """, view.getId());
+
+        // Act
+        BoardView result = boardViewRepository.findById(view.getId()).orElseThrow();
+
+        // Assert
+        assertThat(result.getFilterRules())
+                .containsExactly(new FilterRule(FilterField.STATUS, FilterOperator.IN, List.of("1", "2")));
     }
 
     @Test
@@ -75,6 +144,8 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
         savedView.setSortBy(BoardView.SortBy.CREATED_AT);
         savedView.setSortDirection(BoardView.SortDirection.DESC);
         savedView.setPosition(4);
+        FilterRule rule = new FilterRule(FilterField.DUE_DATE, FilterOperator.IS_NOT_NULL, List.of());
+        savedView.setFilterRules(List.of(rule));
 
         // Act
         BoardView updatedView = boardViewRepository.save(savedView);
@@ -91,7 +162,26 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
         assertThat(foundView.getSortBy()).isEqualTo(BoardView.SortBy.CREATED_AT);
         assertThat(foundView.getSortDirection()).isEqualTo(BoardView.SortDirection.DESC);
         assertThat(foundView.getPosition()).isEqualTo(4);
+        assertThat(foundView.getFilterRules()).containsExactly(rule);
         assertThat(boardViewRepository.findAll()).hasSize(viewCountBeforeUpdate);
+    }
+
+    @Test
+    void saveExistingView_WithNullFilterRules_ClearsPersistedRules() {
+        // Arrange
+        Board board = createBoard("BoardOne");
+        FilterRule rule = new FilterRule(FilterField.DUE_DATE, FilterOperator.IS_NOT_NULL, List.of());
+        BoardView view = boardViewRepository.save(new BoardView(null, board.getId(), "Board view",
+                BoardView.ViewType.BOARD, BoardView.GroupBy.STATUS, BoardView.SortBy.TITLE,
+                BoardView.SortDirection.ASC, 0, List.of(rule)));
+        view.setFilterRules(null);
+
+        // Act
+        boardViewRepository.save(view);
+        BoardView result = boardViewRepository.findById(view.getId()).orElseThrow();
+
+        // Assert
+        assertThat(result.getFilterRules()).isEmpty();
     }
 
     @Test

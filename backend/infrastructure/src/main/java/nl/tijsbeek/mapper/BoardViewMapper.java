@@ -19,7 +19,8 @@ public class BoardViewMapper {
                 entity.getGroupBy(),
                 entity.getSortBy(),
                 entity.getSortDirection(),
-                entity.getPosition()
+                entity.getPosition(),
+                entity.getFilterRules()
         );
     }
 
@@ -33,7 +34,8 @@ public class BoardViewMapper {
                 view.getGroupBy(),
                 view.getSortBy(),
                 view.getSortDirection(),
-                view.getPosition()
+                view.getPosition(),
+                view.getFilterRules()
         );
     }
 }

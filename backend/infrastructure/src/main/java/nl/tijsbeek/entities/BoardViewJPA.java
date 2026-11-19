@@ -5,6 +5,10 @@ import nl.tijsbeek.entities.BoardView.GroupBy;
 import nl.tijsbeek.entities.BoardView.SortBy;
 import nl.tijsbeek.entities.BoardView.SortDirection;
 import nl.tijsbeek.entities.BoardView.ViewType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.List;
 
 @Entity
 @Table(name = "board_view")
@@ -40,12 +44,17 @@ public class BoardViewJPA {
     @Column(name = "position", nullable = false)
     private int position;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "filter_rules", nullable = false, columnDefinition = "jsonb")
+    private List<FilterRule> filterRules = List.of();
+
     public BoardViewJPA() {
         // Required by JPA
     }
 
     public BoardViewJPA(Long id, BoardJPA board, String name, ViewType type,
-                        GroupBy groupBy, SortBy sortBy, SortDirection sortDirection, int position) {
+                        GroupBy groupBy, SortBy sortBy, SortDirection sortDirection, int position,
+                        List<FilterRule> filterRules) {
         this.id = id;
         this.board = board;
         this.name = name;
@@ -54,6 +63,7 @@ public class BoardViewJPA {
         this.sortBy = sortBy;
         this.sortDirection = sortDirection;
         this.position = position;
+        this.filterRules = filterRules;
     }
 
     public Long getId() {
@@ -118,6 +128,10 @@ public class BoardViewJPA {
 
     public void setPosition(int position) {
         this.position = position;
+    }
+
+    public List<FilterRule> getFilterRules() {
+        return filterRules;
     }
 
 }

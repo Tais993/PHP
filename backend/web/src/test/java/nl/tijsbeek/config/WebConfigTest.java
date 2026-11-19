@@ -49,7 +49,7 @@ class WebConfigTest {
                             .header("Access-Control-Request-Headers", "content-type"))
                     .andExpect(status().isOk())
                     .andExpect(header().string("Access-Control-Allow-Origin", "https://preview.example"))
-                    .andExpect(header().string("Access-Control-Allow-Methods", "GET,POST,DELETE"))
+                    .andExpect(header().string("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE"))
                     .andExpect(header().doesNotExist("Access-Control-Allow-Credentials"));
         }
     }

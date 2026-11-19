@@ -2,6 +2,7 @@ package nl.tijsbeek.errors;
 
 import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.exceptions.BoardViewNotFoundException;
+import nl.tijsbeek.exceptions.InvalidFilterRulesException;
 import nl.tijsbeek.exceptions.InvalidTaskReferenceException;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -24,8 +25,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createProblem(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler(InvalidTaskReferenceException.class)
-    public ProblemDetail handleInvalidTaskReference(InvalidTaskReferenceException exception) {
+    @ExceptionHandler({InvalidTaskReferenceException.class, InvalidFilterRulesException.class})
+    public ProblemDetail handleBadRequest(RuntimeException exception) {
         return createProblem(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 

@@ -1,6 +1,8 @@
 package nl.tijsbeek.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +25,7 @@ public class TaskJPA {
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 

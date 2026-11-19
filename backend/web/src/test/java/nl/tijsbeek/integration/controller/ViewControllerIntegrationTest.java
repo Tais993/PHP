@@ -13,6 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +30,124 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
     ViewControllerIntegrationTest(JdbcTemplate jdbcTemplate, MockMvc mockMvc) {
         super(jdbcTemplate);
         this.mockMvc = mockMvc;
+    }
+
+    @Test
+    void createBoardView_ValidRequest_SavesViewOnBoard() throws Exception {
+        // Arrange
+        long boardId = createBoard("Project board", "");
+
+        // Act & Assert
+        mockMvc.perform(post("/views")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardId": %d,
+                                  "name": "Project view",
+                                  "type": "BOARD",
+                                  "groupBy": "STATUS",
+                                  "sortBy": "CREATED_AT",
+                                  "sortDirection": "DESC",
+                                  "position": 2
+                                }
+                                """.formatted(boardId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.boardId").value(boardId))
+                .andExpect(jsonPath("$.name").value("Project view"))
+                .andExpect(jsonPath("$.type").value("BOARD"))
+                .andExpect(jsonPath("$.groupBy").value("STATUS"))
+                .andExpect(jsonPath("$.sortBy").value("CREATED_AT"))
+                .andExpect(jsonPath("$.sortDirection").value("DESC"))
+                .andExpect(jsonPath("$.position").value(2))
+                .andExpect(jsonPath("$.filterRules").isArray())
+                .andExpect(jsonPath("$.filterRules").isEmpty());
+
+        mockMvc.perform(get("/boards/{id}/views", boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].name", contains("Project view")))
+                .andExpect(jsonPath("$[0].type").value("BOARD"))
+                .andExpect(jsonPath("$[0].groupBy").value("STATUS"))
+                .andExpect(jsonPath("$[0].sortBy").value("CREATED_AT"))
+                .andExpect(jsonPath("$[0].sortDirection").value("DESC"))
+                .andExpect(jsonPath("$[0].position").value(2));
+    }
+
+    @Test
+    void createBoardView_InvalidType_ReturnsBadRequest() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/views")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardId": 1,
+                                  "name": "Board view",
+                                  "type": "INVALID",
+                                  "groupBy": "STATUS",
+                                  "sortBy": "TITLE",
+                                  "sortDirection": "ASC",
+                                  "position": 0
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateSortingView_ValidRequest_SavesSortingAndReordersTasks() throws Exception {
+        // Arrange
+        long statusId = createStatus(1L, "To do", 0);
+        createTask(1L, "B task", statusId);
+        createTask(1L, "A task", statusId);
+        createTask(1L, "C task", statusId);
+        long viewId = createView(1L, "Board view", "BOARD", "STATUS", "CREATED_AT", "ASC", 3);
+
+        // Act & Assert
+        mockMvc.perform(put("/views/{id}/sorting", viewId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sortBy":"TITLE","sortDirection":"DESC"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(viewId))
+                .andExpect(jsonPath("$.sortBy").value("TITLE"))
+                .andExpect(jsonPath("$.sortDirection").value("DESC"));
+
+        mockMvc.perform(get("/views/{id}", viewId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sortBy").value("TITLE"))
+                .andExpect(jsonPath("$.sortDirection").value("DESC"));
+        mockMvc.perform(get("/views/{id}/tasks", viewId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groups.*.items[*].title", contains("C task", "B task", "A task")));
+    }
+
+    @Test
+    void updateSortingView_InvalidSortDirection_ReturnsBadRequest() throws Exception {
+        // Arrange
+        long viewId = createView(1L);
+
+        // Act & Assert
+        mockMvc.perform(put("/views/{id}/sorting", viewId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sortBy":"TITLE","sortDirection":"INVALID"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateSortingView_MissingView_ReturnsNotFound() throws Exception {
+        // Act & Assert
+        mockMvc.perform(put("/views/{id}/sorting", Long.MAX_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sortBy":"TITLE","sortDirection":"DESC"}
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"))
+                .andExpect(jsonPath("$.instance").value("/views/" + Long.MAX_VALUE + "/sorting"));
     }
 
     @Test

@@ -1,4 +1,4 @@
-package nl.tijsbeek.dto;
+package nl.tijsbeek.dto.response;
 
 import nl.tijsbeek.entities.BoardView;
 import org.jetbrains.annotations.Contract;

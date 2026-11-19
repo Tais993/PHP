@@ -1,9 +1,9 @@
 package nl.tijsbeek.controller;
 
-import nl.tijsbeek.dto.BoardResponse;
-import nl.tijsbeek.dto.BoardViewResponse;
-import nl.tijsbeek.dto.CreateBoardRequest;
-import nl.tijsbeek.dto.TaskResponse;
+import nl.tijsbeek.dto.response.BoardResponse;
+import nl.tijsbeek.dto.response.BoardViewResponse;
+import nl.tijsbeek.dto.request.CreateBoardRequest;
+import nl.tijsbeek.dto.response.TaskResponse;
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardService;

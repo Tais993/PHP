@@ -1,4 +1,4 @@
-package nl.tijsbeek.dto;
+package nl.tijsbeek.dto.request;
 
 import nl.tijsbeek.entities.FilterRule;
 import nl.tijsbeek.entities.FilterRule.FilterField;

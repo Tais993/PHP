@@ -1,5 +1,7 @@
 package nl.tijsbeek.entities;
 
+import java.util.List;
+
 public class BoardView {
 
     private final Long id;
@@ -10,9 +12,16 @@ public class BoardView {
     private SortBy sortBy;
     private SortDirection sortDirection;
     private int position;
+    private List<FilterRule> filterRules;
 
     public BoardView(Long id, Long boardId, String name, ViewType type,
                      GroupBy groupBy, SortBy sortBy, SortDirection sortDirection, int position) {
+        this(id, boardId, name, type, groupBy, sortBy, sortDirection, position, List.of());
+    }
+
+    public BoardView(Long id, Long boardId, String name, ViewType type,
+                     GroupBy groupBy, SortBy sortBy, SortDirection sortDirection, int position,
+                     List<FilterRule> filterRules) {
         this.id = id;
         this.boardId = boardId;
         this.name = name;
@@ -21,6 +30,7 @@ public class BoardView {
         this.sortBy = sortBy;
         this.sortDirection = sortDirection;
         this.position = position;
+        setFilterRules(filterRules);
     }
 
     public Long getId() {
@@ -77,6 +87,14 @@ public class BoardView {
 
     public void setPosition(int position) {
         this.position = position;
+    }
+
+    public List<FilterRule> getFilterRules() {
+        return filterRules;
+    }
+
+    public void setFilterRules(List<FilterRule> filterRules) {
+        this.filterRules = filterRules == null ? List.of() : List.copyOf(filterRules);
     }
 
     public enum ViewType {

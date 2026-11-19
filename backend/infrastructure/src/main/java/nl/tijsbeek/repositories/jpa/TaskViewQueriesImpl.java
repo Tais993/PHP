@@ -41,7 +41,7 @@ public class TaskViewQueriesImpl implements TaskViewQueries {
         };
 
         String query = """
-                SELECT task.id, task.board_id, task.title, task.description, task.created_at,
+                SELECT task.id, task.board_id, task.title, task.description, task.created_at, task.due_date,
                        status.id AS status_id, status.board_id AS status_board_id,
                        status.name AS status_name, status.position AS status_position
                 FROM task
@@ -78,6 +78,7 @@ public class TaskViewQueriesImpl implements TaskViewQueries {
                 resultSet.getString("title"),
                 resultSet.getString("description"),
                 resultSet.getObject("created_at", LocalDateTime.class),
+                resultSet.getObject("due_date", LocalDateTime.class),
                 status
         );
     }

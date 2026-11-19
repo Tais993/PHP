@@ -55,7 +55,7 @@ public class TaskServiceImpl implements TaskService {
                             "Status does not exist on the selected board"));
         }
 
-        Task task = new Task(null, selectedBoardId, title, description, null, status);
+        Task task = new Task(selectedBoardId, title, description, null, status);
 
 
         return taskRepository.save(task);

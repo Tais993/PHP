@@ -165,7 +165,7 @@ class TaskViewRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     private Task saveTask(Board board, String title, BoardStatus status, LocalDateTime createdAt) {
-        Task task = taskRepository.save(new Task(null, board.getId(), title, "Description for " + title, null, status));
+        Task task = taskRepository.save(new Task(board.getId(), title, "Description for " + title, null, status));
         jdbcTemplate.update("UPDATE task SET created_at = ? WHERE id = ?", Timestamp.valueOf(createdAt), task.getId());
         return task;
     }

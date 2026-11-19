@@ -5,17 +5,14 @@ import nl.tijsbeek.entities.BoardStatusJPA;
 import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
-import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.exceptions.BoardViewNotFoundException;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
 import nl.tijsbeek.interfaces.repositories.TaskRepository;
 import nl.tijsbeek.mapper.TaskMapper;
 import nl.tijsbeek.repositories.jpa.TaskJpaRepository;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 

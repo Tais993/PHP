@@ -102,8 +102,11 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
         BoardView view = saveView(board, "Board view", 0);
 
         // Act & Assert
+        Long viewId = view.getId();
+
         assertThatThrownBy(() -> jdbcTemplate.update(
-                "UPDATE board_view SET filter_rules = '{}'::jsonb WHERE id = ?", view.getId()))
+                "UPDATE board_view SET filter_rules = '{}'::jsonb WHERE id = ?",
+                viewId))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("board_view_filter_rules_array");
     }

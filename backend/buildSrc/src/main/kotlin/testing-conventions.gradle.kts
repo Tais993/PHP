@@ -1,4 +1,7 @@
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.testing.Test
+import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
@@ -8,12 +11,33 @@ plugins {
 
 val testSourceSet = sourceSets.test.get()
 
+abstract class MockitoAgentArgumentProvider : CommandLineArgumentProvider {
+    @get:Classpath
+    abstract val agentJar: ConfigurableFileCollection
+
+    override fun asArguments(): Iterable<String> =
+        listOf("-javaagent:${agentJar.singleFile}")
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
     testLogging {
         events("passed", "skipped", "failed")
         showStandardStreams = true
+    }
+}
+
+configurations.matching { it.name == "mockitoAgent" }.configureEach {
+    val mockitoAgent = this
+    isCanBeConsumed = false
+    isTransitive = false
+    shouldResolveConsistentlyWith(configurations.testRuntimeClasspath.get())
+
+    tasks.withType<Test>().configureEach {
+        jvmArgumentProviders.add(objects.newInstance<MockitoAgentArgumentProvider>().apply {
+            agentJar.from(mockitoAgent)
+        })
     }
 }
 

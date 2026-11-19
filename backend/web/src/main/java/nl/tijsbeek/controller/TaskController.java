@@ -1,9 +1,8 @@
 package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.request.CreateTaskRequest;
-import nl.tijsbeek.dto.response.TaskResponse;
 import nl.tijsbeek.dto.request.UpdateTaskStatusRequest;
-import nl.tijsbeek.entities.Task;
+import nl.tijsbeek.dto.response.TaskResponse;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.services.TaskService;
 import org.springframework.http.HttpStatus;
@@ -25,9 +24,8 @@ public class TaskController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TaskResponse create(@RequestBody CreateTaskRequest taskRequest) {
-        Task task = taskService.createTask(taskRequest.title(), taskRequest.boardId(), taskRequest.description(), taskRequest.statusId());
-        return TaskResponse.fromDomain(task);
+    public TaskResponse create(@RequestBody CreateTaskRequest request) {
+        return TaskResponse.fromDomain(taskService.createTask(request.toDomain()));
     }
 
     @GetMapping
@@ -49,9 +47,8 @@ public class TaskController {
 
     @PostMapping("/{id}/status")
     @ResponseStatus(HttpStatus.OK)
-    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskStatusRequest updateTaskStatusRequest) {
-        Task task = taskService.changeTaskStatus(id, updateTaskStatusRequest.statusId());
-        return TaskResponse.fromDomain(task);
+    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskStatusRequest request) {
+        return TaskResponse.fromDomain(taskService.changeTaskStatus(request.toDomain(id)));
     }
 
 

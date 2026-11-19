@@ -1,10 +1,9 @@
 package nl.tijsbeek.controller;
 
+import nl.tijsbeek.dto.request.CreateBoardRequest;
 import nl.tijsbeek.dto.response.BoardResponse;
 import nl.tijsbeek.dto.response.BoardViewResponse;
-import nl.tijsbeek.dto.request.CreateBoardRequest;
 import nl.tijsbeek.dto.response.TaskResponse;
-import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardService;
 import nl.tijsbeek.interfaces.services.BoardViewService;
@@ -32,9 +31,7 @@ public class BoardController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BoardResponse create(@RequestBody CreateBoardRequest request) {
-        Board board = boardService.createBoard(request.title(), request.description());
-
-        return BoardResponse.fromDomain(board);
+        return BoardResponse.fromDomain(boardService.createBoard(request.toDomain()));
     }
 
     @GetMapping

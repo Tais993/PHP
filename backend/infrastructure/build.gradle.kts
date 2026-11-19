@@ -7,6 +7,8 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":application"))
 
+    implementation("org.jspecify:jspecify")
+    implementation("org.springframework:spring-core")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-restclient")
 

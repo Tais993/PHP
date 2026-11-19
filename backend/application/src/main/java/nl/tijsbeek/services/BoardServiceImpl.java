@@ -3,7 +3,6 @@ package nl.tijsbeek.services;
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.interfaces.services.BoardService;
-import org.jetbrains.annotations.Contract;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,7 +13,6 @@ public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
 
-    @Contract(pure = true)
     public BoardServiceImpl(BoardRepository boardRepository) {
         this.boardRepository = boardRepository;
     }

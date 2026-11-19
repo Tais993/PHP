@@ -35,13 +35,6 @@ subprojects {
     apply(plugin = "testing-conventions")
     apply(plugin = "io.spring.dependency-management")
 
-
-    dependencies {
-        "compileOnly"("org.jetbrains:annotations:26.1.0")
-        "testCompileOnly"("org.jetbrains:annotations:26.1.0")
-    }
-
-
     extensions.configure<DependencyManagementExtension> {
         imports {
             mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.2")

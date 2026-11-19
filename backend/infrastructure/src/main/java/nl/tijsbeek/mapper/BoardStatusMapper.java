@@ -2,8 +2,8 @@ package nl.tijsbeek.mapper;
 
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardStatusJPA;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
+import org.springframework.lang.Contract;
 
 public class BoardStatusMapper {
 
@@ -17,7 +17,6 @@ public class BoardStatusMapper {
         );
     }
 
-    @Contract("_ -> new")
     public static @NonNull BoardStatus toDomain(@NonNull BoardStatusJPA entity) {
         return new BoardStatus(entity.getId(), entity.getBoard().getId(), entity.getName(), entity.getPosition());
     }

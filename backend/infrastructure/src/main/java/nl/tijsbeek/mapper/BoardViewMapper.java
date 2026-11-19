@@ -3,8 +3,8 @@ package nl.tijsbeek.mapper;
 import nl.tijsbeek.entities.BoardJPA;
 import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.BoardViewJPA;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
+import org.springframework.lang.Contract;
 
 public class BoardViewMapper {
     private BoardViewMapper() {}

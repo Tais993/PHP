@@ -3,8 +3,8 @@ package nl.tijsbeek.mapper;
 import nl.tijsbeek.entities.BoardStatusJPA;
 import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.entities.TaskJPA;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NonNull;
+import org.springframework.lang.Contract;
 
 public class TaskMapper {
     private TaskMapper() {}

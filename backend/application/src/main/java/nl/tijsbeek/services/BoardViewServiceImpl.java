@@ -7,7 +7,6 @@ import nl.tijsbeek.exceptions.InvalidFilterRulesException;
 import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
 import nl.tijsbeek.interfaces.services.BoardViewService;
-import org.jetbrains.annotations.Contract;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +18,6 @@ public class BoardViewServiceImpl implements BoardViewService {
     private final BoardViewRepository boardViewRepository;
     private final BoardStatusRepository boardStatusRepository;
 
-    @Contract(pure = true)
     public BoardViewServiceImpl(BoardViewRepository boardViewRepository, BoardStatusRepository boardStatusRepository) {
         this.boardViewRepository = boardViewRepository;
         this.boardStatusRepository = boardStatusRepository;

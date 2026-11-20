@@ -1,70 +1,34 @@
-import { type ReactNode, useContext, useEffect, useState } from 'react';
-import { apiUrl } from '../config.ts';
-import { BoardViewsContext } from './BoardViewsContext.ts';
-import type { TaskViewData } from '../components/types/TaskViewData.ts';
-import { TasksContext, type NewTask } from './TasksContext.ts';
-
-type TaskResult = {
-    requestKey: string;
-    data: TaskViewData | null;
-    error: string | null;
-};
+import {type ReactNode, useCallback, useContext, useState} from 'react';
+import {request} from '../api/request.ts';
+import {BoardViewsContext} from './BoardViewsContext.ts';
+import type {TaskViewData} from '../components/types/TaskViewData.ts';
+import {TasksContext, type NewTask} from './TasksContext.ts';
+import {useAsyncResource} from './useAsyncResource.ts';
 
 export function TasksProvider({
-    boardId,
-    children,
-}: {
+                                  boardId,
+                                  children,
+                              }: {
     readonly boardId: number;
     readonly children: ReactNode;
 }) {
-    const [result, setResult] = useState<TaskResult | null>(null);
+
     const [reloadCount, setReloadCount] = useState(0);
 
     const viewsContext = useContext(BoardViewsContext);
     const selectedViewId = viewsContext?.selectedView?.id ?? null;
     const settingsRevision = viewsContext?.settingsRevision ?? 0;
     const requestKey = `${boardId}:${selectedViewId}:${reloadCount}:${settingsRevision}`;
-    const currentResult = result?.requestKey === requestKey ? result : null;
 
-    const tasks = currentResult?.data ?? null;
-    const error = currentResult?.error ?? null;
-    const loading = selectedViewId !== null && currentResult === null;
-
-    useEffect(() => {
-        if (selectedViewId == null) {
-            return;
-        }
-
-        const controller = new AbortController();
-
-        async function loadTasks() {
-            try {
-                const response = await fetch(
-                    apiUrl(`/views/${selectedViewId}/tasks`),
-                    { signal: controller.signal },
-                );
-
-                if (!response.ok) {
-                    throw new Error('Could not load tasks');
-                }
-
-                const data: TaskViewData = await response.json();
-
-                if (!controller.signal.aborted) {
-                    setResult({ requestKey, data, error: null });
-                }
-            } catch (exception) {
-                if (!controller.signal.aborted) {
-                    setResult({ requestKey, data: null, error: 'Could not load tasks' });
-                    console.error(exception);
-                }
-            }
-        }
-
-        void loadTasks();
-
-        return () => controller.abort();
-    }, [selectedViewId, requestKey]);
+    const loadTasks = useCallback(async (signal: AbortSignal): Promise<TaskViewData> => {
+        const response = await request(`/views/${selectedViewId}/tasks`, {signal}, {
+            fallbackMessage: 'Could not load tasks',
+        });
+        return response.json();
+    }, [selectedViewId]);
+    const {data: tasks, loading, error} = useAsyncResource(
+        selectedViewId === null ? null : requestKey, loadTasks, 'Could not load tasks',
+    );
 
     async function createTask(input: NewTask): Promise<void> {
         if (selectedViewId === null) {
@@ -86,7 +50,7 @@ export function TasksProvider({
             throw new Error('Task title must contain 1–255 characters');
         }
 
-        const response = await fetch(apiUrl('/tasks'), {
+        await request('/tasks', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -96,11 +60,7 @@ export function TasksProvider({
                 title,
                 boardId,
             }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Could not create task');
-        }
+        }, {fallbackMessage: 'Could not create task'});
 
         // Reload groups and task ordering from the selected view after saving.
         setReloadCount(current => current + 1);
@@ -111,7 +71,7 @@ export function TasksProvider({
             throw new Error('Select a board view before moving a task');
         }
 
-        const response = await fetch(apiUrl(`/tasks/${taskId}/status`), {
+        await request(`/tasks/${taskId}/status`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -119,18 +79,14 @@ export function TasksProvider({
             body: JSON.stringify({
                 statusId,
             }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Could not update task status');
-        }
+        }, {fallbackMessage: 'Could not update task status'});
 
         // Reload view tasks after status change
         setReloadCount(current => current + 1);
     }
 
     return (
-        <TasksContext.Provider value={{ tasks, loading, error, createTask, moveTask }}>
+        <TasksContext.Provider value={{tasks, loading, error, createTask, moveTask}}>
             {children}
         </TasksContext.Provider>
     );

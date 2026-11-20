@@ -1,16 +1,15 @@
-import {type ReactNode, useEffect, useState, useSyncExternalStore} from 'react';
-import {apiUrl} from '../config.ts';
+import {type ReactNode, useCallback, useSyncExternalStore} from 'react';
+import {request} from '../api/request.ts';
 import type {BoardViewData, FilterRule, ViewSorting} from '../components/types/BoardViewData.ts';
 import {BoardViewsContext, type NewBoardView} from './BoardViewsContext.ts';
+import {useAsyncResource} from './useAsyncResource.ts';
 import {
     getSettingsRevision, getViewSettings, initialSettings, subscribeToViewSettings, updateViewSettings,
 } from './boardViewSettings.ts';
 
 type BoardViewsResult = {
-    boardId: number;
     data: BoardViewData[];
     settingsRevisionAtRead: number;
-    error: string | null;
 };
 
 export function BoardViewsProvider({
@@ -23,9 +22,20 @@ export function BoardViewsProvider({
     readonly children: ReactNode;
 }) {
 
-    const [result, setResult] = useState<BoardViewsResult | null>(null);
+    const loadBoardViews = useCallback(async (signal: AbortSignal): Promise<BoardViewsResult> => {
+        const settingsRevisionAtRead = getSettingsRevision();
+        const response = await request(`/boards/${boardId}/views`, {signal}, {
+            fallbackMessage: 'Could not load board views',
+        });
+        const data: BoardViewData[] = await response.json();
+        return {data, settingsRevisionAtRead};
+    }, [boardId]);
+
+    const {data: currentResult, loading, error: loadError, updateData} = useAsyncResource(
+        String(boardId), loadBoardViews, 'Could not load board views',
+    );
+
     const settings = useSyncExternalStore(subscribeToViewSettings, getViewSettings);
-    const currentResult = result?.boardId === boardId ? result : null;
     const boardViews = currentResult?.data.map(view => {
         const updated = settings.get(view.id);
         // A save can finish while the board's view list is loading.
@@ -33,10 +43,10 @@ export function BoardViewsProvider({
             ? updated.savedView
             : view;
     }) ?? [];
-    const loading = currentResult === null;
-    const invalidView = !loading && currentResult.error === null &&
+
+    const invalidView = !loading && loadError === null &&
         boardViewId !== undefined && !boardViews.some(view => view.id === boardViewId);
-    const error = currentResult?.error ?? (invalidView ? 'View does not belong to this board' : null);
+    const error = loadError ?? (invalidView ? 'View does not belong to this board' : null);
     const selectedView = loading || error
         ? null
         : boardViewId === undefined
@@ -45,44 +55,6 @@ export function BoardViewsProvider({
 
     const selectedSettings = (selectedView && settings.get(selectedView.id)) || initialSettings;
 
-    useEffect(() => {
-        const controller = new AbortController();
-
-        async function loadBoardViews() {
-            try {
-                const settingsRevisionAtRead = getSettingsRevision();
-                const response = await fetch(
-                    apiUrl(`/boards/${boardId}/views`),
-                    {signal: controller.signal},
-                );
-
-                if (!response.ok) {
-                    throw new Error('Could not load board views');
-                }
-
-                const data: BoardViewData[] = await response.json();
-
-                if (!controller.signal.aborted) {
-                    setResult({boardId, data, settingsRevisionAtRead, error: null});
-                }
-
-            } catch (exception) {
-                if (!controller.signal.aborted) {
-                    setResult({
-                        boardId,
-                        data: [],
-                        settingsRevisionAtRead: getSettingsRevision(),
-                        error: 'Could not load board views',
-                    });
-                    console.error(exception);
-                }
-            }
-        }
-
-        void loadBoardViews();
-
-        return () => controller.abort();
-    }, [boardId]);
 
     function saveFilterRules(viewId: number, filterRules: FilterRule[]) {
         return boardViews.some(view => view.id === viewId)
@@ -118,7 +90,7 @@ export function BoardViewsProvider({
         }
 
         const position = (boardViews.at(-1)?.position ?? -1) + 1;
-        const response = await fetch(apiUrl('/views'), {
+        const response = await request('/views', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -127,16 +99,11 @@ export function BoardViewsProvider({
                 name,
                 position,
             }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Could not create view');
-        }
+        }, {fallbackMessage: 'Could not create view'});
 
         const createdView: BoardViewData = await response.json();
-
-        setResult(current => {
-            if (!current || current.boardId !== boardId || current.data.some(view => view.id === createdView.id)) {
+        updateData(current => {
+            if (current.data.some(view => view.id === createdView.id)) {
                 return current;
             }
 

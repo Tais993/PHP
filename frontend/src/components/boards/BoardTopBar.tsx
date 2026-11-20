@@ -5,6 +5,7 @@ import {BoardViewsContext} from "../../providers/BoardViewsContext.ts";
 import {TasksContext} from "../../providers/TasksContext.ts";
 import {Link} from "react-router";
 import AddViewButton from "../buttons/AddViewButton.tsx";
+import ViewOptionsPopover from "./ViewOptionsPopover.tsx";
 
 export default function BoardTopBar() {
     const boardsContext = useContext(BoardsContext);
@@ -25,7 +26,14 @@ export default function BoardTopBar() {
 
     const {boards, loading: boardsLoading, error: boardsError} = boardsContext;
     
-    const {boardViews, loading: boardViewsLoading, error: boardViewsError
+    const {
+        boardViews,
+        loading: boardViewsLoading,
+        error: boardViewsError,
+        saveViewDetails,
+        duplicateView,
+        viewMutationStatus,
+        refreshBoardViews,
     } = boardViewsContext;
 
 
@@ -62,17 +70,38 @@ export default function BoardTopBar() {
                 <Group>
                     {boardViewsLoading && <span>Loading boards...</span>}
                     {boardViewsError && <span>{boardViewsError}</span>}
-
-                    {boardViews.map(boardView => (
+                    {viewMutationStatus.error && <span role="alert">{viewMutationStatus.error}</span>}
+                    {viewMutationStatus.needsRefresh && (
                         <Button
-                            key={boardView.id}
-                            variant="subtle"
-                            color="gray"
-                            component={Link}
-                            to={`/boards/${boardView.boardId}/views/${boardView.id}`}
+                            variant="default"
+                            loading={viewMutationStatus.pending}
+                            disabled={viewMutationStatus.pending}
+                            onClick={() => void refreshBoardViews()}
                         >
-                            {boardView.name}
+                            Refresh view list
                         </Button>
+                    )}
+
+                    {boardViews.map((boardView, index) => (
+                        <Group key={boardView.id} gap={0} wrap="nowrap">
+                            <Button
+                                variant="subtle"
+                                color="gray"
+                                component={Link}
+                                to={`/boards/${boardView.boardId}/views/${boardView.id}`}
+                            >
+                                {boardView.name}
+                            </Button>
+                            <ViewOptionsPopover
+                                view={boardView}
+                                position={index + 1}
+                                viewCount={boardViews.length}
+                                mutationStatus={viewMutationStatus}
+                                onSave={details => saveViewDetails(boardView.id, details)}
+                                onDuplicate={name => duplicateView(boardView.id, name)}
+                                onRefresh={refreshBoardViews}
+                            />
+                        </Group>
                     ))}
                 </Group>
 

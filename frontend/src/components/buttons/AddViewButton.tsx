@@ -10,7 +10,7 @@ export default function AddViewButton() {
         throw new Error('AddViewButton must be inside BoardViewsProvider');
     }
 
-    const {createView, loading, error} = context;
+    const {createView, loading, error, viewMutationStatus} = context;
 
     return (
         <AddItemButton
@@ -57,7 +57,7 @@ export default function AddViewButton() {
                     />
                 </>
             )}
-            disabled={loading || Boolean(error)}
+            disabled={loading || Boolean(error) || viewMutationStatus.pending || viewMutationStatus.needsRefresh}
             onCreate={({title}, fields) => createView({
                 name: title,
                 type: fields.get('type') as NewBoardView['type'],

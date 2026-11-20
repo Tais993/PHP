@@ -1,4 +1,4 @@
-import {apiUrl} from '../config.ts';
+import {request} from '../api/request.ts';
 import type {BoardViewData, FilterRule, ViewSorting} from '../components/types/BoardViewData.ts';
 
 export type ViewSettingsStatus = {
@@ -58,18 +58,14 @@ export async function updateViewSettings(
     updateSettings(viewId, {...current, pending: true, error: null});
 
     try {
-        const response = reloading
-            ? await fetch(apiUrl(path), {cache: 'no-store', signal})
-            : await fetch(apiUrl(`${path}/${kind}`), {
+        const response = await request(reloading ? path : `${path}/${kind}`, reloading
+            ? {cache: 'no-store', signal}
+            : {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload),
                 signal,
-            });
-        if (!response.ok) {
-            const problem = await response.json().catch(() => null);
-            throw new Error(typeof problem?.detail === 'string' && problem.detail ? problem.detail : fallbackError);
-        }
+            }, {fallbackMessage: fallbackError, parseProblemDetail: true});
 
         const savedView: BoardViewData = await response.json();
         updateSettings(viewId, {...initialSettings, savedView, revision: ++revision});

@@ -1,7 +1,8 @@
 import {type ReactNode, useCallback, useSyncExternalStore} from 'react';
 import {request} from '../api/request.ts';
 import type {BoardViewData, FilterRule, ViewSorting} from '../components/types/BoardViewData.ts';
-import {BoardViewsContext, type NewBoardView} from './BoardViewsContext.ts';
+import {BoardViewsContext} from './BoardViewsContext.ts';
+import {useBoardViewMutations} from './useBoardViewMutations.ts';
 import {useAsyncResource} from './useAsyncResource.ts';
 import {
     getSettingsRevision, getViewSettings, initialSettings, subscribeToViewSettings, updateViewSettings,
@@ -74,43 +75,22 @@ export function BoardViewsProvider({
             : Promise.resolve(false);
     }
 
-    async function createView(input: NewBoardView): Promise<void> {
-        if (loading) {
-            throw new Error('Wait until board views have finished loading');
-        }
+    const createView = useBoardViewMutations({
+        boardId,
+        loading,
+        error,
+        boardViews,
+        onCreated: createdView => {
+            updateData(current => {
+                if (current.data.some(view => view.id === createdView.id)) {
+                    return current;
+                }
 
-        if (error) {
-            throw new Error('Reload the board before creating a view');
-        }
-
-        const name = input.name.trim();
-
-        if (!name || name.length > 255) {
-            throw new Error('View name must contain 1–255 characters');
-        }
-
-        const position = (boardViews.at(-1)?.position ?? -1) + 1;
-        const response = await request('/views', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                ...input,
-                boardId,
-                name,
-                position,
-            }),
-        }, {fallbackMessage: 'Could not create view'});
-
-        const createdView: BoardViewData = await response.json();
-        updateData(current => {
-            if (current.data.some(view => view.id === createdView.id)) {
-                return current;
-            }
-
-            const data = [...current.data, createdView].sort((a, b) => a.position - b.position || a.id - b.id);
-            return {...current, data};
-        });
-    }
+                const data = [...current.data, createdView].sort((a, b) => a.position - b.position || a.id - b.id);
+                return {...current, data};
+            });
+        },
+    });
 
     return (
         <BoardViewsContext.Provider

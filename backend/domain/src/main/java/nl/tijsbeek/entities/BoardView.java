@@ -40,6 +40,20 @@ public class BoardView {
         setFilterRules(filterRules);
     }
 
+    public BoardView duplicate(String name) {
+        return new BoardView(
+                null,
+                boardId,
+                name,
+                type,
+                groupBy,
+                sortBy,
+                sortDirection,
+                0,
+                filterRules
+        );
+    }
+
     public Long getId() {
         return id;
     }

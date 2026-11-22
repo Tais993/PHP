@@ -43,6 +43,11 @@ public class ViewController {
         return BoardViewResponse.fromDomain(boardViewService.updateBoardViewDetails(viewId, details.name(), details.position()));
     }
 
+    @PostMapping("/{viewId}/duplicate")
+    public @NonNull BoardViewResponse duplicate(@PathVariable final long viewId, @RequestBody String name) {
+        return BoardViewResponse.fromDomain(boardViewService.duplicateBoardView(viewId, name));
+    }
+
     @PutMapping("/{viewId}/filter-rules")
     public @NonNull BoardViewResponse replaceFilterRules(
             @PathVariable final long viewId,

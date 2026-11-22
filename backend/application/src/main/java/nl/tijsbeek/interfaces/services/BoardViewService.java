@@ -23,6 +23,9 @@ public interface BoardViewService {
     BoardView createBoardView(final BoardView boardView);
 
     @Transactional
+    BoardView duplicateBoardView(long boardViewId, String boardName);
+
+    @Transactional
     BoardView updateBoardView(BoardView boardView);
 
     @Transactional

@@ -274,27 +274,20 @@ export function BoardViewsProvider({
         try {
             const response = await request(`/views/${viewId}/duplicate`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name}),
+                headers: {'Content-Type': 'text/plain;charset=UTF-8'},
+                body: name,
                 signal,
             }, {
                 fallbackMessage: 'Could not duplicate view.',
-                notFoundMessage: 'The server does not yet support view duplication.',
                 parseProblemDetail: true,
             });
 
             const duplicate: BoardViewData = await response.json();
-            updateData(current => current.data.some(view => view.id === duplicate.id)
-                ? current
-                : {
-                    ...current,
-                    data: orderBoardViews([...current.data, duplicate]),
-                    settingsRevisionAtRead: getSettingsRevision(),
-                });
+            applyBoardViews(boardId, orderBoardViews([...boardViews, duplicate]));
             finishBoardViewMutation(boardId);
             return true;
         } catch (exception) {
-            if (exception instanceof ApiResponseError) {
+            if (exception instanceof ApiResponseError && exception.status < 500) {
                 finishBoardViewMutation(boardId, {error: exception.message});
                 throw exception;
             }

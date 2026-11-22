@@ -49,6 +49,28 @@ export function subscribeToViewSettings(listener: () => void) {
     };
 }
 
+export function waitForBoardViewMutation(boardId: number, signal: AbortSignal) {
+    signal.throwIfAborted();
+    if (!getBoardViewMutationStatus(boardId).pending) return;
+
+    return new Promise<void>((resolve, reject) => {
+        const unsubscribe = subscribeToViewSettings(() => {
+            if (getBoardViewMutationStatus(boardId).pending) return;
+
+            unsubscribe();
+            signal.removeEventListener('abort', abort);
+            resolve();
+        });
+
+        function abort() {
+            unsubscribe();
+            reject(signal.reason);
+        }
+
+        signal.addEventListener('abort', abort, {once: true});
+    });
+}
+
 function updateSettings(viewId: number, next: ViewSettings) {
     settings = new Map(settings).set(viewId, next);
     listeners.forEach(listener => listener());

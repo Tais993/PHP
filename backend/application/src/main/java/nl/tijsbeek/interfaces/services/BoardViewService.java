@@ -23,6 +23,12 @@ public interface BoardViewService {
     BoardView createBoardView(final BoardView boardView);
 
     @Transactional
+    BoardView updateBoardView(BoardView boardView);
+
+    @Transactional
+    BoardView updateBoardViewDetails(long viewId, String name, int position);
+
+    @Transactional
     BoardView updateSortingOfBoardView(long viewId, BoardView.SortBy sortBy, BoardView.SortDirection sortDirection);
 
     @Transactional

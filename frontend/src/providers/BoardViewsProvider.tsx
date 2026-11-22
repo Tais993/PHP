@@ -13,6 +13,7 @@ import {
     initialSettings,
     subscribeToViewSettings,
     updateViewSettings,
+    waitForBoardViewMutation,
 } from './boardViewSettings.ts';
 
 type BoardViewsResult = {
@@ -48,9 +49,10 @@ export function BoardViewsProvider({
 
     const loadBoardViews = useCallback(async (signal: AbortSignal): Promise<BoardViewsResult> => {
         while (true) {
+            await waitForBoardViewMutation(boardId, signal);
             const requestRevision = readBoardListRevision(boardListRevisions.current, boardId);
             const settingsRevisionAtRead = getSettingsRevision();
-            const response = await request(`/boards/${boardId}/views`, {signal}, {
+            const response = await request(`/boards/${boardId}/views`, {cache: 'no-store', signal}, {
                 fallbackMessage: 'Could not load board views',
             });
             const data = orderBoardViews(await response.json() as BoardViewData[]);
@@ -168,8 +170,8 @@ export function BoardViewsProvider({
             throw new Error('Reload the board before changing view details.');
         }
 
-        const view = boardViews.find(candidate => candidate.id === viewId);
-        if (!view) {
+        const fromIndex = boardViews.findIndex(view => view.id === viewId);
+        if (fromIndex === -1) {
             throw new Error('This view is no longer on the current board.');
         }
 
@@ -191,32 +193,51 @@ export function BoardViewsProvider({
 
         invalidateBoardListReads(boardId);
         const signal = AbortSignal.timeout(15_000);
+        const updatedViews = [...boardViews];
+        const toIndex = details.position - 1;
+        const moving = fromIndex !== toIndex;
+        if (moving) {
+            const [movedView] = updatedViews.splice(fromIndex, 1);
+            updatedViews.splice(toIndex, 0, movedView);
+        }
+        let savedAny = false;
 
         try {
-            const response = await request(`/views/${viewId}/details`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name, position: details.position - 1}),
-                signal,
-            }, {
-                fallbackMessage: 'Could not save view changes.',
-                notFoundMessage: 'The server does not yet support view renaming and reordering.',
-                parseProblemDetail: true,
-            });
+            // The details endpoint only updates one view. Assign distinct positions to
+            // the reordered list, including when existing positions have ties or gaps.
+            for (const [index, view] of updatedViews.entries()) {
+                const position = moving ? index : view.position;
+                const nextName = view.id === viewId ? name : view.name;
+                if (position === view.position && nextName === view.name) continue;
 
-            const updatedViews = orderBoardViews(await response.json() as BoardViewData[]);
-            applyBoardViews(boardId, updatedViews);
+                const response = await request(`/views/${view.id}/details`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: nextName, position}),
+                    signal,
+                }, {
+                    fallbackMessage: 'Could not save view changes.',
+                    parseProblemDetail: true,
+                });
+                savedAny = true;
+                updatedViews[index] = await response.json() as BoardViewData;
+            }
+
+            applyBoardViews(boardId, orderBoardViews(updatedViews));
             finishBoardViewMutation(boardId);
             return true;
         } catch (exception) {
-            if (exception instanceof ApiResponseError) {
+            if (exception instanceof ApiResponseError && exception.status < 500 && !savedAny) {
                 finishBoardViewMutation(boardId, {error: exception.message});
                 throw exception;
             }
 
-            const uncertainMessage = signal.aborted
-                ? 'The view update timed out.'
-                : 'The view update outcome is uncertain.';
+            let uncertainMessage = 'The view update outcome is uncertain.';
+            if (signal.aborted) {
+                uncertainMessage = 'The view update timed out.';
+            } else if (savedAny) {
+                uncertainMessage = 'Some view changes may have been saved.';
+            }
             const refreshed = await recoverUncertainMutation(boardId, uncertainMessage);
             if (refreshed) {
                 throw new Error(`${uncertainMessage} The board list was refreshed; verify the result before trying again.`);

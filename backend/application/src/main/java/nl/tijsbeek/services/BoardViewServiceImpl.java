@@ -44,6 +44,14 @@ public class BoardViewServiceImpl implements BoardViewService {
     }
 
     @Override
+    public BoardView duplicateBoardView(long boardViewId, String boardName) {
+        return boardViewRepository.save(
+                boardViewRepository.findById(boardViewId)
+                .orElseThrow(() -> new BoardViewNotFoundException(boardViewId))
+                        .duplicate(boardName));
+    }
+
+    @Override
     public BoardView updateBoardView(BoardView boardView) {
         return boardViewRepository.save(boardView);
     }

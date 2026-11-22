@@ -44,6 +44,22 @@ public class BoardViewServiceImpl implements BoardViewService {
     }
 
     @Override
+    public BoardView updateBoardView(BoardView boardView) {
+        return boardViewRepository.save(boardView);
+    }
+
+    @Override
+    public BoardView updateBoardViewDetails(long viewId, String name, int position) {
+        BoardView boardView = boardViewRepository.findById(viewId)
+                .orElseThrow(() -> new BoardViewNotFoundException(viewId));
+
+        boardView.setName(name);
+        boardView.setPosition(position);
+
+        return updateBoardView(boardView);
+    }
+
+    @Override
     public BoardView updateSortingOfBoardView(long viewId, BoardView.SortBy sortBy, BoardView.SortDirection sortDirection) {
         BoardView boardView = boardViewRepository.findById(viewId)
                 .orElseThrow(() -> new BoardViewNotFoundException(viewId));

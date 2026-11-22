@@ -2,6 +2,7 @@ package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.request.CreateBoardViewRequest;
 import nl.tijsbeek.dto.request.ReplaceFilterRulesRequest;
+import nl.tijsbeek.dto.request.UpdateBoardViewDetails;
 import nl.tijsbeek.dto.request.UpdateSortingView;
 import nl.tijsbeek.dto.response.BoardViewResponse;
 import nl.tijsbeek.dto.response.TaskViewResponse;
@@ -35,6 +36,11 @@ public class ViewController {
     @PostMapping
     public @NonNull BoardViewResponse create(@RequestBody CreateBoardViewRequest request) {
         return BoardViewResponse.fromDomain(boardViewService.createBoardView(request.toDomain()));
+    }
+
+    @PostMapping("/{viewId}/details")
+    public @NonNull BoardViewResponse update(@PathVariable final long viewId, @RequestBody UpdateBoardViewDetails details) {
+        return BoardViewResponse.fromDomain(boardViewService.updateBoardViewDetails(viewId, details.name(), details.position()));
     }
 
     @PutMapping("/{viewId}/filter-rules")

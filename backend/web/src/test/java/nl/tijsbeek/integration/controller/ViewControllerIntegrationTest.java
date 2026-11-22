@@ -5,19 +5,15 @@ import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.nullValue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @IntegrationTest
@@ -90,6 +86,89 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateViewDetails_ValidRequest_SavesNameAndPosition() throws Exception {
+        long boardId = createBoard("Project board", "");
+        long viewId = createView(boardId, "Original view", "BOARD", "STATUS", "CREATED_AT", "DESC", 0);
+        createView(boardId, "Other view", "BOARD", "STATUS", "TITLE", "ASC", 1);
+
+        mockMvc.perform(post("/views/{id}/details", viewId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Renamed view","position":2}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(viewId))
+                .andExpect(jsonPath("$.name").value("Renamed view"))
+                .andExpect(jsonPath("$.position").value(2))
+                .andExpect(jsonPath("$.sortBy").value("CREATED_AT"))
+                .andExpect(jsonPath("$.sortDirection").value("DESC"));
+
+        mockMvc.perform(get("/boards/{id}/views", boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].name", contains("Other view", "Renamed view")))
+                .andExpect(jsonPath("$[1].id").value(viewId))
+                .andExpect(jsonPath("$[1].position").value(2));
+    }
+
+    @Test
+    void updateViewDetails_MissingView_ReturnsNotFound() throws Exception {
+        mockMvc.perform(post("/views/{id}/details", Long.MAX_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Renamed view","position":2}
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
+    }
+
+    @Test
+    void duplicateView_PlainTextName_SavesCopyWithSourceSettings() throws Exception {
+        long boardId = createBoard("Project board", "");
+        long viewId = createView(boardId, "Original view", "BOARD", "STATUS", "CREATED_AT", "DESC", 3);
+        mockMvc.perform(put("/views/{id}/filter-rules", viewId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"filterRules":[{"field":"TITLE","operator":"CONTAINS","values":["Project"]}]}
+                                """))
+                .andExpect(status().isOk());
+
+        String copyName = "Copy of Caf\u00e9";
+        mockMvc.perform(post("/views/{id}/duplicate", viewId)
+                        .contentType(new MediaType(MediaType.TEXT_PLAIN, UTF_8))
+                        .content(copyName.getBytes(UTF_8)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").value(not((int) viewId)))
+                .andExpect(jsonPath("$.boardId").value(boardId))
+                .andExpect(jsonPath("$.name").value(copyName))
+                .andExpect(jsonPath("$.type").value("BOARD"))
+                .andExpect(jsonPath("$.groupBy").value("STATUS"))
+                .andExpect(jsonPath("$.sortBy").value("CREATED_AT"))
+                .andExpect(jsonPath("$.sortDirection").value("DESC"))
+                .andExpect(jsonPath("$.filterRules[0].field").value("TITLE"))
+                .andExpect(jsonPath("$.filterRules[0].operator").value("CONTAINS"))
+                .andExpect(jsonPath("$.filterRules[0].values[0]").value("Project"));
+
+        mockMvc.perform(get("/boards/{id}/views", boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].name", contains(copyName, "Original view")))
+                .andExpect(jsonPath("$[0].filterRules[0].values[0]").value("Project"))
+                .andExpect(jsonPath("$[1].id").value(viewId))
+                .andExpect(jsonPath("$[1].position").value(3));
+    }
+
+    @Test
+    void duplicateView_MissingView_ReturnsNotFound() throws Exception {
+        mockMvc.perform(post("/views/{id}/duplicate", Long.MAX_VALUE)
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("Copy of view"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
     }
 
     @Test

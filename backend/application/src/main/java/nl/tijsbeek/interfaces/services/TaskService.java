@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface TaskService {
 
     @Transactional
-    Task createTask(CreateTask command);
+    Task createTask(String title, Long boardId, String description, Long statusId);
 
     @Transactional(readOnly = true)
     Optional<Task> getTask(long id);
@@ -28,12 +28,8 @@ public interface TaskService {
     Task changeTaskTitle(long id, String newTitle);
 
     @Transactional
-    Task changeTaskStatus(ChangeTaskStatus command);
+    Task changeTaskStatus(long taskId, Long statusId);
 
     @Transactional
     void deleteTask(long id);
-
-    record CreateTask(String title, Long boardId, String description, Long statusId) {}
-
-    record ChangeTaskStatus(long taskId, Long statusId) {}
 }

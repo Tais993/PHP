@@ -25,7 +25,8 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@RequestBody CreateTaskRequest request) {
-        return TaskResponse.fromDomain(taskService.createTask(request.toDomain()));
+        return TaskResponse.fromDomain(taskService.createTask(
+                request.title(), request.boardId(), request.description(), request.statusId()));
     }
 
     @GetMapping
@@ -48,7 +49,7 @@ public class TaskController {
     @PostMapping("/{id}/status")
     @ResponseStatus(HttpStatus.OK)
     public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskStatusRequest request) {
-        return TaskResponse.fromDomain(taskService.changeTaskStatus(request.toDomain(id)));
+        return TaskResponse.fromDomain(taskService.changeTaskStatus(id, request.statusId()));
     }
 
 

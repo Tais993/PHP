@@ -1,7 +1,5 @@
 package nl.tijsbeek.entities;
 
-import org.jspecify.annotations.NonNull;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -19,28 +17,36 @@ public class Board {
 
     public Board(Long id, String title, String description, List<BoardStatus> statuses) {
         this.id = id;
-        this.title = title;
-        this.description = description;
-        this.statuses = List.copyOf(statuses);
+        this.title = requireValidTitle(title);
+        this.description = Objects.requireNonNull(description, "Board description is required");
+        this.statuses = requireValidStatuses(id, statuses);
     }
 
 
-    public void changeTitle(@NonNull String newTitle) {
-        Objects.requireNonNull(newTitle);
+    public void changeTitle(String newTitle) {
+        this.title = requireValidTitle(newTitle);
+    }
 
-        if (newTitle.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Task title cannot be empty"
-            );
+    private static String requireValidTitle(String title) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Board title is required");
         }
-
-        if (newTitle.length() > MAX_TITLE_LENGTH) {
+        if (title.length() > MAX_TITLE_LENGTH) {
             throw new IllegalArgumentException(
-                    "Task title cannot exceed 255 characters"
-            );
+                    "Board title cannot exceed " + MAX_TITLE_LENGTH + " characters");
         }
+        return title;
+    }
 
-        this.title = newTitle;
+    private static List<BoardStatus> requireValidStatuses(Long boardId, List<BoardStatus> statuses) {
+        List<BoardStatus> copy = List.copyOf(statuses);
+        for (BoardStatus status : copy) {
+            Long statusBoardId = status.getBoardId();
+            if (statusBoardId != null && !statusBoardId.equals(boardId)) {
+                throw new IllegalArgumentException("Board status must belong to the board");
+            }
+        }
+        return copy;
     }
 
 
@@ -62,6 +68,6 @@ public class Board {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = Objects.requireNonNull(description, "Board description is required");
     }
 }

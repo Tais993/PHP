@@ -246,13 +246,13 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void saveBoard_WithNullTitle_ThrowsDataIntegrityViolationException() {
+    void insertBoard_WithNullTitle_ThrowsDataIntegrityViolationException() {
         // Arrange
-        Board board = new Board(null, null, "Board without a title");
         int boardCountBeforeSave = boardRepository.findAll().size();
 
         // Act & Assert
-        assertThatThrownBy(() -> boardRepository.save(board))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO board (title, description) VALUES (?, ?)", null, "Board without a title"))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("title");
         assertThat(boardRepository.findAll()).hasSize(boardCountBeforeSave);

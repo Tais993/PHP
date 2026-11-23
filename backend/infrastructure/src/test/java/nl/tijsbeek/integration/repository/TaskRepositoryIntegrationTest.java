@@ -22,11 +22,13 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
 
     private final TaskRepository taskRepository;
     private final BoardRepository boardRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     TaskRepositoryIntegrationTest(JdbcTemplate jdbcTemplate,
                                   TaskRepository taskRepository,
                                   BoardRepository boardRepository) {
         super(jdbcTemplate);
+        this.jdbcTemplate = jdbcTemplate;
         this.taskRepository = taskRepository;
         this.boardRepository = boardRepository;
     }
@@ -236,39 +238,41 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void saveTask_WithNullTitle_ThrowsDataIntegrityViolationException() {
+    void insertTask_WithNullTitle_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
-        Task task = new Task(board.getId(), null, "Task without a title", null, null);
 
         // Act & Assert
-        assertThatThrownBy(() -> taskRepository.save(task))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO task (board_id, title, description) VALUES (?, ?, ?)",
+                board.getId(), null, "Task without a title"))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("title");
         assertThat(taskRepository.findAll()).isEmpty();
     }
 
     @Test
-    void saveTask_WithNullDescription_ThrowsDataIntegrityViolationException() {
+    void insertTask_WithNullDescription_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
-        Task task = new Task(board.getId(), "TaskOne", null, null, null);
 
         // Act & Assert
-        assertThatThrownBy(() -> taskRepository.save(task))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO task (board_id, title, description) VALUES (?, ?, ?)",
+                board.getId(), "TaskOne", null))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("description");
         assertThat(taskRepository.findAll()).isEmpty();
     }
 
     @Test
-    void saveTask_WithNullBoardId_ThrowsDataIntegrityViolationException() {
-        // Arrange
-        Task task = new Task(null, "TaskOne", "Task without a board", null, null);
-
+    void insertTask_WithNullBoardId_ThrowsDataIntegrityViolationException() {
         // Act & Assert
-        assertThatThrownBy(() -> taskRepository.save(task))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO task (title, description) VALUES (?, ?)",
+                "TaskOne", "Task without a board"))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("board_id");
         assertThat(taskRepository.findAll()).isEmpty();
     }
 
@@ -297,32 +301,34 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void saveNewTask_WithStatusFromAnotherBoard_RejectsTask() {
+    void insertTask_WithStatusFromAnotherBoard_RejectsTask() {
         // Arrange
         Board firstBoard = createBoard("BoardOne");
         Board secondBoard = createBoard("BoardTwo");
-        Task task = new Task(firstBoard.getId(), "TaskOne", "Wrong board status", null,
-                secondBoard.getStatuses().get(0));
+        Long wrongStatusId = secondBoard.getStatuses().get(0).getId();
 
         // Act & Assert
-        assertThatThrownBy(() -> taskRepository.save(task))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO task (board_id, title, description, status) VALUES (?, ?, ?, ?)",
+                firstBoard.getId(), "TaskOne", "Wrong board status", wrongStatusId))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("task_board_status_fk");
         assertThat(taskRepository.findAll()).isEmpty();
     }
 
     @Test
-    void saveExistingTask_WithStatusFromAnotherBoard_RejectsChangeAndPreservesOriginalStatus() {
+    void updateTask_WithStatusFromAnotherBoard_RejectsChangeAndPreservesOriginalStatus() {
         // Arrange
         Board firstBoard = createBoard("BoardOne");
         Board secondBoard = createBoard("BoardTwo");
         BoardStatus originalStatus = firstBoard.getStatuses().get(0);
         Task savedTask = saveTask(firstBoard, "TaskOne", originalStatus);
         Task originalTask = taskRepository.findById(savedTask.getId()).orElseThrow();
-        savedTask.setStatus(secondBoard.getStatuses().get(0));
+        Long wrongStatusId = secondBoard.getStatuses().get(0).getId();
 
         // Act & Assert
-        assertThatThrownBy(() -> taskRepository.save(savedTask))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE task SET status = ? WHERE id = ?", wrongStatusId, savedTask.getId()))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("task_board_status_fk");
         assertThat(taskRepository.findById(savedTask.getId())).hasValueSatisfying(foundTask -> {

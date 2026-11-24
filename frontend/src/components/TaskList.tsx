@@ -1,15 +1,16 @@
-import { Paper, Stack, Text } from '@mantine/core';
-import { Task } from './Task.tsx';
-import type { TaskData } from './types/TaskData.ts';
+import {Paper, Stack, Text} from '@mantine/core';
+import {Task} from './Task.tsx';
+import type {TaskData} from './types/TaskData.ts';
 
 type TaskListProps = {
     tasks: TaskData[];
     draggedTaskId?: number | null;
     onDragStart?: (taskId: number) => void;
     onDragEnd?: () => void;
+    onOpenTask: (taskId: number) => void;
 };
 
-export function TaskList({ tasks, draggedTaskId, onDragStart, onDragEnd }: Readonly<TaskListProps>) {
+export function TaskList({ tasks, draggedTaskId, onDragStart, onDragEnd, onOpenTask }: Readonly<TaskListProps>) {
     if (tasks.length === 0) {
         return (
             <Paper withBorder radius="sm" p="lg">
@@ -29,6 +30,7 @@ export function TaskList({ tasks, draggedTaskId, onDragStart, onDragEnd }: Reado
                     isDragging={draggedTaskId === task.id}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}
+                    onOpen={onOpenTask}
                 />
             ))}
         </Stack>

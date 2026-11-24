@@ -7,5 +7,5 @@ export type TaskData = {
     description: string
     createdAt: string
     status: TaskDataStatus | null
-    dueDate: string
+    dueDate: string | null
 }

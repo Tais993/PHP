@@ -1,8 +1,8 @@
-import { Divider, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import type { DragEvent } from 'react';
-import { TaskList } from '../TaskList.tsx';
+import {Divider, Group, Paper, Stack, Text, Title} from '@mantine/core';
+import type {DragEvent} from 'react';
+import {TaskList} from '../TaskList.tsx';
 import AddTaskButton from '../buttons/AddTaskButton.tsx';
-import type { TaskViewData } from '../types/TaskViewData.ts';
+import type {TaskViewData} from '../types/TaskViewData.ts';
 
 type BoardColumnProps = {
     group: TaskViewData['groups'][string];
@@ -13,6 +13,7 @@ type BoardColumnProps = {
     onDrop: (event: DragEvent<HTMLElement>, statusId: number | null) => Promise<void>;
     onTaskDragStart: (taskId: number) => void;
     onTaskDragEnd: () => void;
+    onOpenTask: (taskId: number) => void;
 };
 
 export default function BoardColumn({
@@ -24,6 +25,7 @@ export default function BoardColumn({
                                         onDrop,
                                         onTaskDragStart,
                                         onTaskDragEnd,
+                                        onOpenTask,
                                     }: Readonly<BoardColumnProps>) {
     return (
         <Paper
@@ -57,6 +59,7 @@ export default function BoardColumn({
                     draggedTaskId={draggedTaskId}
                     onDragStart={onTaskDragStart}
                     onDragEnd={onTaskDragEnd}
+                    onOpenTask={onOpenTask}
                 />
                 <AddTaskButton statusId={id} fullWidth mt="auto" />
             </Stack>

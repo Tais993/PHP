@@ -1,8 +1,9 @@
-import {type ReactNode, useCallback, useContext, useState} from 'react';
+import {type ReactNode, useCallback, useContext, useRef, useState} from 'react';
 import {request} from '../api/request.ts';
 import {BoardViewsContext} from './BoardViewsContext.ts';
+import type {TaskData} from '../components/types/TaskData.ts';
 import type {TaskViewData} from '../components/types/TaskViewData.ts';
-import {TasksContext, type NewTask} from './TasksContext.ts';
+import {type NewTask, type TaskChanges, TasksContext} from './TasksContext.ts';
 import {useAsyncResource} from './useAsyncResource.ts';
 
 export function TasksProvider({
@@ -14,6 +15,8 @@ export function TasksProvider({
 }) {
 
     const [reloadCount, setReloadCount] = useState(0);
+    const pendingTaskSaves = useRef(new Map<number, Promise<TaskData>>());
+    const getPendingTaskSave = useCallback((taskId: number) => pendingTaskSaves.current.get(taskId), []);
 
     const viewsContext = useContext(BoardViewsContext);
     const selectedViewId = viewsContext?.selectedView?.id ?? null;
@@ -21,7 +24,7 @@ export function TasksProvider({
     const requestKey = `${boardId}:${selectedViewId}:${reloadCount}:${settingsRevision}`;
 
     const loadTasks = useCallback(async (signal: AbortSignal): Promise<TaskViewData> => {
-        const response = await request(`/views/${selectedViewId}/tasks`, {signal}, {
+        const response = await request(`/views/${selectedViewId}/tasks`, {cache: 'no-store', signal}, {
             fallbackMessage: 'Could not load tasks',
         });
         return response.json();
@@ -66,27 +69,49 @@ export function TasksProvider({
         setReloadCount(current => current + 1);
     }
 
+    async function updateTask(taskId: number, changes: TaskChanges): Promise<TaskData> {
+        const previousSave = getPendingTaskSave(taskId);
+
+        async function patchTask(): Promise<TaskData> {
+            // A failed save must not prevent the next edit from being sent.
+            await previousSave?.catch(() => undefined);
+            const response = await request(`/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(changes),
+            }, {
+                fallbackMessage: 'Could not save task changes.',
+                parseProblemDetail: true,
+            });
+
+            const task: TaskData = await response.json();
+            setReloadCount(current => current + 1);
+            return task;
+        }
+
+        const pendingSave = patchTask();
+        pendingTaskSaves.current.set(taskId, pendingSave);
+        try {
+            return await pendingSave;
+        } finally {
+            if (getPendingTaskSave(taskId) === pendingSave) {
+                pendingTaskSaves.current.delete(taskId);
+            }
+        }
+    }
+
     async function moveTask(taskId: number, statusId: number | null): Promise<void> {
         if (selectedViewId === null) {
             throw new Error('Select a board view before moving a task');
         }
 
-        await request(`/tasks/${taskId}/status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                statusId,
-            }),
-        }, {fallbackMessage: 'Could not update task status'});
-
-        // Reload view tasks after status change
-        setReloadCount(current => current + 1);
+        await updateTask(taskId, {status: statusId});
     }
 
     return (
-        <TasksContext.Provider value={{tasks, loading, error, createTask, moveTask}}>
+        <TasksContext.Provider value={{tasks, loading, error, createTask, updateTask, getPendingTaskSave, moveTask}}>
             {children}
         </TasksContext.Provider>
     );

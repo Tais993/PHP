@@ -12,7 +12,6 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,48 +61,35 @@ class TaskStatusV4_1MigrationIntegrationTest {
     }
 
     @Test
-    void migrate_TaskWithStatus_PreservesExistingData() {
-        // Act
+    void migrate_PreservesAssignedAndUnassignedTasks() {
         MigrateResult result = flyway.migrate();
 
-        // Assert
         assertThat(result.migrationsExecuted).isEqualTo(1);
-        Map<String, Object> task = jdbcTemplate.queryForMap(
-                "SELECT * FROM task WHERE id = ?", assignedTaskId
-        );
-        assertThat(task)
+
+        assertThat(jdbcTemplate.queryForMap("SELECT * FROM task WHERE id = ?", assignedTaskId))
                 .containsEntry("id", assignedTaskId)
                 .containsEntry("board_id", boardId)
                 .containsEntry("title", "Assigned task")
                 .containsEntry("description", "Task with a status")
                 .containsEntry("created_at", Timestamp.valueOf(CREATED_AT))
                 .containsEntry("status", statusId);
-        assertThat(jdbcTemplate.queryForMap("SELECT * FROM board WHERE id = ?", boardId))
-                .containsEntry("title", "BoardOne")
-                .containsEntry("description", "Board for migration testing");
-        assertThat(jdbcTemplate.queryForMap("SELECT * FROM board_status WHERE id = ?", statusId))
-                .containsEntry("board_id", boardId)
-                .containsEntry("name", "To do")
-                .containsEntry("position", 0);
-    }
 
-    @Test
-    void migrate_TaskWithoutStatus_PreservesExistingData() {
-        // Act
-        MigrateResult result = flyway.migrate();
-
-        // Assert
-        assertThat(result.migrationsExecuted).isEqualTo(1);
-        Map<String, Object> task = jdbcTemplate.queryForMap(
-                "SELECT * FROM task WHERE id = ?", unassignedTaskId
-        );
-        assertThat(task)
+        assertThat(jdbcTemplate.queryForMap("SELECT * FROM task WHERE id = ?", unassignedTaskId))
                 .containsEntry("id", unassignedTaskId)
                 .containsEntry("board_id", boardId)
                 .containsEntry("title", "Unassigned task")
                 .containsEntry("description", "Task without a status")
                 .containsEntry("created_at", Timestamp.valueOf(CREATED_AT))
                 .containsEntry("status", null);
+
+        assertThat(jdbcTemplate.queryForMap("SELECT * FROM board WHERE id = ?", boardId))
+                .containsEntry("title", "BoardOne")
+                .containsEntry("description", "Board for migration testing");
+
+        assertThat(jdbcTemplate.queryForMap("SELECT * FROM board_status WHERE id = ?", statusId))
+                .containsEntry("board_id", boardId)
+                .containsEntry("name", "To do")
+                .containsEntry("position", 0);
     }
 
     private long createTask(String title, String description, Long taskStatusId) {

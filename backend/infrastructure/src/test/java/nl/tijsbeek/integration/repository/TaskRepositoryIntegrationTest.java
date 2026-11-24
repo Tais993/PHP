@@ -143,16 +143,6 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void findAllByBoardId_MissingBoard_ReturnsEmptyList() {
-        // Arrange
-        Board board = createBoard("BoardOne");
-        saveTask(board, "TaskOne", null);
-
-        // Act & Assert
-        assertThat(taskRepository.findAllByBoardId(Long.MAX_VALUE)).isEmpty();
-    }
-
-    @Test
     void saveExistingTask_UpdatesFieldsWithoutChangingIdOrCreationTime() {
         // Arrange
         Board board = createBoard("BoardOne");

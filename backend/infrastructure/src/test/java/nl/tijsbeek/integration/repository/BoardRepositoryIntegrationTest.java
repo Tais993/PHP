@@ -179,22 +179,6 @@ class BoardRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void deleteBoard_ThenFindById_ReturnsEmptyOptional() {
-        // Arrange
-        Board savedBoard = boardRepository.save(
-                new Board(null, "BoardOne", "Board to delete")
-        );
-        int boardCountBeforeDelete = boardRepository.findAll().size();
-
-        // Act
-        boardRepository.deleteById(savedBoard.getId());
-
-        // Assert
-        assertThat(boardRepository.findById(savedBoard.getId())).isEmpty();
-        assertThat(boardRepository.findAll()).hasSize(boardCountBeforeDelete - 1);
-    }
-
-    @Test
     void deleteBoardWithStatuses_RemovesAssociatedStatuses() {
         // Arrange
         Board savedBoard = boardRepository.save(

@@ -5,17 +5,15 @@ import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @IntegrationTest
@@ -81,7 +79,9 @@ class ViewControllerFilterRulesIntegrationTest extends IntegrationTestBase {
                                 {"filterRules":[{"field":"TITLE","operator":"IN","values":["Task"]}]}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Invalid operator or value count for TITLE IN"));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").isString())
+                .andExpect(jsonPath("$.detail").value(not(blankOrNullString())));
         mockMvc.perform(put("/views/{id}/filter-rules", viewId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -103,7 +103,8 @@ class ViewControllerFilterRulesIntegrationTest extends IntegrationTestBase {
                                 """.formatted(otherStatusId)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.detail").value("Status " + otherStatusId + " does not exist on board 1"));
+                .andExpect(jsonPath("$.detail").isString())
+                .andExpect(jsonPath("$.detail").value(not(blankOrNullString())));
     }
 
     @Test

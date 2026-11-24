@@ -6,10 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
@@ -44,7 +41,8 @@ class WebConfigTest {
     @ParameterizedTest
     @CsvSource({
             "POST, /api/boards",
-            "PUT, /api/views/1/sorting"
+            "PUT, /api/views/1/sorting",
+            "PATCH, /api/tasks/1"
     })
     void allowsJsonPreflightAndTrimsMultipleOrigins(String method, String path) throws Exception {
         try (var context = context("https://frontend.example, https://preview.example ")) {
@@ -95,5 +93,8 @@ class WebConfigTest {
 
         @PutMapping("/views/{id}/sorting")
         void updateSorting() {}
+
+        @PatchMapping("/tasks/{id}")
+        void updateTask() {}
     }
 }

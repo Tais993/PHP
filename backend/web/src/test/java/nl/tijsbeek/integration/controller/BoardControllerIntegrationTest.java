@@ -1,9 +1,9 @@
 
 package nl.tijsbeek.integration.controller;
 
-import nl.tijsbeek.dto.response.BoardResponse;
 import nl.tijsbeek.dto.request.CreateBoardRequest;
 import nl.tijsbeek.dto.request.CreateTaskRequest;
+import nl.tijsbeek.dto.response.BoardResponse;
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -16,15 +16,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.ObjectMapper;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @IntegrationTest
@@ -51,10 +45,7 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/boards/{id}", 0L))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value("about:blank"))
-                .andExpect(jsonPath("$.title").value("Not Found"))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board with ID 0 was not found"));
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test

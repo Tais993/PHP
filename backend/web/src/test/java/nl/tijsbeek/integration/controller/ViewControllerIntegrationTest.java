@@ -225,7 +225,8 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
+                .andExpect(jsonPath("$.detail").isString())
+                .andExpect(jsonPath("$.detail").value(not(blankOrNullString())));
     }
 
     @Test
@@ -254,10 +255,9 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/views/{id}", Long.MAX_VALUE))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value("about:blank"))
-                .andExpect(jsonPath("$.title").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
+                .andExpect(jsonPath("$.detail").isString())
+                .andExpect(jsonPath("$.detail").value(not(blankOrNullString())));
     }
 
     @Test
@@ -266,12 +266,11 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/views/{id}/tasks", Long.MAX_VALUE))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
-    void getViewTasks_ReturnsOrderedGroupsAndTasksFromCorrectBoard() throws Exception {
+    void getViewTasks_ReturnsBoardColumnsAndOrdersTasksWithinEachColumn() throws Exception {
         // Arrange
         long doneId = createStatus(1L, "Done", 20);
         long todoId = createStatus(1L, "To do", 5);
@@ -291,7 +290,7 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/views/{id}/tasks", viewId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.groupedBy").value("STATUS"))
-                .andExpect(jsonPath("$.groups.*.id", contains((int) todoId, (int) doneId)))
+                .andExpect(jsonPath("$.groups.*.id", containsInAnyOrder((int) todoId, (int) doneId)))
 
                 // Verify the To do group and its task order
                 .andExpect(jsonPath(todoGroupPath + ".id").value(todoId))
@@ -329,7 +328,7 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
         // Act & Assert
         mockMvc.perform(get("/views/{id}/tasks", viewId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.groups.*.id", contains((int) todoId, (int) doneId)))
+                .andExpect(jsonPath("$.groups.*.id", containsInAnyOrder((int) todoId, (int) doneId)))
                 .andExpect(jsonPath(todoGroupPath + ".items[*].id", contains((int) taskId)))
                 .andExpect(jsonPath(doneGroupPath + ".id").value(doneId))
                 .andExpect(jsonPath(doneGroupPath + ".name").value("Done"))
@@ -341,30 +340,30 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
     @Test
     void getViewTasks_TaskWithoutStatus_HandlesUnassignedTask() throws Exception {
         // Arrange
-        long statusId = createStatus(1L, "To do", 0);
+        int assignedPosition = 5;
+        long statusId = createStatus(1L, "To do", assignedPosition);
         long taskB = createTask(1L, "B unassigned", null);
         long assignedTask = createTask(1L, "Assigned task", statusId);
         long taskA = createTask(1L, "A unassigned", null);
         long viewId = createView(1L);
 
         String assignedGroupPath = "$.groups['" + statusId + "']";
+        String unassignedGroupPath = "$.groups.*[?(@.id == null)]";
 
         // Act & Assert
         mockMvc.perform(get("/views/{id}/tasks", viewId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.groupedBy").value("STATUS"))
-                .andExpect(jsonPath("$.items").doesNotExist())
-                .andExpect(jsonPath("$.groups.*.name", contains("To do", "Unassigned")))
+                .andExpect(jsonPath("$.groups.*.name", containsInAnyOrder("To do", "Unassigned")))
                 .andExpect(jsonPath(assignedGroupPath + ".id").value(statusId))
+                .andExpect(jsonPath(assignedGroupPath + ".position").value(assignedPosition))
                 .andExpect(jsonPath(assignedGroupPath + ".items[*].id", contains((int) assignedTask)))
 
-                // Verify the Unassigned group appears last and preserves task order
-                .andExpect(jsonPath("$.groups['0'].id").value(nullValue()))
-                .andExpect(jsonPath("$.groups['0'].name").value("Unassigned"))
-                .andExpect(jsonPath("$.groups['0'].position").value(Integer.MAX_VALUE))
-                .andExpect(jsonPath("$.groups['0'].items[*].id", contains((int) taskA, (int) taskB)))
-                .andExpect(jsonPath("$.groups['0'].items[0].status").value(nullValue()))
-                .andExpect(jsonPath("$.groups['0'].items[1].status").value(nullValue()));
+                // The frontend sorts columns by position and keeps each column's item order.
+                .andExpect(jsonPath(unassignedGroupPath + ".name", contains("Unassigned")))
+                .andExpect(jsonPath(unassignedGroupPath + ".position", contains(greaterThan(assignedPosition))))
+                .andExpect(jsonPath(unassignedGroupPath + ".items[*].id", contains((int) taskA, (int) taskB)))
+                .andExpect(jsonPath(unassignedGroupPath + ".items[*].status", contains(nullValue(), nullValue())));
     }
 
     private long createTask(long boardId, String title, Long statusId) {

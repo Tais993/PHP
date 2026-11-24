@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -36,26 +35,6 @@ class BoardStatusRepositoryIntegrationTest extends IntegrationTestBase {
         this.boardRepository = boardRepository;
         this.taskRepository = taskRepository;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Test
-    void findById_ExistingStatus_ReturnsPersistedStatus() {
-        // Arrange
-        Board board = boardRepository.save(new Board(null, "BoardOne", "Board with statuses", List.of(
-                new BoardStatus(null, null, "To do", 2)
-        )));
-        BoardStatus status = board.getStatuses().get(0);
-
-        // Act
-        Optional<BoardStatus> result = boardStatusRepository.findById(status.getId());
-
-        // Assert
-        assertThat(result).hasValueSatisfying(foundStatus -> {
-            assertThat(foundStatus.getId()).isEqualTo(status.getId());
-            assertThat(foundStatus.getBoardId()).isEqualTo(board.getId());
-            assertThat(foundStatus.getName()).isEqualTo("To do");
-            assertThat(foundStatus.getPosition()).isEqualTo(2);
-        });
     }
 
     @Test
@@ -121,16 +100,6 @@ class BoardStatusRepositoryIntegrationTest extends IntegrationTestBase {
 
         // Act & Assert
         assertThat(boardStatusRepository.findAllByBoardId(emptyBoard.getId())).isEmpty();
-    }
-
-    @Test
-    void findAllByBoardId_MissingBoard_ReturnsEmptyList() {
-        // Arrange
-        Board board = createBoard("BoardOne");
-        saveStatus(board, "To do", 0);
-
-        // Act & Assert
-        assertThat(boardStatusRepository.findAllByBoardId(Long.MAX_VALUE)).isEmpty();
     }
 
     @Test

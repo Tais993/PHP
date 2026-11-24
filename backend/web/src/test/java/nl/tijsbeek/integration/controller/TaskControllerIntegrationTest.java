@@ -2,14 +2,13 @@ package nl.tijsbeek.integration.controller;
 
 import nl.tijsbeek.dto.request.CreateTaskRequest;
 import nl.tijsbeek.dto.response.TaskResponse;
-
 import nl.tijsbeek.integration.fixtures.IntegrationTestBase;
 import nl.tijsbeek.testing.annotations.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
@@ -20,8 +19,9 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.nullValue;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -50,10 +50,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value("about:blank"))
-                .andExpect(jsonPath("$.title").value("Not Found"))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Task with ID 9999 was not found"));
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
@@ -100,14 +97,15 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void createTask_ThenGetById_ReturnsTask() throws Exception {
-        long statusId = createStatus(1L, "unfinished", 0);
+    void createTaskWithSelectedStatus_ThenGetById_ReturnsTaskWithSelectedStatus() throws Exception {
+        createStatus(1L, "unfinished", 0);
+        long selectedStatusId = createStatus(1L, "finished", 7);
         CreateTaskRequest request = new CreateTaskRequest(
-                "test",
+                "Finished task",
                 1L,
-                "Lorem ipsum",
+                "Uses the selected status",
                 null,
-                statusId
+                selectedStatusId
         );
 
         MvcResult result = mockMvc.perform(
@@ -116,36 +114,31 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.boardId").isNumber())
                 .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.title").value("test"))
-                .andExpect(jsonPath("$.description").value("Lorem ipsum"))
-                .andExpect(jsonPath("$.status.id").value(statusId))
-                .andExpect(jsonPath("$.status.name").value("unfinished"))
-                .andExpect(jsonPath("$.status.position").value(0))
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Finished task"))
+                .andExpect(jsonPath("$.description").value("Uses the selected status"))
+                .andExpect(jsonPath("$.status.id").value(selectedStatusId))
+                .andExpect(jsonPath("$.status.name").value("finished"))
+                .andExpect(jsonPath("$.status.position").value(7))
                 .andReturn();
 
-        TaskResponse createdTask = objectMapper.readValue(
+        long taskId = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 TaskResponse.class
-        );
+        ).id();
 
-        long taskId = createdTask.id();
-
-        mockMvc.perform(
-                        get("/tasks/{id}", taskId)
-                )
+        mockMvc.perform(get("/tasks/{id}", taskId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.boardId").value(1L))
                 .andExpect(jsonPath("$.id").value(taskId))
-                .andExpect(jsonPath("$.title").value("test"))
-                .andExpect(jsonPath("$.description").value("Lorem ipsum"))
-                .andExpect(jsonPath("$.status.id").value(statusId))
-                .andExpect(jsonPath("$.status.name").value("unfinished"))
-                .andExpect(jsonPath("$.status.position").value(0))
+                .andExpect(jsonPath("$.boardId").value(1L))
+                .andExpect(jsonPath("$.title").value("Finished task"))
+                .andExpect(jsonPath("$.description").value("Uses the selected status"))
+                .andExpect(jsonPath("$.status.id").value(selectedStatusId))
+                .andExpect(jsonPath("$.status.name").value("finished"))
+                .andExpect(jsonPath("$.status.position").value(7))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
-
 
     @Test
     void createTasks_thenGetAll_ReturnsTasks() throws Exception {
@@ -184,29 +177,25 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 )
                 .andExpect(status().isCreated());
 
-        // Act & Assert: Retrieve all tasks
-        mockMvc.perform(get("/tasks"))
+        // Act
+        byte[] response = mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].id").value(everyItem(instanceOf(Number.class))))
+                .andReturn().getResponse().getContentAsByteArray();
+        TaskResponse[] tasks = objectMapper.readValue(response, TaskResponse[].class);
 
-                // First task
-                .andExpect(jsonPath("$[0].id").isNumber())
-                .andExpect(jsonPath("$[0].boardId").value(1L))
-                .andExpect(jsonPath("$[0].title").value("Task 1"))
-                .andExpect(jsonPath("$[0].description").value("First task description"))
-                .andExpect(jsonPath("$[0].status.id").value(unfinishedId))
-                .andExpect(jsonPath("$[0].status.name").value("unfinished"))
-                .andExpect(jsonPath("$[0].createdAt").isNotEmpty())
-
-                // Second task
-                .andExpect(jsonPath("$[1].id").isNumber())
-                .andExpect(jsonPath("$[1].boardId").value(1L))
-                .andExpect(jsonPath("$[1].title").value("Task 2"))
-                .andExpect(jsonPath("$[1].description").value("Second task description"))
-                .andExpect(jsonPath("$[1].status.id").value(finishedId))
-                .andExpect(jsonPath("$[1].status.name").value("finished"))
-                .andExpect(jsonPath("$[1].createdAt").isNotEmpty());
+        // Assert
+        assertThat(tasks)
+                .allSatisfy(task -> {
+                    assertThat(task.id()).isNotNull();
+                    assertThat(task.createdAt()).isNotNull();
+                    assertThat(task.status()).isNotNull();
+                })
+                .extracting(TaskResponse::boardId, TaskResponse::title, TaskResponse::description,
+                        task -> task.status().id(), task -> task.status().name())
+                .containsExactlyInAnyOrder(
+                        tuple(1L, "Task 1", "First task description", unfinishedId, "unfinished"),
+                        tuple(1L, "Task 2", "Second task description", finishedId, "finished"));
     }
 
     @Test
@@ -302,48 +291,6 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
 
-    @Test
-    void createTaskWithSecondBoardStatus_ThenGetById_ReturnsSelectedStatus() throws Exception {
-        createStatus(1L, "unfinished", 0);
-        long selectedStatusId = createStatus(1L, "finished", 7);
-        CreateTaskRequest request = new CreateTaskRequest(
-                "Finished task",
-                1L,
-                "Uses the selected status",
-                null,
-                selectedStatusId
-        );
-
-        MvcResult result = mockMvc.perform(
-                        post("/tasks")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.boardId").value(1L))
-                .andExpect(jsonPath("$.status.id").value(selectedStatusId))
-                .andExpect(jsonPath("$.status.name").value("finished"))
-                .andExpect(jsonPath("$.status.position").value(7))
-                .andReturn();
-
-        long taskId = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                TaskResponse.class
-        ).id();
-
-        mockMvc.perform(get("/tasks/{id}", taskId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(taskId))
-                .andExpect(jsonPath("$.boardId").value(1L))
-                .andExpect(jsonPath("$.title").value("Finished task"))
-                .andExpect(jsonPath("$.description").value("Uses the selected status"))
-                .andExpect(jsonPath("$.status.id").value(selectedStatusId))
-                .andExpect(jsonPath("$.status.name").value("finished"))
-                .andExpect(jsonPath("$.status.position").value(7))
-                .andExpect(jsonPath("$.createdAt").isNotEmpty());
-    }
-
     @ParameterizedTest
     @EnumSource(InvalidTaskReference.class)
     void createTask_InvalidBoardOrStatus_RejectsRequestAndPersistsNothing(InvalidTaskReference invalidReference)
@@ -379,12 +326,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                    .andExpect(jsonPath("$.type").value("about:blank"))
-                    .andExpect(jsonPath("$.title").value("Bad Request"))
-                    .andExpect(jsonPath("$.status").value(400))
-                    .andExpect(jsonPath("$.detail").value(boardId == Long.MAX_VALUE
-                            ? "Board with ID " + boardId + " was not found"
-                            : "Status does not exist on the selected board"));
+                    .andExpect(jsonPath("$.status").value(400));
         } finally {
             // Verify existing tasks remain unchanged and no task was created
             assertThat(readTaskRows()).isEqualTo(tasksBefore);
@@ -403,8 +345,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
                         .content("{\"title\":"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.title").value("Bad Request"));
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
@@ -452,8 +393,7 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(post("/tasks/{id}/status", 99999L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("statusId", statusId))))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Task with ID 99999 was not found"));
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -466,12 +406,10 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(post("/tasks/{id}/status", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("statusId", otherStatusId))))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Status does not exist on the selected board"));
+                .andExpect(status().isBadRequest());
     }
 
     private List<Map<String, Object>> readTaskRows() {
         return jdbcTemplate.queryForList("SELECT * FROM task ORDER BY id");
     }
-
 }

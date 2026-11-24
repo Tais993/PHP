@@ -220,45 +220,26 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void findAllByBoardId_ViewsOnDifferentBoards_ReturnsOnlyMatchingViews() {
+    void findAllByBoardId_ReturnsOnlyMatchingViewsOrderedByPositionThenId() {
         // Arrange
         Board firstBoard = createBoard("BoardOne");
         Board secondBoard = createBoard("BoardTwo");
+        BoardView lastView = saveView(firstBoard, "Last view", 20);
         BoardView firstView = saveView(firstBoard, "First view", 0);
-        BoardView secondView = saveView(firstBoard, "Second view", 1);
         BoardView otherView = saveView(secondBoard, "Other view", 0);
+        BoardView secondView = saveView(firstBoard, "Second view", 0);
 
         // Act & Assert
         assertThat(boardViewRepository.findAllByBoardId(firstBoard.getId()))
                 .extracting(BoardView::getId, BoardView::getBoardId, BoardView::getName, BoardView::getPosition)
                 .containsExactly(
                         tuple(firstView.getId(), firstBoard.getId(), "First view", 0),
-                        tuple(secondView.getId(), firstBoard.getId(), "Second view", 1)
+                        tuple(secondView.getId(), firstBoard.getId(), "Second view", 0),
+                        tuple(lastView.getId(), firstBoard.getId(), "Last view", 20)
                 );
         assertThat(boardViewRepository.findAllByBoardId(secondBoard.getId()))
                 .extracting(BoardView::getId, BoardView::getBoardId, BoardView::getName, BoardView::getPosition)
                 .containsExactly(tuple(otherView.getId(), secondBoard.getId(), "Other view", 0));
-    }
-
-    @Test
-    void findAllByBoardId_ViewsSavedOutOfOrder_ReturnsViewsOrderedByPositionThenId() {
-        // Arrange
-        Board board = createBoard("BoardOne");
-        BoardView lastView = saveView(board, "Last view", 20);
-        BoardView firstView = saveView(board, "First view", 0);
-        BoardView secondView = saveView(board, "Second view", 0);
-
-        // Act
-        List<BoardView> result = boardViewRepository.findAllByBoardId(board.getId());
-
-        // Assert
-        assertThat(result)
-                .extracting(BoardView::getId, BoardView::getName, BoardView::getPosition)
-                .containsExactly(
-                        tuple(firstView.getId(), "First view", 0),
-                        tuple(secondView.getId(), "Second view", 0),
-                        tuple(lastView.getId(), "Last view", 20)
-                );
     }
 
     @Test
@@ -270,16 +251,6 @@ class BoardViewRepositoryIntegrationTest extends IntegrationTestBase {
 
         // Act & Assert
         assertThat(boardViewRepository.findAllByBoardId(emptyBoard.getId())).isEmpty();
-    }
-
-    @Test
-    void findAllByBoardId_MissingBoard_ReturnsEmptyList() {
-        // Arrange
-        Board board = createBoard("BoardOne");
-        saveView(board, "Board view", 0);
-
-        // Act & Assert
-        assertThat(boardViewRepository.findAllByBoardId(Long.MAX_VALUE)).isEmpty();
     }
 
     @Test

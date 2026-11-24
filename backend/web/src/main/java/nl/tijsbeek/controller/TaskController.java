@@ -1,7 +1,7 @@
 package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.request.CreateTaskRequest;
-import nl.tijsbeek.dto.request.UpdateTaskStatusRequest;
+import nl.tijsbeek.dto.request.UpdateTaskRequest;
 import nl.tijsbeek.dto.response.TaskResponse;
 import nl.tijsbeek.exceptions.TaskNotFoundException;
 import nl.tijsbeek.interfaces.services.TaskService;
@@ -46,10 +46,10 @@ public class TaskController {
                 .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    @PostMapping("/{id}/status")
+    @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskStatusRequest request) {
-        return TaskResponse.fromDomain(taskService.changeTaskStatus(id, request.statusId()));
+    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskRequest request) {
+        return TaskResponse.fromDomain(taskService.updateTask(id, request.titleToFieldUpdate(), request.descriptionToFieldUpdate(), request.dueDateToFieldUpdate(), request.statusToFieldUpdate()));
     }
 
 

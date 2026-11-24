@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":infrastructure"))
 
     implementation("org.jspecify:jspecify")
+    implementation("org.openapitools:jackson-databind-nullable:0.2.13")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
 
     implementation("org.springframework.boot:spring-boot-starter-webmvc")

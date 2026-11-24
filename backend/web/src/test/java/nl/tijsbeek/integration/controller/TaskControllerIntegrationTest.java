@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -350,23 +351,80 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void updateTaskStatus_ValidStatus_UpdatesAndReturnsTask() throws Exception {
-        long status1Id = createStatus(1L, "todo", 0);
-        long status2Id = createStatus(1L, "done", 1);
-        long taskId = createTask(1L, "Test task", "Description", status1Id);
+        long todoStatusId = createStatus(1L, "todo", 0);
+        long doneStatusId = createStatus(1L, "done", 1);
+        long taskId = createTask(1L, "Test task", "Description", todoStatusId);
+        LocalDateTime dueDate = LocalDateTime.parse("2026-12-01T14:30:45");
+        jdbcTemplate.update("UPDATE task SET due_date = ? WHERE id = ?", dueDate, taskId);
 
-        mockMvc.perform(post("/tasks/{id}/status", taskId)
+        mockMvc.perform(patch("/tasks/{id}", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("statusId", status2Id))))
+                        .content(objectMapper.writeValueAsString(Map.of("status", doneStatusId))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.boardId").value(1L))
-                .andExpect(jsonPath("$.status.id").value(status2Id))
+                .andExpect(jsonPath("$.title").value("Test task"))
+                .andExpect(jsonPath("$.description").value("Description"))
+                .andExpect(jsonPath("$.dueDate").value("2026-12-01T14:30:45"))
+                .andExpect(jsonPath("$.status.id").value(doneStatusId))
                 .andExpect(jsonPath("$.status.name").value("done"));
 
         mockMvc.perform(get("/tasks/{id}", taskId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status.id").value(status2Id))
+                .andExpect(jsonPath("$.title").value("Test task"))
+                .andExpect(jsonPath("$.description").value("Description"))
+                .andExpect(jsonPath("$.dueDate").value("2026-12-01T14:30:45"))
+                .andExpect(jsonPath("$.status.id").value(doneStatusId))
                 .andExpect(jsonPath("$.status.name").value("done"));
+    }
+
+    @Test
+    void updateTask_TitleDescriptionAndDueDate_UpdatesFieldsAndKeepsStatus() throws Exception {
+        long statusId = createStatus(1L, "todo", 0);
+        long taskId = createTask(1L, "Test task", "Description", statusId);
+        Map<String, String> request = Map.of(
+                "title", "Updated task",
+                "description", "Updated description",
+                "dueDate", "2026-12-01T14:30:45"
+        );
+
+        mockMvc.perform(patch("/tasks/{id}", taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.title").value("Updated task"))
+                .andExpect(jsonPath("$.description").value("Updated description"))
+                .andExpect(jsonPath("$.dueDate").value("2026-12-01T14:30:45"))
+                .andExpect(jsonPath("$.status.id").value(statusId));
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated task"))
+                .andExpect(jsonPath("$.description").value("Updated description"))
+                .andExpect(jsonPath("$.dueDate").value("2026-12-01T14:30:45"))
+                .andExpect(jsonPath("$.status.id").value(statusId));
+    }
+
+    @Test
+    void updateTask_NullDueDate_ClearsDueDateAndKeepsStatus() throws Exception {
+        long statusId = createStatus(1L, "todo", 0);
+        long taskId = createTask(1L, "Test task", "Description", statusId);
+        LocalDateTime dueDate = LocalDateTime.parse("2026-12-01T14:30:45");
+        jdbcTemplate.update("UPDATE task SET due_date = ? WHERE id = ?", dueDate, taskId);
+
+        mockMvc.perform(patch("/tasks/{id}", taskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dueDate\": null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.dueDate").value(nullValue()))
+                .andExpect(jsonPath("$.status.id").value(statusId));
+
+        mockMvc.perform(get("/tasks/{id}", taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dueDate").value(nullValue()))
+                .andExpect(jsonPath("$.status.id").value(statusId));
     }
 
     @Test
@@ -374,9 +432,9 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
         long statusId = createStatus(1L, "todo", 0);
         long taskId = createTask(1L, "Test task", "Description", statusId);
 
-        mockMvc.perform(post("/tasks/{id}/status", taskId)
+        mockMvc.perform(patch("/tasks/{id}", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"statusId\": null}"))
+                        .content("{\"status\": null}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.status").value(nullValue()));
@@ -387,25 +445,25 @@ class TaskControllerIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void updateTaskStatus_NonExistingTask_ReturnsNotFound() throws Exception {
+    void updateTask_NonExistingTask_ReturnsNotFound() throws Exception {
         long statusId = createStatus(1L, "todo", 0);
 
-        mockMvc.perform(post("/tasks/{id}/status", 99999L)
+        mockMvc.perform(patch("/tasks/{id}", 99999L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("statusId", statusId))))
+                        .content(objectMapper.writeValueAsString(Map.of("status", statusId))))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void updateTaskStatus_StatusFromAnotherBoard_ReturnsBadRequest() throws Exception {
-        long status1Id = createStatus(1L, "todo", 0);
+        long statusId = createStatus(1L, "todo", 0);
         long otherBoardId = createBoard("Other board", "");
         long otherStatusId = createStatus(otherBoardId, "other", 0);
-        long taskId = createTask(1L, "Test task", "Description", status1Id);
+        long taskId = createTask(1L, "Test task", "Description", statusId);
 
-        mockMvc.perform(post("/tasks/{id}/status", taskId)
+        mockMvc.perform(patch("/tasks/{id}", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("statusId", otherStatusId))))
+                        .content(objectMapper.writeValueAsString(Map.of("status", otherStatusId))))
                 .andExpect(status().isBadRequest());
     }
 

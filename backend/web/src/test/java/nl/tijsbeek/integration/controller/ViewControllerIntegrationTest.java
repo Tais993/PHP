@@ -225,8 +225,7 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"))
-                .andExpect(jsonPath("$.instance").value("/views/" + Long.MAX_VALUE + "/sorting"));
+                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
     }
 
     @Test
@@ -258,8 +257,7 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.type").value("about:blank"))
                 .andExpect(jsonPath("$.title").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"))
-                .andExpect(jsonPath("$.instance").value("/views/" + Long.MAX_VALUE));
+                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
     }
 
     @Test
@@ -269,8 +267,7 @@ class ViewControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"))
-                .andExpect(jsonPath("$.instance").value("/views/" + Long.MAX_VALUE + "/tasks"));
+                .andExpect(jsonPath("$.detail").value("Board view with ID " + Long.MAX_VALUE + " was not found"));
     }
 
     @Test

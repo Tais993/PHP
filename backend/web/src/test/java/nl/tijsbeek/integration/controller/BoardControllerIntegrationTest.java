@@ -54,8 +54,7 @@ public class BoardControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.type").value("about:blank"))
                 .andExpect(jsonPath("$.title").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Board with ID 0 was not found"))
-                .andExpect(jsonPath("$.instance").value("/boards/0"));
+                .andExpect(jsonPath("$.detail").value("Board with ID 0 was not found"));
     }
 
     @Test

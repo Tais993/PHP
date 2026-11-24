@@ -4,6 +4,7 @@ import nl.tijsbeek.entities.Task;
 import nl.tijsbeek.results.TaskViewResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,10 +26,7 @@ public interface TaskService {
     TaskViewResult getTasksOfBoardView(long boardId);
 
     @Transactional
-    Task changeTaskTitle(long id, String newTitle);
-
-    @Transactional
-    Task changeTaskStatus(long taskId, Long statusId);
+    Task updateTask(long id, FieldUpdate<String> title, FieldUpdate<String> description, FieldUpdate<LocalDateTime> dueDate, FieldUpdate<Long> statusId);
 
     @Transactional
     void deleteTask(long id);

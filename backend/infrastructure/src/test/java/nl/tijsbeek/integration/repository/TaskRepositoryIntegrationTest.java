@@ -149,7 +149,7 @@ class TaskRepositoryIntegrationTest extends IntegrationTestBase {
         Task savedTask = saveTask(board, "Original title", board.getStatuses().get(0));
         Task originalTask = taskRepository.findById(savedTask.getId()).orElseThrow();
         int taskCountBeforeUpdate = taskRepository.findAll().size();
-        originalTask.changeTitle("Updated title");
+        originalTask.setTitle("Updated title");
         originalTask.setDescription("Updated description");
 
         // Act

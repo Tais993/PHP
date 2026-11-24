@@ -1,6 +1,5 @@
 package nl.tijsbeek.services;
 
-import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardStatus;
 import nl.tijsbeek.entities.BoardView;
 import nl.tijsbeek.entities.Task;
@@ -11,12 +10,14 @@ import nl.tijsbeek.interfaces.repositories.BoardRepository;
 import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.interfaces.repositories.BoardViewRepository;
 import nl.tijsbeek.interfaces.repositories.TaskRepository;
+import nl.tijsbeek.interfaces.services.FieldUpdate;
 import nl.tijsbeek.interfaces.services.TaskGroupingService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import nl.tijsbeek.results.TaskViewResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,37 +92,40 @@ public class TaskServiceImpl implements TaskService {
         };
     }
 
-    @Transactional
     @Override
-    public Task changeTaskTitle(long id, String newTitle) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException(id));
-
-        task.changeTitle(newTitle);
-
-        return taskRepository.save(task);
-    }
-
-    @Transactional
-    @Override
-    public Task changeTaskStatus(long taskId, Long statusId) {
+    public Task updateTask(
+            long taskId,
+            FieldUpdate<String> title,
+            FieldUpdate<String> description,
+            FieldUpdate<LocalDateTime> dueDate,
+            FieldUpdate<Long> statusId
+    ) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
-        BoardStatus status = null;
-        if (statusId != null) {
-            Board board = boardRepository.findById(task.getBoardId())
-                    .orElseThrow(() -> new InvalidTaskReferenceException(
-                            "Board with ID " + task.getBoardId() + " was not found"));
-
-            status = board.getStatuses().stream()
-                    .filter(option -> statusId.equals(option.getId()))
-                    .findFirst()
-                    .orElseThrow(() -> new InvalidTaskReferenceException(
-                            "Status does not exist on the selected board"));
+        if (title.supplied()) {
+            task.setTitle(title.value());
         }
 
-        task.setStatus(status);
+        if (description.supplied()) {
+            task.setDescription(description.value());
+        }
+
+        if (dueDate.supplied()) {
+            task.setDueDate(dueDate.value());
+        }
+
+        if (statusId.supplied()) {
+            Long requestedStatusId = statusId.value();
+            BoardStatus status = null;
+            if (requestedStatusId != null) {
+                status = boardStatusRepository.findByIdAndboardId(requestedStatusId, task.getBoardId())
+                        .orElseThrow(() -> new InvalidTaskReferenceException(
+                                "Status does not exist on the selected board"));
+            }
+
+            task.setStatus(status);
+        }
 
         return taskRepository.save(task);
     }

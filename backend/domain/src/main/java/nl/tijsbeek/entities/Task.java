@@ -29,10 +29,6 @@ public class Task {
     }
 
 
-    public void changeTitle(String newTitle) {
-        this.title = requireValidTitle(newTitle);
-    }
-
     private static String requireValidTitle(String title) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("Task title is required");
@@ -70,6 +66,9 @@ public class Task {
         return title;
     }
 
+    public void setTitle(String newTitle) {
+        this.title = requireValidTitle(newTitle);
+    }
 
     public String getDescription() {
         return description;

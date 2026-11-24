@@ -6,10 +6,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TaskTest {
     @ParameterizedTest
@@ -24,7 +21,7 @@ class TaskTest {
         String originalTitle = "x".repeat(Task.MAX_TITLE_LENGTH);
         Task task = new Task(1L, originalTitle, "", null, null);
 
-        assertThrows(IllegalArgumentException.class, () -> task.changeTitle(title));
+        assertThrows(IllegalArgumentException.class, () -> task.setTitle(title));
         assertEquals(originalTitle, task.getTitle());
     }
 

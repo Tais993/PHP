@@ -1,18 +1,28 @@
-import { useContext } from 'react';
-import { Alert, Box, Group, ScrollArea, Text, Title } from '@mantine/core';
-import { BoardsContext } from '../../providers/BoardsContext.ts';
-import { TasksContext } from '../../providers/TasksContext.ts';
+import {useContext} from 'react';
+import {Alert, Box, Group, ScrollArea, Text, Title} from '@mantine/core';
+import {useLocation, useNavigate} from 'react-router';
+import {BoardsContext} from '../../providers/BoardsContext.ts';
+import {TasksContext} from '../../providers/TasksContext.ts';
 import AddTaskButton from '../buttons/AddTaskButton.tsx';
-import { BoardViewsContext } from '../../providers/BoardViewsContext.ts';
+import TaskDetailPanel from '../TaskDetailPanel.tsx';
+import {BoardViewsContext} from '../../providers/BoardViewsContext.ts';
 import BoardColumn from './BoardColumn.tsx';
 import BoardTopBar from './BoardTopBar.tsx';
 import BoardViewControls from './BoardViewControls.tsx';
-import { useBoardDragAndDrop } from '../../hooks/useBoardDragAndDrop.ts';
+import {useBoardDragAndDrop} from '../../hooks/useBoardDragAndDrop.ts';
 
-export default function BoardLayout() {
+type BoardLayoutProps = {
+    boardId: number;
+    boardPath: string;
+    taskId?: number;
+};
+
+export default function BoardLayout({ boardId, boardPath, taskId }: Readonly<BoardLayoutProps>) {
     const boardsContext = useContext(BoardsContext);
     const boardViewsContext = useContext(BoardViewsContext);
     const tasksContext = useContext(TasksContext);
+    const navigate = useNavigate();
+    const { state } = useLocation();
 
     if (!boardsContext) {
         throw new Error('TopBar must be inside BoardsProvider');
@@ -44,6 +54,18 @@ export default function BoardLayout() {
         groupsRecord: tasks?.groups,
         moveTask,
     });
+
+    function openTask(id: number) {
+        void navigate(`${boardPath}/tasks/${id}`, { state: { taskOpenedFrom: boardPath } });
+    }
+
+    function closeTask() {
+        if (state?.taskOpenedFrom === boardPath) {
+            void navigate(-1);
+        } else {
+            void navigate(boardPath, { replace: true });
+        }
+    }
 
     return (
         <>
@@ -100,11 +122,14 @@ export default function BoardLayout() {
                                 onDrop={handleDrop}
                                 onTaskDragStart={handleTaskDragStart}
                                 onTaskDragEnd={handleTaskDragEnd}
+                                onOpenTask={openTask}
                             />
                         ))}
                     </Box>
                 </ScrollArea>
             </Box>
+
+            <TaskDetailPanel boardId={boardId} taskId={taskId} onClose={closeTask} />
         </>
     );
 }

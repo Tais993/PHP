@@ -1,15 +1,18 @@
-import type { DragEvent } from 'react';
-import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core';
-import type { TaskData } from './types/TaskData.ts';
+import {type DragEvent, useRef} from 'react';
+import {Badge, Button, Group, Paper, Stack, Text} from '@mantine/core';
+import type {TaskData} from './types/TaskData.ts';
 
 type TaskProps = {
     task: TaskData;
     isDragging?: boolean;
     onDragStart?: (taskId: number) => void;
     onDragEnd?: () => void;
+    onOpen: (taskId: number) => void;
 };
 
-export function Task({ task, isDragging, onDragStart, onDragEnd }: Readonly<TaskProps>) {
+export function Task({ task, isDragging, onDragStart, onDragEnd, onOpen }: Readonly<TaskProps>) {
+    const openButton = useRef<HTMLButtonElement>(null);
+
     const handleDragStart = (event: DragEvent<HTMLDivElement>) => {
         event.dataTransfer.setData('text/plain', String(task.id));
         event.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id }));
@@ -32,6 +35,11 @@ export function Task({ task, isDragging, onDragStart, onDragEnd }: Readonly<Task
             draggable
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onClick={() => {
+                if (isDragging) return;
+                openButton.current?.focus({ preventScroll: true });
+                onOpen(task.id);
+            }}
             style={{
                 cursor: 'grab',
                 userSelect: 'none',
@@ -86,7 +94,7 @@ export function Task({ task, isDragging, onDragStart, onDragEnd }: Readonly<Task
                         Due: {task.dueDate || 'Not set'}
                     </Text>
 
-                    <Button variant="default" size="xs">
+                    <Button ref={openButton} variant="default" size="xs">
                         Open task
                     </Button>
                 </Group>

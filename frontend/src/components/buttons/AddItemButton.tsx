@@ -15,6 +15,11 @@ type AddItemButtonProps = {
     itemName: string;
     label?: string;
     buttonProps?: Pick<ButtonProps, 'variant' | 'color' | 'size' | 'fullWidth' | 'mt'>;
+    dataCy?: {
+        trigger: string;
+        title?: string;
+        submit?: string;
+    };
     titleLabel?: string;
     titlePlaceholder?: string;
     showDescription?: boolean;
@@ -27,6 +32,7 @@ export default function AddItemButton({
     itemName,
     label = `+ Add ${itemName}`,
     buttonProps,
+    dataCy,
     titleLabel = 'Title',
     titlePlaceholder = 'What needs doing?',
     showDescription = true,
@@ -88,7 +94,7 @@ export default function AddItemButton({
 
     return (
         <>
-            <Button {...buttonProps} onClick={openModal} disabled={disabled}>
+            <Button {...buttonProps} data-cy={dataCy?.trigger} onClick={openModal} disabled={disabled}>
                 {label}
             </Button>
 
@@ -118,6 +124,7 @@ export default function AddItemButton({
                             maxLength={255}
                             disabled={saving}
                             data-autofocus
+                            data-cy={dataCy?.title}
                         />
 
                         {showDescription && (
@@ -150,6 +157,7 @@ export default function AddItemButton({
 
                             <Button
                                 type="submit"
+                                data-cy={dataCy?.submit}
                                 loading={saving}
                                 disabled={disabled || !trimmedTitle}
                             >

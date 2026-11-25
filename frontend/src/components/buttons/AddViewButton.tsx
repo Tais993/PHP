@@ -15,6 +15,7 @@ export default function AddViewButton() {
     return (
         <AddItemButton
             itemName="view"
+            dataCy={{trigger: 'add-view', title: 'view-name', submit: 'create-view'}}
             buttonProps={{variant: 'subtle', color: 'gray', size: 'sm'}}
             titleLabel="Name"
             titlePlaceholder="e.g. Sprint board"

@@ -76,14 +76,17 @@ export default function BoardLayout({ boardId, boardPath, taskId }: Readonly<Boa
             <Box aria-label="Tasks" p="lg">
                 <Group justify="space-between" my="lg">
                     <Box>
-                        <Title order={1} size="h2">{selectedView?.name}</Title>
+                        <Title order={1} size="h2" data-cy="view-heading">{selectedView?.name}</Title>
                         {taskCount !== null && (
                             <Text size="sm" c="dimmed" mt={4}>
                                 {taskCount} {taskCount === 1 ? 'task' : 'tasks'}{boardTitle && ` in ${boardTitle}`}
                             </Text>
                         )}
                     </Box>
-                    <AddTaskButton label="New task" />
+                    <AddTaskButton
+                        label="New task"
+                        dataCy={{trigger: 'add-task', title: 'task-title', submit: 'create-task'}}
+                    />
                 </Group>
 
                 {selectedView && (

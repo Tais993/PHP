@@ -26,6 +26,7 @@ export function Task({ task, isDragging, onDragStart, onDragEnd, onOpen }: Reado
 
     return (
         <Paper
+            data-cy="task-card"
             withBorder
             radius="sm"
             p="sm"

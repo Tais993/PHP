@@ -138,7 +138,7 @@ function TaskDetails({ boardId, taskId }: Readonly<{ boardId: number; taskId: nu
                     </>
                 ) : (
                     <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
-                        <Drawer.Title fz={32} fw={600} lh={1.2} style={{ overflowWrap: 'anywhere' }}>
+                        <Drawer.Title data-cy="task-detail-title" fz={32} fw={600} lh={1.2} style={{ overflowWrap: 'anywhere' }}>
                             {task?.title ?? 'Task details'}
                         </Drawer.Title>
                         {task && (

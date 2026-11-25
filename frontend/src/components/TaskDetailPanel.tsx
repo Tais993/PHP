@@ -146,6 +146,7 @@ function TaskDetails({ boardId, taskId }: Readonly<{ boardId: number; taskId: nu
                                 variant="subtle"
                                 size="compact-xs"
                                 aria-label="Edit title"
+                                data-cy="edit-task-title"
                                 onClick={() => changeDraft('title', {})}
                             >
                                 Edit
@@ -153,7 +154,7 @@ function TaskDetails({ boardId, taskId }: Readonly<{ boardId: number; taskId: nu
                         )}
                     </Group>
                 )}
-                <Drawer.CloseButton aria-label="Close task details" />
+                <Drawer.CloseButton aria-label="Close task details" data-cy="close-task-details" />
             </Drawer.Header>
 
             <Drawer.Body>

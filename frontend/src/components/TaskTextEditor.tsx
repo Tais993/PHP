@@ -34,6 +34,7 @@ export function TaskTextEditor({
                 <Input
                     {...(field === 'description' ? { rows: 9, resize: 'vertical' } : { size: 'lg' })}
                     aria-label={field === 'title' ? 'Title' : 'Description'}
+                    data-cy={`edit-task-${field}-input`}
                     value={value}
                     onChange={event => onChange(event.currentTarget.value)}
                     error={error}
@@ -45,6 +46,7 @@ export function TaskTextEditor({
                         type="submit"
                         size="sm"
                         aria-label={`Save ${field}`}
+                        data-cy={`save-task-${field}`}
                         loading={saving}
                         disabled={!canSave}
                     >

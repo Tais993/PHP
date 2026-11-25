@@ -55,6 +55,7 @@ export default function BoardTopBar() {
                     {boards.map(board => (
                         <Button
                             key={board.id}
+                            data-cy="board-link"
                             variant="subtle"
                             color="gray"
                             component={Link}
@@ -85,6 +86,7 @@ export default function BoardTopBar() {
                     {boardViews.map((boardView, index) => (
                         <Group key={boardView.id} gap={0} wrap="nowrap">
                             <Button
+                                data-cy="view-link"
                                 variant="subtle"
                                 color="gray"
                                 component={Link}

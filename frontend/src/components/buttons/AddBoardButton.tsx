@@ -14,6 +14,7 @@ export default function AddBoardButton() {
     return (
         <AddItemButton
             itemName="board"
+            dataCy={{trigger: 'add-board', title: 'board-title', submit: 'create-board'}}
             disabled={loading || Boolean(loadError)}
             onCreate={createBoard}
         />

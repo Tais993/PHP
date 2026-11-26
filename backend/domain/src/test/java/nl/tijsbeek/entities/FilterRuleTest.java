@@ -38,9 +38,11 @@ class FilterRuleTest {
             String value,
             Class<? extends RuntimeException> expectedCause
     ) {
+        List<String> values = List.of(value);
+
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new FilterRule(field, operator, List.of(value)));
+                () -> new FilterRule(field, operator, values));
         assertEquals("Invalid filter value for " + field, exception.getMessage());
         assertInstanceOf(expectedCause, exception.getCause());
     }

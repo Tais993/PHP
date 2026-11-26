@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -58,13 +61,19 @@ class WebConfigTest {
 
             assertThat(response.getHeader("Access-Control-Allow-Methods"))
                     .isNotNull()
-                    .satisfies(methods -> assertThat(methods.split("\\s*,\\s*")).contains(method));
+                    .satisfies(methods -> assertThat(headerTokens(methods)).contains(method));
             assertThat(response.getHeader("Access-Control-Allow-Headers"))
                     .isNotNull()
-                    .satisfies(headers -> assertThat(headers.split("\\s*,\\s*"))
+                    .satisfies(headers -> assertThat(headerTokens(headers))
                             .usingElementComparator(String.CASE_INSENSITIVE_ORDER)
                             .contains("content-type"));
         }
+    }
+
+    private static List<String> headerTokens(String headerValue) {
+        return Arrays.stream(headerValue.split(","))
+                .map(String::trim)
+                .toList();
     }
 
     private AnnotationConfigWebApplicationContext context(String origins) {
@@ -89,12 +98,18 @@ class WebConfigTest {
         }
 
         @PostMapping("/boards")
-        void createBoard() {}
+        void createBoard() {
+            // Registers the route for the CORS preflight test.
+        }
 
         @PutMapping("/views/{id}/sorting")
-        void updateSorting() {}
+        void updateSorting() {
+            // Registers the route for the CORS preflight test.
+        }
 
         @PatchMapping("/tasks/{id}")
-        void updateTask() {}
+        void updateTask() {
+            // Registers the route for the CORS preflight test.
+        }
     }
 }

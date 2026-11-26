@@ -59,7 +59,11 @@ sonar {
         property("sonar.projectBaseDir", repositoryDir.absolutePath)
         property("sonar.sources", frontendDir.resolve("src").absolutePath)
         property("sonar.typescript.tsconfigPaths", frontendDir.resolve("tsconfig.app.json").absolutePath)
-        property("sonar.javascript.lcov.reportPaths", frontendDir.resolve("coverage/lcov.info").absolutePath)
+        property(
+            "sonar.javascript.lcov.reportPaths",
+            listOf("coverage/lcov-unit.info", "coverage/lcov.info")
+                .joinToString(",") { frontendDir.resolve(it).absolutePath }
+        )
 
         property(
             "sonar.coverage.jacoco.xmlReportPaths",

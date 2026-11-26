@@ -25,6 +25,12 @@ npm run dev
 
 Start the backend separately with `./gradlew :web:bootRun` from `backend/` (`gradlew.bat` on Windows), or `docker compose up -d --build` from the repository root. The frontend runs on `http://localhost:5173` and calls the backend directly. If port 5173 is in use, Vite stops so it cannot silently switch to an origin the backend does not allow.
 
+## Unit tests
+
+Run `npm test` from this directory with Node.js 24. Run `npm run test:coverage`
+to also write an LCOV report to `coverage/lcov-unit.info`. Both commands run
+without installing frontend dependencies or starting the backend.
+
 ## Build and hosting
 
 ```sh

@@ -28,6 +28,26 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c
 
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+
+      - name: Run frontend unit tests with coverage
+        working-directory: frontend
+        run: |
+          npm run test:coverage
+          grep -Eq '^DA:[0-9]+,[1-9]' coverage/lcov-unit.info
+          sed -i 's|^SF:src/|SF:frontend/src/|' coverage/lcov-unit.info
+
+      - name: Upload frontend unit coverage artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: unit-frontend-coverage
+          path: frontend/coverage/lcov-unit.info
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run unit tests with coverage
         run: ./gradlew jacocoAggregateUnitReport
 
@@ -52,7 +72,8 @@ jobs:
       - name: Upload unit coverage to Codecov
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
-          files: ./backend/build/reports/jacoco/unit/report.xml
+          files: ./backend/build/reports/jacoco/unit/report.xml,./frontend/coverage/lcov-unit.info
+          disable_search: true
           flags: unit
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true

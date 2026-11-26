@@ -51,8 +51,14 @@ subprojects {
 
 sonar {
     properties {
+        val repositoryDir = rootProject.projectDir.parentFile
+        val frontendDir = repositoryDir.resolve("frontend")
+
         property("sonar.projectKey", "Tais993_PHP")
         property("sonar.organization", "tais993")
+        property("sonar.projectBaseDir", repositoryDir.absolutePath)
+        property("sonar.sources", frontendDir.resolve("src").absolutePath)
+        property("sonar.typescript.tsconfigPaths", frontendDir.resolve("tsconfig.app.json").absolutePath)
 
         property(
             "sonar.coverage.jacoco.xmlReportPaths",

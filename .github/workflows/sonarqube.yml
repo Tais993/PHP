@@ -83,6 +83,12 @@ jobs:
           name: unit-coverage
           path: backend/build/reports/jacoco/unit
 
+      - name: Download frontend unit coverage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: unit-frontend-coverage
+          path: frontend/coverage
+
       - name: Download integration coverage
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
@@ -109,6 +115,7 @@ jobs:
           test -s build/reports/jacoco/unit/report.xml
           test -s build/reports/jacoco/integration/report.xml
           test -s build/reports/jacoco/e2e/report.xml
+          test -s ../frontend/coverage/lcov-unit.info
           test -s ../frontend/coverage/lcov.info
 
           echo "JaCoCo and LCOV reports found successfully."

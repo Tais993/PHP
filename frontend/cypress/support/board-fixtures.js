@@ -9,15 +9,15 @@ export function createBoard() {
   }).its('body');
 }
 
-export function createBoardView(boardId) {
+export function createBoardView(boardId, {name = 'Task test view', position = 0} = {}) {
   return cy.request('POST', apiUrl('/views'), {
     boardId,
-    name: 'Task test view',
+    name,
     type: 'BOARD',
     groupBy: 'STATUS',
     sortBy: 'CREATED_AT',
     sortDirection: 'DESC',
-    position: 0,
+    position,
   }).its('body');
 }
 
@@ -32,6 +32,10 @@ export function createTask(boardId, title, {description = '', statusId = null} =
 
 export function replaceViewFilterRules(viewId, filterRules) {
   return cy.request('PUT', apiUrl(`/views/${viewId}/filter-rules`), {filterRules});
+}
+
+export function setTaskDueDate(taskId, dueDate) {
+  return cy.request('PATCH', apiUrl(`/tasks/${taskId}`), {dueDate});
 }
 
 export function deleteBoardWithTasks(boardId, {hasStatusFixtures = false} = {}) {

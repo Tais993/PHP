@@ -3,11 +3,12 @@ import type {ButtonProps} from '@mantine/core';
 import {TasksContext} from '../../providers/TasksContext.ts';
 import AddItemButton from './AddItemButton.tsx';
 
-type AddTaskButtonProps = Pick<ButtonProps, 'fullWidth' | 'mt'> & {
-    statusId?: number | null;
-    label?: string;
-    dataCy?: ComponentProps<typeof AddItemButton>['dataCy'];
-};
+type AddTaskButtonProps = Pick<ButtonProps, 'fullWidth' | 'mt'>
+    & Pick<ComponentProps<typeof AddItemButton>, 'dataCy'>
+    & {
+        statusId?: number | null;
+        label?: string;
+    };
 
 export default function AddTaskButton({
     statusId = null,

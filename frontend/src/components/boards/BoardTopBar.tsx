@@ -38,8 +38,7 @@ export default function BoardTopBar() {
 
 
 
-    return <>
-
+    return (
         <ScrollArea type="auto">
             <Group
                 h={55}
@@ -115,5 +114,5 @@ export default function BoardTopBar() {
             <Divider/>
 
         </ScrollArea>
-    </>
+    );
 }

@@ -29,7 +29,7 @@ export function isNullCheck(operator: FilterOperator) {
 
 function isLocalDateTime(value: string) {
     const parts = /^([+-]\d{4,9}|\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{0,9})?)?$/i.exec(value);
-    if (!parts || parts[0] !== value) {
+    if (parts?.[0] !== value) {
         return false;
     }
 

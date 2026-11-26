@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.lang.Contract;
 
 public class BoardStatusMapper {
+    private BoardStatusMapper() {}
 
     @Contract("_ -> new")
     public static @NonNull BoardStatusJPA toJpa(@NonNull BoardStatus status) {

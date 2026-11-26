@@ -43,10 +43,11 @@ class BoardTest {
         assertEquals(List.of(newStatus), new Board(null, "Inbox", "", List.of(newStatus)).getStatuses());
         assertEquals(List.of(linkedStatus, newStatus),
                 new Board(1L, "Inbox", "", List.of(linkedStatus, newStatus)).getStatuses());
+        List<BoardStatus> linkedStatuses = List.of(linkedStatus);
         assertThrows(IllegalArgumentException.class,
-                () -> new Board(2L, "Inbox", "", List.of(linkedStatus)));
+                () -> new Board(2L, "Inbox", "", linkedStatuses));
         assertThrows(IllegalArgumentException.class,
-                () -> new Board(null, "Inbox", "", List.of(linkedStatus)));
+                () -> new Board(null, "Inbox", "", linkedStatuses));
     }
 
     private static Stream<String> invalidTitles() {

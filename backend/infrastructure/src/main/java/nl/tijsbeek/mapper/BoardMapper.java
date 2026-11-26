@@ -2,8 +2,6 @@ package nl.tijsbeek.mapper;
 
 import nl.tijsbeek.entities.Board;
 import nl.tijsbeek.entities.BoardJPA;
-import nl.tijsbeek.entities.BoardStatus;
-import nl.tijsbeek.entities.BoardStatusJPA;
 import org.jspecify.annotations.NonNull;
 import org.springframework.lang.Contract;
 

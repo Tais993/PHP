@@ -261,11 +261,12 @@ class BoardStatusRepositoryIntegrationTest extends IntegrationTestBase {
                 board.getId(), "TaskOne", "Task with a status", null, status
         ));
         Task originalTask = taskRepository.findById(task.getId()).orElseThrow();
+        Long statusId = status.getId();
 
         // Act & Assert
-        assertThatThrownBy(() -> boardStatusRepository.deleteById(status.getId()))
+        assertThatThrownBy(() -> boardStatusRepository.deleteById(statusId))
                 .isInstanceOf(DataIntegrityViolationException.class);
-        assertThat(boardStatusRepository.findById(status.getId())).hasValueSatisfying(foundStatus -> {
+        assertThat(boardStatusRepository.findById(statusId)).hasValueSatisfying(foundStatus -> {
             assertThat(foundStatus.getBoardId()).isEqualTo(board.getId());
             assertThat(foundStatus.getName()).isEqualTo("To do");
             assertThat(foundStatus.getPosition()).isZero();

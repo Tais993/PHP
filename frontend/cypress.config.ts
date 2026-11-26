@@ -18,6 +18,7 @@ function runStatusFixture(boardId: number, sql: string) {
 }
 
 export default defineConfig({
+  projectId: 'xf5z4s',
   expose: {
     apiBaseUrl: (process.env.VITE_API_BASE_URL?.trim() || "http://localhost:8080/api").replace(/\/+$/, ""),
   },

@@ -43,12 +43,26 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npx --no-install cypress install
+
+      - name: Prepare backend and JaCoCo agent
+        working-directory: backend
+        run: ./gradlew :web:prepareE2eBackend
 
       - name: Run Cypress against the local stack
         shell: bash
+        env:
+          VITE_COVERAGE: 'true'
+          FRONTEND_ORIGINS: http://localhost:5173
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5434/homepage
+          SPRING_DATASOURCE_USERNAME: homepage
+          SPRING_DATASOURCE_PASSWORD: homepage
         run: |
-          ../backend/gradlew -p ../backend :web:bootRun > "$RUNNER_TEMP/backend.log" 2>&1 &
+          docker compose -f ../compose.dev.yaml up -d --wait
+          java -javaagent:../backend/web/build/e2e/jacocoagent.jar=destfile=../backend/build/jacoco/e2e.exec,append=false,includes=nl.tijsbeek.* \
+            -jar ../backend/web/build/e2e/application.jar > "$RUNNER_TEMP/backend.log" 2>&1 &
           backend_pid=$!
           npm run dev > "$RUNNER_TEMP/frontend.log" 2>&1 &
           frontend_pid=$!
@@ -60,6 +74,28 @@ jobs:
             --output /dev/null http://localhost:5173/
 
           npx --no-install cypress run --e2e
+
+          # JaCoCo writes execution data when the application JVM shuts down.
+          kill -TERM "$backend_pid"
+          wait "$backend_pid" || true
+          test -s ../backend/build/jacoco/e2e.exec
+          grep -Eq '^DA:[0-9]+,[1-9]' coverage/lcov.info
+          sed -i 's|^SF:src/|SF:frontend/src/|' coverage/lcov.info
+
+      - name: Generate backend E2E coverage report
+        working-directory: backend
+        run: |
+          ./gradlew jacocoAggregateE2eReport
+          test -s build/reports/jacoco/e2e/report.xml
+
+      - name: Upload E2E coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
+        with:
+          files: ./frontend/coverage/lcov.info,./backend/build/reports/jacoco/e2e/report.xml
+          disable_search: true
+          flags: e2e
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
       - name: Upload E2E failure diagnostics
         if: failure()

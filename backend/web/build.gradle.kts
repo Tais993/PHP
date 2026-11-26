@@ -54,3 +54,18 @@ tasks.asciidoctor {
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     systemProperty("spring.profiles.active", "local")
 }
+
+tasks.register<Sync>("prepareE2eBackend") {
+    group = "verification"
+    description = "Stages the application and JaCoCo agent for end-to-end coverage."
+    into(layout.buildDirectory.dir("e2e"))
+
+    from(tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar")) {
+        rename { "application.jar" }
+    }
+    from({
+        configurations["jacocoAgent"].map { zipTree(it) }
+    }) {
+        include("jacocoagent.jar")
+    }
+}

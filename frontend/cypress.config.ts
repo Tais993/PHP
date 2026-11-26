@@ -1,5 +1,6 @@
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import registerCodeCoverageTasks from '@cypress/code-coverage/task';
 import {defineConfig} from "cypress";
 
 const composeFile = fileURLToPath(new URL('../compose.dev.yaml', import.meta.url));
@@ -21,12 +22,14 @@ export default defineConfig({
   projectId: 'xf5z4s',
   expose: {
     apiBaseUrl: (process.env.VITE_API_BASE_URL?.trim() || "http://localhost:8080/api").replace(/\/+$/, ""),
+    coverage: process.env.VITE_COVERAGE === 'true',
+    codeCoverage: {expectFrontendCoverageOnly: true},
   },
   e2e: {
     baseUrl: "http://localhost:5173",
 
     // This really has to be resolved, for now statuses are creating like this.
-    setupNodeEvents(on) {
+    setupNodeEvents(on, config) {
       // The application has no endpoint for managing board statuses.
       on('task', {
         seedBoardStatuses(boardId: number) {
@@ -45,6 +48,10 @@ export default defineConfig({
           return null;
         },
       });
+      if (config.expose.coverage) {
+        registerCodeCoverageTasks(on, config);
+      }
+      return config;
     },
   },
 });

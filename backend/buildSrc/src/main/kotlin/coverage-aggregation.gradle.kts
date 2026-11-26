@@ -10,18 +10,12 @@ val coverageProjects = rootProject.subprojects.filter {
 
 fun registerAggregateCoverageReport(
     taskName: String,
-    testTaskName: String,
-    reportDirectory: String
+    reportDirectory: String,
+    configure: JacocoReport.() -> Unit
 ) {
     tasks.register<JacocoReport>(taskName) {
         group = "verification"
-        description = "Aggregates $testTaskName coverage across all production modules."
-
-        dependsOn(
-            coverageProjects.map {
-                "${it.path}:$testTaskName"
-            }
-        )
+        description = "Aggregates $reportDirectory coverage across all production modules."
 
         classDirectories.from(
             coverageProjects.map {
@@ -32,14 +26,6 @@ fun registerAggregateCoverageReport(
         sourceDirectories.from(
             coverageProjects.map {
                 it.file("src/main/java")
-            }
-        )
-
-        executionData.from(
-            coverageProjects.map {
-                it.layout.buildDirectory.file(
-                    "jacoco/$testTaskName.exec"
-                )
             }
         )
 
@@ -58,20 +44,25 @@ fun registerAggregateCoverageReport(
                     "reports/jacoco/$reportDirectory/html"
                 )
         }
+
+        configure()
     }
 }
 
-registerAggregateCoverageReport(
-    taskName = "jacocoAggregateUnitReport",
-    testTaskName = "test",
-    reportDirectory = "unit"
-)
+fun registerAggregateTestCoverageReport(taskName: String, testTaskName: String, reportDirectory: String) {
+    registerAggregateCoverageReport(taskName, reportDirectory) {
+        dependsOn(coverageProjects.map { "${it.path}:$testTaskName" })
+        executionData.from(coverageProjects.map { it.layout.buildDirectory.file("jacoco/$testTaskName.exec") })
+    }
+}
 
-registerAggregateCoverageReport(
-    taskName = "jacocoAggregateIntegrationReport",
-    testTaskName = "integrationTest",
-    reportDirectory = "integration"
-)
+registerAggregateTestCoverageReport("jacocoAggregateUnitReport", "test", "unit")
+registerAggregateTestCoverageReport("jacocoAggregateIntegrationReport", "integrationTest", "integration")
+
+registerAggregateCoverageReport("jacocoAggregateE2eReport", "e2e") {
+    dependsOn(coverageProjects.map { "${it.path}:classes" })
+    executionData.from(layout.buildDirectory.file("jacoco/e2e.exec"))
+}
 
 tasks.register("testAllWithAggregateCoverage") {
     group = "verification"

@@ -1,4 +1,4 @@
-import {type ReactNode, useCallback, useContext, useRef, useState} from 'react';
+import {type ReactNode, useCallback, useContext, useMemo, useRef, useState} from 'react';
 import {request} from '../api/request.ts';
 import {BoardViewsContext} from './BoardViewsContext.ts';
 import type {TaskData} from '../components/types/TaskData.ts';
@@ -33,7 +33,7 @@ export function TasksProvider({
         selectedViewId === null ? null : requestKey, loadTasks, 'Could not load tasks',
     );
 
-    async function createTask(input: NewTask): Promise<void> {
+    const createTask = useCallback(async (input: NewTask): Promise<void> => {
         if (selectedViewId === null) {
             throw new Error('Select a board view before creating a task');
         }
@@ -67,9 +67,9 @@ export function TasksProvider({
 
         // Reload groups and task ordering from the selected view after saving.
         setReloadCount(current => current + 1);
-    }
+    }, [selectedViewId, loading, error, boardId]);
 
-    async function updateTask(taskId: number, changes: TaskChanges): Promise<TaskData> {
+    const updateTask = useCallback(async (taskId: number, changes: TaskChanges): Promise<TaskData> => {
         const previousSave = getPendingTaskSave(taskId);
 
         async function patchTask(): Promise<TaskData> {
@@ -100,18 +100,21 @@ export function TasksProvider({
                 pendingTaskSaves.current.delete(taskId);
             }
         }
-    }
+    }, [getPendingTaskSave]);
 
-    async function moveTask(taskId: number, statusId: number | null): Promise<void> {
+    const moveTask = useCallback(async (taskId: number, statusId: number | null): Promise<void> => {
         if (selectedViewId === null) {
             throw new Error('Select a board view before moving a task');
         }
 
         await updateTask(taskId, {status: statusId});
-    }
+    }, [selectedViewId, updateTask]);
+
+    const value = useMemo(() => ({tasks, loading, error, createTask, updateTask, getPendingTaskSave, moveTask}),
+        [tasks, loading, error, createTask, updateTask, getPendingTaskSave, moveTask]);
 
     return (
-        <TasksContext.Provider value={{tasks, loading, error, createTask, updateTask, getPendingTaskSave, moveTask}}>
+        <TasksContext.Provider value={value}>
             {children}
         </TasksContext.Provider>
     );

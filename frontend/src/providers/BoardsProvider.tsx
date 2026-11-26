@@ -1,18 +1,17 @@
-import {type ReactNode, useCallback} from 'react';
+import {type ReactNode, useCallback, useMemo} from 'react';
 import type {BoardData} from "../components/types/BoardData.ts";
 import {request} from '../api/request.ts';
 import {BoardsContext, type NewBoard} from './BoardsContext.ts';
 import {useAsyncResource} from './useAsyncResource.ts';
 
-export function BoardsProvider({children}: { children: ReactNode }) {
+export function BoardsProvider({children}: { readonly children: ReactNode }) {
     const loadBoards = useCallback(async (signal: AbortSignal): Promise<BoardData[]> => {
         const response = await request('/boards', {signal}, {fallbackMessage: 'Could not load boards'});
         return response.json();
     }, []);
     const {data, loading, error, updateData} = useAsyncResource('boards', loadBoards, 'Could not load boards');
-    const boards = data ?? [];
 
-    async function createBoard(input: NewBoard): Promise<void> {
+    const createBoard = useCallback(async (input: NewBoard): Promise<void> => {
         // Prevent the initial load from overwriting a newly created board.
         if (loading) {
             throw new Error('Wait until boards have finished loading');
@@ -46,10 +45,13 @@ export function BoardsProvider({children}: { children: ReactNode }) {
                 ? current
                 : [...current, createdBoard],
         );
-    }
+    }, [loading, error, updateData]);
+
+    const value = useMemo(() => ({boards: data ?? [], loading, error, createBoard}),
+        [data, loading, error, createBoard]);
 
     return (
-        <BoardsContext.Provider value={{boards, loading, error, createBoard}}>
+        <BoardsContext.Provider value={value}>
             {children}
         </BoardsContext.Provider>
     );

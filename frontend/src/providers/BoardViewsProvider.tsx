@@ -30,6 +30,50 @@ function readBoardListRevision(revisions: Map<number, number>, boardId: number) 
     return revisions.get(boardId) ?? 0;
 }
 
+async function fetchBoardViews(targetBoardId: number) {
+    const response = await request(`/boards/${targetBoardId}/views`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5_000),
+    }, {
+        fallbackMessage: 'Could not reload board views.',
+        parseProblemDetail: true,
+    });
+    return orderBoardViews(await response.json() as BoardViewData[]);
+}
+
+function prepareViewDetailsUpdates(boardViews: BoardViewData[], viewId: number, details: ViewDetails) {
+    const fromIndex = boardViews.findIndex(view => view.id === viewId);
+    if (fromIndex === -1) {
+        throw new Error('This view is no longer on the current board.');
+    }
+
+    const name = details.name.trim();
+    if (!name || name.length > 255) {
+        throw new Error('View name must contain 1–255 characters.');
+    }
+    if (!Number.isInteger(details.position) || details.position < 1 || details.position > boardViews.length) {
+        throw new Error('Choose a position within the current view list.');
+    }
+
+    const updatedViews = [...boardViews];
+    const toIndex = details.position - 1;
+    const moving = fromIndex !== toIndex;
+    if (moving) {
+        const [movedView] = updatedViews.splice(fromIndex, 1);
+        updatedViews.splice(toIndex, 0, movedView);
+    }
+
+    // Assign distinct positions when reordering, including when existing positions have ties or gaps.
+    const updates = updatedViews.flatMap((view, index) => {
+        const position = moving ? index : view.position;
+        const nextName = view.id === viewId ? name : view.name;
+        if (position === view.position && nextName === view.name) return [];
+
+        return [{index, viewId: view.id, name: nextName, position}];
+    });
+    return {updatedViews, updates};
+}
+
 export function BoardViewsProvider({
     boardId,
     boardViewId,
@@ -83,24 +127,17 @@ export function BoardViewsProvider({
     const invalidView = !loading && loadError === null &&
         boardViewId !== undefined && !boardViews.some(view => view.id === boardViewId);
     const error = loadError ?? (invalidView ? 'View does not belong to this board' : null);
-    const selectedView = loading || error
-        ? null
-        : boardViewId === undefined
-            ? boardViews.find(view => view.id === currentResult?.implicitSelectedViewId) ?? boardViews[0] ?? null
-            : boardViews.find(view => view.id === boardViewId) ?? null;
+    let selectedView: BoardViewData | null = null;
+    if (!loading && !error) {
+        if (boardViewId === undefined) {
+            selectedView = boardViews.find(view => view.id === currentResult?.implicitSelectedViewId)
+                ?? boardViews[0] ?? null;
+        } else {
+            selectedView = boardViews.find(view => view.id === boardViewId) ?? null;
+        }
+    }
 
     const selectedSettings = (selectedView && settings.get(selectedView.id)) || initialSettings;
-
-    async function fetchBoardViews(targetBoardId: number) {
-        const response = await request(`/boards/${targetBoardId}/views`, {
-            cache: 'no-store',
-            signal: AbortSignal.timeout(5_000),
-        }, {
-            fallbackMessage: 'Could not reload board views.',
-            parseProblemDetail: true,
-        });
-        return orderBoardViews(await response.json() as BoardViewData[]);
-    }
 
     function applyBoardViews(targetBoardId: number, data: BoardViewData[]) {
         if (boardId !== targetBoardId) return;
@@ -170,18 +207,7 @@ export function BoardViewsProvider({
             throw new Error('Reload the board before changing view details.');
         }
 
-        const fromIndex = boardViews.findIndex(view => view.id === viewId);
-        if (fromIndex === -1) {
-            throw new Error('This view is no longer on the current board.');
-        }
-
-        const name = details.name.trim();
-        if (!name || name.length > 255) {
-            throw new Error('View name must contain 1–255 characters.');
-        }
-        if (!Number.isInteger(details.position) || details.position < 1 || details.position > boardViews.length) {
-            throw new Error('Choose a position within the current view list.');
-        }
+        const {updatedViews, updates} = prepareViewDetailsUpdates(boardViews, viewId, details);
         if (hasUnsettledViewSettings(boardId)) {
             throw new Error('Reload the affected view settings before changing view details.');
         }
@@ -193,27 +219,15 @@ export function BoardViewsProvider({
 
         invalidateBoardListReads(boardId);
         const signal = AbortSignal.timeout(15_000);
-        const updatedViews = [...boardViews];
-        const toIndex = details.position - 1;
-        const moving = fromIndex !== toIndex;
-        if (moving) {
-            const [movedView] = updatedViews.splice(fromIndex, 1);
-            updatedViews.splice(toIndex, 0, movedView);
-        }
         let savedAny = false;
 
         try {
-            // The details endpoint only updates one view. Assign distinct positions to
-            // the reordered list, including when existing positions have ties or gaps.
-            for (const [index, view] of updatedViews.entries()) {
-                const position = moving ? index : view.position;
-                const nextName = view.id === viewId ? name : view.name;
-                if (position === view.position && nextName === view.name) continue;
-
-                const response = await request(`/views/${view.id}/details`, {
+            // Finish each update before sending the next so recovery can read the saved state.
+            for (const {index, viewId: updatedViewId, name, position} of updates) {
+                const response = await request(`/views/${updatedViewId}/details`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({name: nextName, position}),
+                    body: JSON.stringify({name, position}),
                     signal,
                 }, {
                     fallbackMessage: 'Could not save view changes.',

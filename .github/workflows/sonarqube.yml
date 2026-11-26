@@ -28,6 +28,11 @@ jobs:
     uses: ./.github/workflows/integration-tests.yml
     secrets: inherit
 
+  e2e-tests:
+    name: E2E Tests
+    uses: ./.github/workflows/e2e-tests.yml
+    secrets: inherit
+
   sonar:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
@@ -35,6 +40,7 @@ jobs:
     needs:
       - unit-tests
       - integration-tests
+      - e2e-tests
 
     # Fork PRs do not receive the SonarQube token
     if: >-
@@ -83,6 +89,18 @@ jobs:
           name: integration-coverage
           path: backend/build/reports/jacoco/integration
 
+      - name: Download frontend E2E coverage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: e2e-frontend-coverage
+          path: frontend/coverage
+
+      - name: Download backend E2E coverage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: e2e-backend-coverage
+          path: backend/build/reports/jacoco/e2e
+
       - name: Verify coverage reports
         run: |
           echo "Available JaCoCo reports:"
@@ -90,8 +108,10 @@ jobs:
 
           test -s build/reports/jacoco/unit/report.xml
           test -s build/reports/jacoco/integration/report.xml
+          test -s build/reports/jacoco/e2e/report.xml
+          test -s ../frontend/coverage/lcov.info
 
-          echo "JaCoCo reports found successfully."
+          echo "JaCoCo and LCOV reports found successfully."
 
       - name: Compile production classes and analyze
         env:

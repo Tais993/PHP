@@ -49,7 +49,7 @@ public class TaskController {
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskRequest request) {
+    public TaskResponse update(@PathVariable long id, @RequestBody UpdateTaskRequest request) {
         return TaskResponse.fromDomain(taskService.updateTask(id, request.titleToFieldUpdate(), request.descriptionToFieldUpdate(), request.dueDateToFieldUpdate(), request.statusToFieldUpdate()));
     }
 

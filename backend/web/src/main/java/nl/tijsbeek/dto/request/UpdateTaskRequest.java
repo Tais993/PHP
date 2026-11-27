@@ -5,6 +5,8 @@ import org.openapitools.jackson.nullable.JsonNullable;
 
 import java.time.LocalDateTime;
 
+import static nl.tijsbeek.dto.FieldUpdateMapper.toFieldUpdate;
+
 public record UpdateTaskRequest(
         JsonNullable<String> title,
         JsonNullable<String> description,
@@ -29,9 +31,5 @@ public record UpdateTaskRequest(
 
     public FieldUpdate<Long> statusToFieldUpdate() {
         return toFieldUpdate(status);
-    }
-
-    private static <T> FieldUpdate<T> toFieldUpdate(JsonNullable<T> field) {
-        return new FieldUpdate<>(field.isPresent(), field.orElse(null));
     }
 }

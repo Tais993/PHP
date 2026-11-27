@@ -7,6 +7,10 @@ public class BoardStatus {
     private final String name;
     private final int position;
 
+    public BoardStatus(Long boardId, String name, int position) {
+        this(null, boardId, name, position);
+    }
+
     public BoardStatus(Long id, Long boardId, String name, int position) {
         this.id = id;
         this.boardId = boardId;

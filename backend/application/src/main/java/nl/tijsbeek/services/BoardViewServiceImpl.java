@@ -93,7 +93,7 @@ public class BoardViewServiceImpl implements BoardViewService {
                 .toList();
 
         for (long statusId : statusIds) {
-            if (boardStatusRepository.findByIdAndboardId(statusId, view.getBoardId()).isEmpty()) {
+            if (boardStatusRepository.findByIdAndBoardId(statusId, view.getBoardId()).isEmpty()) {
                 throw new InvalidFilterRulesException(
                         "Status " + statusId + " does not exist on board " + view.getBoardId()
                 );

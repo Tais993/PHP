@@ -49,7 +49,7 @@ public class TaskServiceImpl implements TaskService {
 
         BoardStatus status = null;
         if (statusId != null) {
-            status = boardStatusRepository.findByIdAndboardId(statusId, selectedBoardId)
+            status = boardStatusRepository.findByIdAndBoardId(statusId, selectedBoardId)
                     .orElseThrow(() -> new InvalidTaskReferenceException(
                             "Status does not exist on the selected board"));
         }
@@ -119,7 +119,7 @@ public class TaskServiceImpl implements TaskService {
             Long requestedStatusId = statusId.value();
             BoardStatus status = null;
             if (requestedStatusId != null) {
-                status = boardStatusRepository.findByIdAndboardId(requestedStatusId, task.getBoardId())
+                status = boardStatusRepository.findByIdAndBoardId(requestedStatusId, task.getBoardId())
                         .orElseThrow(() -> new InvalidTaskReferenceException(
                                 "Status does not exist on the selected board"));
             }

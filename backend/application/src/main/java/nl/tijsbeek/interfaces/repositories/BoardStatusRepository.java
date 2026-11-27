@@ -9,13 +9,15 @@ public interface BoardStatusRepository {
 
     Optional<BoardStatus> findById(long id);
 
-    Optional<BoardStatus> findByIdAndboardId(long statusId, long boardId);
+    Optional<BoardStatus> findByIdAndBoardId(long statusId, long boardId);
 
     List<BoardStatus> findAll();
 
     List<BoardStatus> findAllByBoardId(long boardId);
 
     BoardStatus save(BoardStatus boardStatus);
+
+    List<BoardStatus> saveAll(List<BoardStatus> boardStatuses);
 
     void deleteById(long id);
 }

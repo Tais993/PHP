@@ -7,6 +7,7 @@ import nl.tijsbeek.entities.BoardStatusJPA;
 import nl.tijsbeek.interfaces.repositories.BoardStatusRepository;
 import nl.tijsbeek.mapper.BoardStatusMapper;
 import nl.tijsbeek.repositories.jpa.BoardStatusJpaRepository;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,7 @@ public class BoardStatusRepositoryImpl implements BoardStatusRepository {
     }
 
     @Override
-    public Optional<BoardStatus> findByIdAndboardId(long statusId, long boardId) {
+    public Optional<BoardStatus> findByIdAndBoardId(long statusId, long boardId) {
         return jpaRepository.findByIdAndBoardId(statusId, boardId)
                 .map(BoardStatusMapper::toDomain);
     }
@@ -66,6 +67,28 @@ public class BoardStatusRepositoryImpl implements BoardStatusRepository {
         BoardStatusJPA saved = jpaRepository.save(entity);
 
         return BoardStatusMapper.toDomain(saved);
+    }
+
+    @Override
+    @Transactional
+    public List<BoardStatus> saveAll(List<BoardStatus> boardStatuses) {
+        List<BoardStatusJPA> entities = boardStatuses.stream()
+                .map(this::mapToJpaWithBoard)
+                .toList();
+
+        List<BoardStatusJPA> savedEntities = jpaRepository.saveAll(entities);
+
+        return savedEntities.stream()
+                .map(BoardStatusMapper::toDomain)
+                .toList();
+    }
+
+    private BoardStatusJPA mapToJpaWithBoard(@NonNull BoardStatus boardStatus) {
+        BoardStatusJPA entity = BoardStatusMapper.toJpa(boardStatus);
+        entity.setBoard(boardStatus.getBoardId() == null ? null :
+                entityManager.getReference(BoardJPA.class, boardStatus.getBoardId()));
+
+        return entity;
     }
 
     @Override

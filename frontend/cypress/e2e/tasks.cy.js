@@ -1,5 +1,10 @@
 import {
-  createBoard, createBoardView, createTask, deleteBoardWithTasks, replaceViewFilterRules,
+  createBoard,
+  createTask,
+  deleteBoardWithTasks,
+  getDefaultView,
+  getViewStatusIds,
+  replaceViewFilterRules,
 } from '../support/board-fixtures.js';
 
 function addTaskThroughForm(title) {
@@ -33,14 +38,12 @@ describe('Tasks', () => {
   let boardId;
   let viewId;
   let viewPath;
-  let hasStatusFixtures;
 
   beforeEach(() => {
     boardId = undefined;
-    hasStatusFixtures = false;
     return createBoard().then(({ id }) => {
       boardId = id;
-      return createBoardView(boardId);
+      return getDefaultView(boardId);
     }).then(({ id }) => {
       viewId = id;
       viewPath = `/boards/${boardId}/views/${viewId}`;
@@ -49,7 +52,7 @@ describe('Tasks', () => {
 
   afterEach(() => {
     if (boardId !== undefined) {
-      return deleteBoardWithTasks(boardId, {hasStatusFixtures});
+      return deleteBoardWithTasks(boardId);
     }
   });
 
@@ -147,9 +150,8 @@ describe('Tasks', () => {
     let statusIds;
 
     beforeEach(() => {
-      hasStatusFixtures = true;
       cy.viewport(1280, 800);
-      return cy.task('seedBoardStatuses', boardId).then(ids => {
+      return getViewStatusIds(viewId).then(ids => {
         statusIds = ids;
       });
     });
@@ -172,12 +174,12 @@ describe('Tasks', () => {
     it('moves a task by dragging it to a different column', () => {
       const title = 'Review the pull request';
 
-      createTask(boardId, title, {statusId: statusIds['To do']});
+      createTask(boardId, title, {statusId: statusIds['To Do']});
       cy.visit(viewPath);
 
       cy.window().then(win => {
         const dragEvent = {eventConstructor: 'DragEvent', dataTransfer: new win.DataTransfer()};
-        column('To do').contains(taskCard, title).trigger('dragstart', dragEvent);
+        column('To Do').contains(taskCard, title).trigger('dragstart', dragEvent);
         column('Done').trigger('dragenter', dragEvent);
         column('Done').trigger('dragover', dragEvent);
         column('Done').contains(taskCard, title).should('be.visible');
@@ -185,22 +187,22 @@ describe('Tasks', () => {
       });
 
       column('Done').contains(taskCard, title).should('contain.text', 'Done');
-      column('To do').contains(taskCard, title).should('not.exist');
+      column('To Do').contains(taskCard, title).should('not.exist');
       cy.reload();
       column('Done').contains(taskCard, title).should('be.visible');
-      column('To do').contains(taskCard, title).should('not.exist');
+      column('To Do').contains(taskCard, title).should('not.exist');
     });
 
     it('filters out a task after its status changes in a saved view', () => {
       const title = 'Publish the release';
       const remainingTitle = 'Update the release checklist';
 
-      createTask(boardId, title, {statusId: statusIds['To do']});
-      createTask(boardId, remainingTitle, {statusId: statusIds['To do']});
-      replaceViewFilterRules(viewId, [{field: 'STATUS', operator: 'IN', values: [String(statusIds['To do'])]}]);
+      createTask(boardId, title, {statusId: statusIds['To Do']});
+      createTask(boardId, remainingTitle, {statusId: statusIds['To Do']});
+      replaceViewFilterRules(viewId, [{field: 'STATUS', operator: 'IN', values: [String(statusIds['To Do'])]}]);
       cy.visit(viewPath);
 
-      column('To do').contains(taskCard, title).click();
+      column('To Do').contains(taskCard, title).click();
       statusSelect().select('Done');
       statusSelect().should('have.value', String(statusIds.Done)).and('be.enabled');
       closeTaskDetails();
@@ -215,11 +217,11 @@ describe('Tasks', () => {
     it('changes and clears a task status from its details', () => {
       const title = 'Prepare the release checklist';
 
-      createTask(boardId, title, {statusId: statusIds['To do']});
+      createTask(boardId, title, {statusId: statusIds['To Do']});
       cy.visit(viewPath);
-      column('To do').contains(taskCard, title).click();
+      column('To Do').contains(taskCard, title).click();
 
-      statusSelect().should('have.value', String(statusIds['To do'])).select('Done');
+      statusSelect().should('have.value', String(statusIds['To Do'])).select('Done');
       statusSelect().should('have.value', String(statusIds.Done)).and('be.enabled');
       closeTaskDetails();
       column('Done').contains(taskCard, title).should('be.visible');

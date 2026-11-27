@@ -1,6 +1,7 @@
 package nl.tijsbeek.controller;
 
 import nl.tijsbeek.dto.request.CreateStatusRequest;
+import nl.tijsbeek.dto.request.UpdateBoardStatusRequest;
 import nl.tijsbeek.dto.response.StatusResponse;
 import nl.tijsbeek.exceptions.BoardStatusNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardStatusService;
@@ -30,6 +31,13 @@ public class BoardStatusController {
                 .map(StatusResponse::fromDomain)
                 .orElseThrow(() -> new BoardStatusNotFoundException(id));
     }
+
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public StatusResponse update(@PathVariable long id, @RequestBody UpdateBoardStatusRequest request) {
+        return StatusResponse.fromDomain(boardStatusService.updateBoardStatus(id, request.titleToFieldUpdate(), request.positionToFieldUpdate()));
+    }
+
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

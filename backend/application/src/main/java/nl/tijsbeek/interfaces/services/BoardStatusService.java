@@ -24,5 +24,8 @@ public interface BoardStatusService {
     List<BoardStatus> getAllByBoardId(long boardId);
 
     @Transactional
+    BoardStatus updateBoardStatus(long boardStatusId, FieldUpdate<String> name, FieldUpdate<Integer> position);
+
+    @Transactional
     void deleteBoardStatus(long boardStatusId);
 }

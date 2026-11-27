@@ -25,6 +25,7 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@RequestBody CreateTaskRequest request) {
+        // TODO make this use a domain object instead?
         return TaskResponse.fromDomain(taskService.createTask(
                 request.title(), request.boardId(), request.description(), request.statusId()));
     }

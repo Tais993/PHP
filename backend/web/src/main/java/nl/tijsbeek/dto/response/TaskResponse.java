@@ -14,9 +14,6 @@ public record TaskResponse(
         LocalDateTime dueDate,
         StatusResponse status) {
 
-    public record StatusResponse(Long id, String name, int position) {}
-
-
     public static @NonNull TaskResponse fromDomain(@NonNull Task task) {
         return new TaskResponse(
                 task.getId(),
@@ -25,11 +22,7 @@ public record TaskResponse(
                 task.getDescription(),
                 task.getCreatedAt(),
                 task.getDueDate(),
-                task.getStatus() == null ? null : new StatusResponse(
-                        task.getStatus().getId(),
-                        task.getStatus().getName(),
-                        task.getStatus().getPosition()
-                )
+                StatusResponse.fromDomain(task.getStatus())
         );
     }
 }

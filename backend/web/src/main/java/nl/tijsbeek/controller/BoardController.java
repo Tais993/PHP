@@ -3,9 +3,11 @@ package nl.tijsbeek.controller;
 import nl.tijsbeek.dto.request.CreateBoardRequest;
 import nl.tijsbeek.dto.response.BoardResponse;
 import nl.tijsbeek.dto.response.BoardViewResponse;
+import nl.tijsbeek.dto.response.StatusResponse;
 import nl.tijsbeek.dto.response.TaskResponse;
 import nl.tijsbeek.exceptions.BoardNotFoundException;
 import nl.tijsbeek.interfaces.services.BoardService;
+import nl.tijsbeek.interfaces.services.BoardStatusService;
 import nl.tijsbeek.interfaces.services.BoardViewService;
 import nl.tijsbeek.interfaces.services.TaskService;
 import org.springframework.http.HttpStatus;
@@ -21,11 +23,13 @@ public class BoardController {
     private final BoardService boardService;
     private final TaskService taskService;
     private final BoardViewService boardViewService;
+    private final BoardStatusService boardStatusService;
 
-    public BoardController(BoardService boardService, TaskService taskService, BoardViewService boardViewService) {
+    public BoardController(BoardService boardService, TaskService taskService, BoardViewService boardViewService, BoardStatusService boardStatusService) {
         this.boardService = requireNonNull(boardService);
         this.taskService = taskService;
         this.boardViewService = boardViewService;
+        this.boardStatusService = boardStatusService;
     }
 
     @PostMapping
@@ -57,6 +61,15 @@ public class BoardController {
         return taskService.getAllTasksByBoardId(boardId)
                 .stream()
                 .map(TaskResponse::fromDomain)
+                .toList();
+    }
+
+    @GetMapping("/{boardId}/status")
+    @ResponseStatus(HttpStatus.OK)
+    public List<StatusResponse> receiveStatus(@PathVariable final long boardId) {
+        return boardStatusService.getAllByBoardId(boardId)
+                .stream()
+                .map(StatusResponse::fromDomain)
                 .toList();
     }
 

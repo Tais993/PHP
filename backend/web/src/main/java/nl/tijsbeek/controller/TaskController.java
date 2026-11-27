@@ -25,6 +25,7 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@RequestBody CreateTaskRequest request) {
+        // TODO make this use a domain object instead?
         return TaskResponse.fromDomain(taskService.createTask(
                 request.title(), request.boardId(), request.description(), request.statusId()));
     }
@@ -48,7 +49,7 @@ public class TaskController {
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public TaskResponse updateStatus(@PathVariable long id, @RequestBody UpdateTaskRequest request) {
+    public TaskResponse update(@PathVariable long id, @RequestBody UpdateTaskRequest request) {
         return TaskResponse.fromDomain(taskService.updateTask(id, request.titleToFieldUpdate(), request.descriptionToFieldUpdate(), request.dueDateToFieldUpdate(), request.statusToFieldUpdate()));
     }
 

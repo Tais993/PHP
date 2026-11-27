@@ -152,14 +152,15 @@ class BoardStatusRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void saveStatus_WithNullName_ThrowsDataIntegrityViolationException() {
+    void insertStatus_WithNullName_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
         BoardStatus existingStatus = saveStatus(board, "To do", 0);
-        BoardStatus invalidStatus = new BoardStatus(null, board.getId(), null, 1);
 
         // Act & Assert
-        assertThatThrownBy(() -> boardStatusRepository.save(invalidStatus))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO board_status (board_id, name, position) VALUES (?, ?, ?)",
+                board.getId(), null, 1))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("name");
         assertThat(boardStatusRepository.findAll())
@@ -168,14 +169,15 @@ class BoardStatusRepositoryIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void saveStatus_WithNegativePosition_ThrowsDataIntegrityViolationException() {
+    void insertStatus_WithNegativePosition_ThrowsDataIntegrityViolationException() {
         // Arrange
         Board board = createBoard("BoardOne");
         BoardStatus existingStatus = saveStatus(board, "To do", 0);
-        BoardStatus invalidStatus = new BoardStatus(null, board.getId(), "Done", -1);
 
         // Act & Assert
-        assertThatThrownBy(() -> boardStatusRepository.save(invalidStatus))
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO board_status (board_id, name, position) VALUES (?, ?, ?)",
+                board.getId(), "Done", -1))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("position");
         assertThat(boardStatusRepository.findAll())

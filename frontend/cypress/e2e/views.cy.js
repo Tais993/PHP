@@ -1,5 +1,12 @@
 import {
-  createBoard, createBoardView, createTask, deleteBoardWithTasks, replaceViewFilterRules, setTaskDueDate,
+  createBoard,
+  createBoardView,
+  createTask,
+  deleteBoardWithTasks,
+  getDefaultView,
+  getViewStatusIds,
+  replaceViewFilterRules,
+  setTaskDueDate,
 } from '../support/board-fixtures.js';
 
 const viewLink = '[data-cy="view-link"]';
@@ -58,28 +65,22 @@ function clearFilters() {
   cy.contains('button', /^Clear filters$/).click();
 }
 
-function sortByTitleAscending() {
-  cy.get('button[aria-label^="Sort by:"]').click();
-  field('Sort field').select('Title');
-  field('Direction').select('Ascending');
-  cy.contains('button', /^Apply$/).click();
+function sortByNewestFirst() {
+  cy.get('button[aria-label^="Sort by:"]:not([data-disabled])').click();
+  field('Sort field').select('Date created');
+  field('Direction').select('Descending').closest('form').contains('button', /^Apply$/).click();
+  cy.get('button[aria-label="Sort by: Date created, descending"]').should('be.visible');
 }
 
 describe('Views', {scrollBehavior: 'nearest'}, () => {
   let boardId;
-  let hasStatusFixtures;
 
   function visitBoard() {
     cy.visit(`/boards/${boardId}`);
   }
 
-  function visitNewView() {
-    createBoardView(boardId).then(({id}) => cy.visit(`/boards/${boardId}/views/${id}`));
-  }
-
   beforeEach(() => {
     boardId = undefined;
-    hasStatusFixtures = false;
     cy.viewport(1280, 900);
     return createBoard().then(({id}) => {
       boardId = id;
@@ -88,7 +89,7 @@ describe('Views', {scrollBehavior: 'nearest'}, () => {
 
   afterEach(() => {
     if (boardId !== undefined) {
-      return deleteBoardWithTasks(boardId, {hasStatusFixtures});
+      return deleteBoardWithTasks(boardId);
     }
   });
 
@@ -98,16 +99,16 @@ describe('Views', {scrollBehavior: 'nearest'}, () => {
     addView('Sprint backlog');
     addView('Release planning');
 
-    expectViewOrder(['Sprint backlog', 'Release planning']);
+    expectViewOrder(['Default', 'Sprint backlog', 'Release planning']);
     cy.reload();
-    expectViewOrder(['Sprint backlog', 'Release planning']);
+    expectViewOrder(['Default', 'Sprint backlog', 'Release planning']);
   });
 
   it('applies and clears a title filter', () => {
     createTask(boardId, 'Audit the deployment');
     createTask(boardId, 'Review the proposal');
-    visitNewView();
-    expectTaskOrder(['Review the proposal', 'Audit the deployment']);
+    visitBoard();
+    expectTaskOrder(['Audit the deployment', 'Review the proposal']);
 
     applyTitleFilter('deployment');
 
@@ -117,30 +118,30 @@ describe('Views', {scrollBehavior: 'nearest'}, () => {
 
     clearFilters();
 
-    expectTaskOrder(['Review the proposal', 'Audit the deployment']);
+    expectTaskOrder(['Audit the deployment', 'Review the proposal']);
     cy.reload();
-    expectTaskOrder(['Review the proposal', 'Audit the deployment']);
+    expectTaskOrder(['Audit the deployment', 'Review the proposal']);
   });
 
   it('changes the sort field and direction', () => {
     createTask(boardId, 'Approve the release');
     createTask(boardId, 'Write the release notes');
     createTask(boardId, 'Check the build');
-    visitNewView();
+    visitBoard();
+    expectTaskOrder(['Approve the release', 'Check the build', 'Write the release notes']);
+
+    sortByNewestFirst();
+
     expectTaskOrder(['Check the build', 'Write the release notes', 'Approve the release']);
-
-    sortByTitleAscending();
-
-    expectTaskOrder(['Approve the release', 'Check the build', 'Write the release notes']);
     cy.reload();
-    cy.get('button[aria-label="Sort by: Title, ascending"]').should('be.visible');
-    expectTaskOrder(['Approve the release', 'Check the build', 'Write the release notes']);
+    cy.get('button[aria-label="Sort by: Date created, descending"]').should('be.visible');
+    expectTaskOrder(['Check the build', 'Write the release notes', 'Approve the release']);
   });
 
   it('switches between views with different saved filters', () => {
     createTask(boardId, 'Backend deployment');
     createTask(boardId, 'Frontend deployment');
-    createBoardView(boardId, {name: 'Backend work'}).then(({id}) => {
+    getDefaultView(boardId).then(({id}) => {
       return replaceViewFilterRules(id, [{field: 'TITLE', operator: 'CONTAINS', values: ['Backend']}]);
     });
     createBoardView(boardId, {name: 'Frontend work', position: 1}).then(({id}) => {
@@ -148,14 +149,14 @@ describe('Views', {scrollBehavior: 'nearest'}, () => {
     });
     visitBoard();
 
-    openView('Backend work');
+    openView('Default');
     expectTaskOrder(['Backend deployment']);
     openView('Frontend work');
     expectTaskOrder(['Frontend deployment']);
     cy.reload();
     cy.get('[data-cy="view-heading"]').should('have.text', 'Frontend work');
     expectTaskOrder(['Frontend deployment']);
-    openView('Backend work');
+    openView('Default');
     expectTaskOrder(['Backend deployment']);
   });
 
@@ -163,78 +164,77 @@ describe('Views', {scrollBehavior: 'nearest'}, () => {
     createTask(boardId, 'Approve the release');
     createTask(boardId, 'Write the release notes');
     createTask(boardId, 'Review the proposal');
-    visitNewView();
+    visitBoard();
 
     applyTitleFilter('release');
+    expectTaskOrder(['Approve the release', 'Write the release notes']);
+    sortByNewestFirst();
     expectTaskOrder(['Write the release notes', 'Approve the release']);
-    sortByTitleAscending();
-    expectTaskOrder(['Approve the release', 'Write the release notes']);
 
-    openViewOptions('Task test view');
+    openViewOptions('Default');
     cy.contains('button', /^Duplicate view$/).click();
-    openView('Copy of Task test view');
+    openView('Copy of Default');
 
-    cy.get('button[aria-label="Sort by: Title, ascending"]').should('be.visible');
-    expectTaskOrder(['Approve the release', 'Write the release notes']);
+    cy.get('button[aria-label="Sort by: Date created, descending"]').should('be.visible');
+    expectTaskOrder(['Write the release notes', 'Approve the release']);
     cy.reload();
-    expectTaskOrder(['Approve the release', 'Write the release notes']);
+    expectTaskOrder(['Write the release notes', 'Approve the release']);
     clearFilters();
-    expectTaskOrder(['Approve the release', 'Review the proposal', 'Write the release notes']);
-    openView('Task test view');
-    expectTaskOrder(['Approve the release', 'Write the release notes']);
+    expectTaskOrder(['Review the proposal', 'Write the release notes', 'Approve the release']);
+    openView('Default');
+    expectTaskOrder(['Write the release notes', 'Approve the release']);
   });
 
   it('reorders views', () => {
-    createBoardView(boardId, {name: 'Backlog'});
-    createBoardView(boardId, {name: 'Active sprint', position: 1});
+    createBoardView(boardId, {name: 'Backlog', position: 1});
     createBoardView(boardId, {name: 'Archive', position: 2});
     visitBoard();
-    expectViewOrder(['Backlog', 'Active sprint', 'Archive']);
+    expectViewOrder(['Default', 'Backlog', 'Archive']);
 
     openViewOptions('Archive');
     field('Position').select('1');
     cy.contains('button', /^Save changes$/).click();
 
-    expectViewOrder(['Archive', 'Backlog', 'Active sprint']);
+    expectViewOrder(['Archive', 'Default', 'Backlog']);
     cy.reload();
-    expectViewOrder(['Archive', 'Backlog', 'Active sprint']);
+    expectViewOrder(['Archive', 'Default', 'Backlog']);
   });
 
   it('renames a view while keeping its route', () => {
-    visitNewView();
+    const renamedView = 'Sprint';
+    getDefaultView(boardId).then(({id}) => cy.visit(`/boards/${boardId}/views/${id}`));
     cy.location('pathname').then(viewPath => {
-      openViewOptions('Task test view');
+      openViewOptions('Default');
       field('View name').clear();
-      field('View name').type('Release checklist');
+      field('View name').type(renamedView);
       cy.contains('button', /^Save changes$/).click();
 
-      expectViewOrder(['Release checklist']);
-      cy.get('[data-cy="view-heading"]').should('have.text', 'Release checklist');
+      expectViewOrder([renamedView]);
+      cy.get('[data-cy="view-heading"]').should('have.text', renamedView);
       cy.location('pathname').should('eq', viewPath);
       cy.reload();
-      cy.get('[data-cy="view-heading"]').should('have.text', 'Release checklist');
-      expectViewOrder(['Release checklist']);
+      cy.get('[data-cy="view-heading"]').should('have.text', renamedView);
+      expectViewOrder([renamedView]);
     });
   });
 
   it('only shows tasks that match both the status and due date filters', () => {
-    hasStatusFixtures = true;
-    cy.task('seedBoardStatuses', boardId).then(statusIds => {
-      createTask(boardId, 'Open task due this week', {statusId: statusIds['To do']})
+    getDefaultView(boardId).then(({id}) => getViewStatusIds(id)).then(statusIds => {
+      createTask(boardId, 'Open task due this week', {statusId: statusIds['To Do']})
         .then(({id}) => setTaskDueDate(id, '2027-05-10T12:00:00'));
-      createTask(boardId, 'Open task due later', {statusId: statusIds['To do']})
+      createTask(boardId, 'Open task due later', {statusId: statusIds['To Do']})
         .then(({id}) => setTaskDueDate(id, '2027-05-20T12:00:00'));
       createTask(boardId, 'Completed task due this week', {statusId: statusIds.Done})
         .then(({id}) => setTaskDueDate(id, '2027-05-10T12:00:00'));
-      createTask(boardId, 'Open task without a date', {statusId: statusIds['To do']});
+      createTask(boardId, 'Open task without a date', {statusId: statusIds['To Do']});
     });
-    visitNewView();
+    visitBoard();
     cy.get(taskCard).should('have.length', 4);
 
     openFilters();
     cy.contains('button', /^Add rule$/).click();
     field('Statuses').click();
-    cy.contains('[role="option"]', /^To do$/).click();
+    cy.contains('[role="option"]', /^To Do$/).click();
     cy.press(Cypress.Keyboard.Keys.TAB);
     cy.contains('button', /^Add rule$/).click();
     cy.contains('legend', /^Rule 2$/).closest('fieldset').within(() => {
